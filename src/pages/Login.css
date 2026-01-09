@@ -26,6 +26,20 @@
   font-weight: bold;
 }
 
+/* ラベルのコロンを揃えるためのスタイル */
+.login-card :global(.ant-form-item-label) {
+  width: 100px !important;
+  min-width: 100px;
+  flex: 0 0 100px;
+}
+
+.login-card :global(.ant-form-item-label > label) {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  text-align: right;
+}
+
 @media (max-width: 600px) {
   .login-card {
     margin: 20px;

@@ -107,6 +107,7 @@ const Login: React.FC = () => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <Form.Item
               label="社員番号"
+              labelCol={{ span: 6, style: { textAlign: 'right' } }}
               validateStatus={errors.userId ? 'error' : ''}
               help={errors.userId?.message}
             >
@@ -126,6 +127,7 @@ const Login: React.FC = () => {
 
             <Form.Item
               label="パスワード"
+              labelCol={{ span: 6, style: { textAlign: 'right' } }}
               validateStatus={errors.password ? 'error' : ''}
               help={errors.password?.message}
             >
