@@ -64,8 +64,21 @@ export const loginService = async (loginData: LoginRequest): Promise<LoginRespon
  * @returns Promise
  */
 export const changePasswordService = async (changePasswordData: ChangePasswordRequest): Promise<any> => {
-  return post('/auth/change-password', changePasswordData);
+  const response = await post('/auth/change-password', changePasswordData);
   
+  // ApiResponse として解析
+  if (response && typeof response === 'object' && 'code' in response) {
+    const api: any = response;
+    
+    // code が 200 以外の場合はバックエンドの message をそのまま投げる
+    if (api.code !== 200) {
+      throw new Error(api.message || 'パスワード変更に失敗しました');
+    }
+    
+    return response;
+  }
+  
+  return response;
 };
 
 /**
