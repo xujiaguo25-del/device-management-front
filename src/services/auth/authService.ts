@@ -1,26 +1,26 @@
 /**
- * 认证相关服务
+ * 認証関連サービス
  */
 
 import { post } from '../api';
 import type { LoginRequest, LoginResponse, ChangePasswordRequest, UserInfo } from '../../types';
 
 /**
- * 用户登录
- * @param loginData 登录数据
- * @returns Promise 登录响应
+ * ログイン
+ * @param loginData ログインデータ
+ * @returns Promise ログイン応答
  */
 export const loginService = async (loginData: LoginRequest): Promise<LoginResponse> => {
   const response = await post('/auth/login', loginData);
 
-  // 按 ApiResponse<LoginData> 解析
+  // ApiResponse<LoginData> として解析
   // { code, message, data: { token, userInfo } }
   if (response && typeof response === 'object' && 'code' in response) {
     const api: any = response;
 
-    // 非 200 直接抛出后端消息，便于提示“密码错误”等
+    // code が 200 以外の場合はバックエンドの message をそのまま投げる（例：パスワード誤り等）
     if (api.code !== 200) {
-      throw new Error(api.message || '登录失败');
+      throw new Error(api.message || 'ログインに失敗しました');
     }
 
     const data = api.data || {};
@@ -29,10 +29,10 @@ export const loginService = async (loginData: LoginRequest): Promise<LoginRespon
       data.token || data.accessToken || data.jwt;
 
     if (!token) {
-      throw new Error('登录响应中缺少 token 字段，请联系管理员');
+      throw new Error('ログイン応答に token フィールドがありません。管理者に連絡してください');
     }
 
-    // 从后端返回的 data.userDTO 提取用户信息（兼容多个字段名）
+    // バックエンドの data.userDTO からユーザー情報を抽出（複数のフィールド名に互換対応）
     const rawUserInfo = data.userDTO || data.userInfo || data.user || data.userInfoDto || {};
 
     const userInfo: UserInfo = {
@@ -42,7 +42,7 @@ export const loginService = async (loginData: LoginRequest): Promise<LoginRespon
       USER_TYPE_NAME: rawUserInfo.userTypeName ?? rawUserInfo.USER_TYPE_NAME ?? '',
     };
 
-    // 返回与 types/LoginResponse 定义一致的结构
+    // types/LoginResponse の定義と一致する構造で返す
     return {
       code: api.code,
       message: api.message,
@@ -53,14 +53,14 @@ export const loginService = async (loginData: LoginRequest): Promise<LoginRespon
     };
   }
 
-  // 兜底：未知结构，直接提示
-  throw new Error('登录响应格式不正确，请联系管理员');
+  // フォールバック：未知の構造
+  throw new Error('ログイン応答の形式が不正です。管理者に連絡してください');
   
 };
 
 /**
- * 修改密码
- * @param changePasswordData 修改密码数据
+ * パスワード変更
+ * @param changePasswordData パスワード変更データ
  * @returns Promise
  */
 export const changePasswordService = async (changePasswordData: ChangePasswordRequest): Promise<any> => {
@@ -69,7 +69,7 @@ export const changePasswordService = async (changePasswordData: ChangePasswordRe
 };
 
 /**
- * 登出
+ * ログアウト
  * @returns Promise
  */
 export const logoutService = async (): Promise<any> => {

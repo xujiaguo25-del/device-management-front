@@ -22,7 +22,7 @@ interface LayoutProps {
   title?: string;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, title = '设备管理系统' }) => {
+const Layout: React.FC<LayoutProps> = ({ children, title = 'デバイス管理システム' }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerVisible, setMobileDrawerVisible] = useState(false);
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title = '设备管理系统' 
     {
       key: '/devices',
       icon: <DesktopOutlined />,
-      label: '设备管理',
+      label: 'デバイス管理',
       onClick: () => {
         navigate('/devices');
         setMobileDrawerVisible(false);
@@ -41,7 +41,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title = '设备管理系统' 
     {
       key: '/permissions',
       icon: <KeyOutlined />,
-      label: '权限管理',
+      label: '権限管理',
       onClick: () => {
         navigate('/permissions');
         setMobileDrawerVisible(false);
@@ -50,7 +50,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title = '设备管理系统' 
     {
       key: '/security-checks',
       icon: <SecurityScanOutlined />,
-      label: '安全检查',
+      label: 'セキュリティチェック',
       onClick: () => {
         navigate('/security-checks');
         setMobileDrawerVisible(false);
@@ -62,23 +62,23 @@ const Layout: React.FC<LayoutProps> = ({ children, title = '设备管理系统' 
     {
       key: 'change-password',
       icon: <LockOutlined />,
-      label: '修改密码',
+      label: 'パスワード変更',
       onClick: () => navigate('/change-password'),
     },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '登出',
+      label: 'ログアウト',
       onClick: async () => {
         try {
-          // 调用后端登出接口
+          // バックエンドのログアウト API を呼び出す
           await logoutService();
-          message.success('已登出');
+          message.success('ログアウトしました');
         } catch (error) {
-          console.error('登出失败:', error);
-          // 即使后端登出失败，也清除本地状态
+          console.error('ログアウト失敗:', error);
+          // バックエンドのログアウトが失敗してもローカル状態はクリアする
         } finally {
-          // 清除本地状态并跳转到登录页
+          // ローカル状態をクリアし、ログイン画面へ遷移
           logout();
           navigate('/login');
         }
@@ -88,7 +88,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title = '设备管理系统' 
 
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
-      {/* 桌面端侧边栏 */}
+      {/* デスクトップ用サイドバー */}
       <Sider
         trigger={null}
         collapsible
@@ -96,7 +96,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title = '设备管理系统' 
         className="layout-sider"
       >
         <div className="logo" style={{ padding: '16px', textAlign: 'center', color: 'white', fontSize: '18px', fontWeight: 'bold' }}>
-          {!collapsed && '设备管理'}
+          {!collapsed && 'デバイス管理'}
         </div>
         <Menu
           theme="dark"
@@ -106,9 +106,9 @@ const Layout: React.FC<LayoutProps> = ({ children, title = '设备管理系统' 
         />
       </Sider>
 
-      {/* 移动端抽屉菜单 */}
+      {/* モバイル用ドロワーメニュー */}
       <Drawer
-        title="菜单"
+        title="メニュー"
         placement="left"
         onClose={() => setMobileDrawerVisible(false)}
         open={mobileDrawerVisible}
@@ -145,7 +145,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title = '设备管理系统' 
             <Button type="text">
               <Avatar icon={<UserOutlined />} />
               <span style={{ marginLeft: '8px' }}>
-                {userInfo?.NAME || '用户'}
+                {userInfo?.NAME || 'ユーザー'}
               </span>
             </Button>
           </Dropdown>

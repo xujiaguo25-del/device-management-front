@@ -13,14 +13,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ component: Component })
   const location = useLocation();
 
   useEffect(() => {
-    // 给一点时间让token状态更新
+    // token の状態が更新されるまで少し待つ
     const timer = setTimeout(() => {
       setIsChecking(false);
     }, 100);
     return () => clearTimeout(timer);
   }, [token]);
 
-  // 如果正在检查，显示加载状态
+  // チェック中はローディングを表示
   if (isChecking) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
@@ -29,7 +29,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ component: Component })
     );
   }
 
-  // 如果没有token，重定向到登录页，并保存当前路径以便登录后返回
+  // token がない場合はログイン画面へリダイレクトし、ログイン後に戻れるよう現在のパスを保存
   if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

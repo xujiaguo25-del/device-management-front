@@ -1,17 +1,17 @@
 /**
- * API 配置和基础请求拦截
+ * API 設定と基本リクエスト処理
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 type RequestOptions = RequestInit & { skipAuthRedirect?: boolean };
 
-// 获取token
+// token を取得
 export const getToken = (): string | null => {
   return localStorage.getItem('auth_token');
 };
 
-// 通用请求方法
+// 共通リクエスト
 export const request = async (
   endpoint: string,
   options: RequestOptions = {}
@@ -24,13 +24,13 @@ export const request = async (
     'Content-Type': 'application/json',
   };
   
-  // 添加来自options的headers
+  // options の headers を追加
   if (options.headers) {
     const optionsHeaders = options.headers as Record<string, string>;
     Object.assign(headers, optionsHeaders);
   }
   
-  // 添加JWT token
+  // JWT token を追加
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -41,11 +41,11 @@ export const request = async (
       headers,
     });
     
-    // 处理token过期 / 登录失败
+    // token 期限切れ / ログイン失敗の処理
     if (response.status === 401) {
-      // 登录接口或主动要求跳过重定向时，直接抛出后端错误信息
+      // ログイン API、または明示的にリダイレクトをスキップする場合は、バックエンドのエラー内容をそのまま返す
       if (skipAuthRedirect || endpoint.includes('/auth/login')) {
-        let errorMessage = '未授权，请检查用户名或密码';
+        let errorMessage = '認証されていません。ユーザーIDまたはパスワードをご確認ください';
         try {
           const errorData = await response.clone().json();
           errorMessage = errorData.message || errorData.error || errorMessage;
@@ -55,56 +55,56 @@ export const request = async (
         throw new Error(errorMessage);
       }
 
-      // 其他接口：清除本地状态并重定向登录
+      // その他の API：ローカル状態をクリアしてログインへリダイレクト
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user_info');
       window.location.href = '/login';
-      throw new Error('未授权，请重新登录');
+      throw new Error('認証されていません。再度ログインしてください');
     }
     
     if (!response.ok) {
-      // 尝试解析错误信息
+      // エラー内容を解析
       let errorMessage = `HTTP error! status: ${response.status}`;
       try {
         const errorData = await response.json();
         errorMessage = errorData.message || errorData.error || errorMessage;
       } catch (e) {
-        // 如果不是 JSON 格式，使用默认错误信息
+        // JSON でない場合はデフォルトのエラーを使う
       }
       throw new Error(errorMessage);
     }
     
-    // 获取响应文本（用于调试）
+    // レスポンステキストを取得（デバッグ用）
     const responseText = await response.clone().text();
-    console.log('API 原始响应文本:', responseText);
+    console.log('API 生レスポンステキスト:', responseText);
     
-    // 解析 JSON
+    // JSON を解析
     let data;
     try {
       data = JSON.parse(responseText);
     } catch (e) {
-      console.error('响应不是有效的 JSON:', responseText);
-      throw new Error('后端返回的数据格式不正确（不是 JSON）');
+      console.error('レスポンスが有効な JSON ではありません:', responseText);
+      throw new Error('バックエンドの返却データ形式が不正です（JSON ではありません）');
     }
     
-    console.log('API 解析后的数据:', data);
+    console.log('API 解析後データ:', data);
     return data;
   } catch (error: any) {
     console.error('API request failed:', error);
-    // 网络错误
+    // ネットワークエラー
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error('网络连接失败，请检查后端服务是否运行');
+      throw new Error('ネットワーク接続に失敗しました。バックエンドが起動しているか確認してください');
     }
     throw error;
   }
 };
 
-// GET 请求
+// GET
 export const get = (endpoint: string, options?: RequestOptions) => {
   return request(endpoint, { ...options, method: 'GET' });
 };
 
-// POST 请求
+// POST
 export const post = (endpoint: string, body?: any, options?: RequestOptions) => {
   return request(endpoint, {
     ...options,
@@ -113,7 +113,7 @@ export const post = (endpoint: string, body?: any, options?: RequestOptions) => 
   });
 };
 
-// PUT 请求
+// PUT
 export const put = (endpoint: string, body?: any, options?: RequestOptions) => {
   return request(endpoint, {
     ...options,
@@ -122,7 +122,7 @@ export const put = (endpoint: string, body?: any, options?: RequestOptions) => {
   });
 };
 
-// DELETE 请求
+// DELETE
 export const del = (endpoint: string, options?: RequestOptions) => {
   return request(endpoint, { ...options, method: 'DELETE' });
 };

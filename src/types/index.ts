@@ -1,8 +1,8 @@
 /**
- * 类型定义
+ * 型定義
  */
 
-// 用户信息
+// ユーザー情報
 export interface UserInfo {
   USER_ID: string;
   DEPT_ID: string;
@@ -10,7 +10,7 @@ export interface UserInfo {
   USER_TYPE_NAME: string;
 }
 
-// 登录请求/响应
+// ログイン（リクエスト/レスポンス）
 export interface LoginRequest {
   userId: string;
   password: string;
@@ -25,14 +25,14 @@ export interface LoginResponse {
   };
 }
 
-// 密码更改请求
+// パスワード変更リクエスト
 export interface ChangePasswordRequest {
   userId: string;
   currentPassword: string;
   newPassword: string;
 }
 
-// 设备信息
+// デバイス情報
 export interface Device {
   DEVICE_ID: number;
   USER_ID: string;
@@ -56,7 +56,7 @@ export interface Device {
   UPDATED_USER: string;
 }
 
-// 设备使用权限
+// デバイス利用権限
 export interface DevicePermission {
   ID: number;
   DEVICE_ID: number;
@@ -78,7 +78,7 @@ export interface DevicePermission {
   UPDATED_USER: string;
 }
 
-// 安全检查记录
+// セキュリティチェック記録
 export interface SecurityCheck {
   CHECK_ID: number;
   DEVICE_ID: number;
@@ -96,7 +96,7 @@ export interface SecurityCheck {
   UPDATED_USER: string;
 }
 
-// 认证状态
+// 認証状態
 export interface AuthState {
   token: string | null;
   userInfo: UserInfo | null;
@@ -104,14 +104,14 @@ export interface AuthState {
   error: string | null;
 }
 
-// 分页参数
+// ページングパラメータ
 export interface PaginationParams {
   page: number;
   size: number;
   [key: string]: any;
 }
 
-// 列表响应
+// リストレスポンス
 export interface ListResponse<T> {
   data: T[];
   total: number;

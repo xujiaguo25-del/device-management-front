@@ -31,7 +31,7 @@ const Login: React.FC = () => {
     },
   });
 
-  // 如果已经登录，自动跳转到之前想访问的页面或默认页面
+  // 既にログインしている場合、直前にアクセスしようとしたページ（またはデフォルト）へ自動遷移
   useEffect(() => {
     if (token) {
       const from = (location.state as any)?.from?.pathname || '/devices';
@@ -43,56 +43,56 @@ const Login: React.FC = () => {
     try {
       setLoading(true);
       
-      // 对密码进行加密
+      // パスワードを暗号化
       const encryptedPassword = encrypt(data.password);
       
       const response = await loginService({
         userId: data.userId,
-        password: encryptedPassword, // 发送加密后的密码
+        password: encryptedPassword, // 暗号化したパスワードを送信
       });
 
-      // 保存记住我选项
+      // 「ログインを記憶する」を保存
       if (data.rememberMe) {
         localStorage.setItem('remembered_userId', data.userId);
       } else {
         localStorage.removeItem('remembered_userId');
       }
 
-      // 保存登录信息（后端返回 api 格式：{ code, message, data: { token, userDTO } }）
+      // ログイン情報を保存（バックエンドの api 形式：{ code, message, data: { token, userDTO } }）
       const token = response?.data?.token;
       const userInfo = response?.data?.userDTO;
 
-      console.log('登录响应:', { token, userInfo });
+      console.log('ログイン応答:', { token, userInfo });
 
       if (!token) {
-        throw new Error('登录响应中缺少 token');
+        throw new Error('ログイン応答に token がありません');
       }
 
       login(token, userInfo as any);
       
-      // 验证token是否已保存
+      // token が保存されているか確認
       const savedToken = localStorage.getItem('auth_token');
-      console.log('Token已保存:', !!savedToken);
+      console.log('Token 保存済み:', !!savedToken);
       
-      message.success('登录成功');
+      message.success('ログインに成功しました');
       
-      // 跳转到之前想访问的页面或默认页面
+      // 直前にアクセスしようとしたページ（またはデフォルト）へ遷移
       const from = (location.state as any)?.from?.pathname || '/devices';
-      console.log('准备跳转到:', from);
+      console.log('遷移先:', from);
       
-      // 使用 replace: true 替换当前历史记录，避免回退到登录页
+      // replace: true で履歴を置換し、戻る操作でログイン画面に戻らないようにする
       setTimeout(() => {
         navigate(from, { replace: true });
         setTimeout(() => {
           if (window.location.pathname === '/login') {
-            console.warn('navigate未生效，使用强制跳转');
+            console.warn('navigate が反映されないため強制遷移します');
             window.location.href = from;
           }
         }, 300);
       }, 100);
     } catch (error: any) {
-      console.error('登录失败:', error);
-      const errorMessage = error?.message || error?.error || '登录失败，请检查用户名和密码';
+      console.error('ログイン失敗:', error);
+      const errorMessage = error?.message || error?.error || 'ログインに失敗しました。ユーザーIDとパスワードをご確認ください';
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -101,43 +101,43 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-container">
-      <Card className="login-card" title="设备管理系统登录">
+      <Card className="login-card" title="デバイス管理システム ログイン">
         <Spin spinning={loading}>
-          {/* 使用原生form元素包装，避免Ant Design Form的类型冲突 */}
+          {/* ネイティブの form 要素でラップし、Ant Design Form の型衝突を回避 */}
           <form onSubmit={handleSubmit(onSubmit)}>
             <Form.Item
-              label="工号"
+              label="社員番号"
               validateStatus={errors.userId ? 'error' : ''}
               help={errors.userId?.message}
             >
               <Controller
                 name="userId"
                 control={control}
-                rules={{ required: '请输入工号' }}
+                rules={{ required: '社員番号を入力してください' }}
                 render={({ field }) => (
                   <Input
                     {...field}
                     prefix={<UserOutlined />}
-                    placeholder="请输入工号"
+                    placeholder="社員番号を入力してください"
                   />
                 )}
               />
             </Form.Item>
 
             <Form.Item
-              label="密码"
+              label="パスワード"
               validateStatus={errors.password ? 'error' : ''}
               help={errors.password?.message}
             >
               <Controller
                 name="password"
                 control={control}
-                rules={{ required: '请输入密码' }}
+                rules={{ required: 'パスワードを入力してください' }}
                 render={({ field }) => (
                   <Input.Password
                     {...field}
                     prefix={<LockOutlined />}
-                    placeholder="请输入密码"
+                    placeholder="パスワードを入力してください"
                   />
                 )}
               />
@@ -154,7 +154,7 @@ const Login: React.FC = () => {
                         checked={!!field.value}
                         onChange={(e) => field.onChange(e.target.checked)}
                       >
-                        记住我
+                        ログインを記憶する
                       </Checkbox>
                     )}
                   />
@@ -170,7 +170,7 @@ const Login: React.FC = () => {
                 size="large" 
                 loading={loading}
               >
-                登录
+                ログイン
               </Button>
             </Form.Item>
           </form>
