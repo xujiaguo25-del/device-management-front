@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout as AntLayout, Menu, Dropdown, Button, Avatar, Drawer } from 'antd';
+import { Layout as AntLayout, Menu, Dropdown, Button, Avatar, Drawer, message } from 'antd';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -12,6 +12,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { logoutService } from '../../services/auth/authService';
 import './Layout.css';
 
 const { Header, Sider, Content } = AntLayout;
@@ -68,9 +69,19 @@ const Layout: React.FC<LayoutProps> = ({ children, title = '设备管理系统' 
       key: 'logout',
       icon: <LogoutOutlined />,
       label: '登出',
-      onClick: () => {
-        logout();
-        navigate('/login');
+      onClick: async () => {
+        try {
+          // 调用后端登出接口
+          await logoutService();
+          message.success('已登出');
+        } catch (error) {
+          console.error('登出失败:', error);
+          // 即使后端登出失败，也清除本地状态
+        } finally {
+          // 清除本地状态并跳转到登录页
+          logout();
+          navigate('/login');
+        }
       },
     },
   ];
@@ -134,7 +145,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title = '设备管理系统' 
             <Button type="text">
               <Avatar icon={<UserOutlined />} />
               <span style={{ marginLeft: '8px' }}>
-                {userInfo?.USER_NAME || '用户'}
+                {userInfo?.NAME || '用户'}
               </span>
             </Button>
           </Dropdown>

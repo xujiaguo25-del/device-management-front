@@ -2,8 +2,8 @@
  * 认证相关服务
  */
 
-// import { post } from './api';
-import type { LoginRequest, LoginResponse, ChangePasswordRequest } from '../../types';
+import { post } from '../api';
+import type { LoginRequest, LoginResponse, ChangePasswordRequest, UserInfo } from '../../types';
 
 /**
  * 用户登录
@@ -11,35 +11,51 @@ import type { LoginRequest, LoginResponse, ChangePasswordRequest } from '../../t
  * @returns Promise 登录响应
  */
 export const loginService = async (loginData: LoginRequest): Promise<LoginResponse> => {
-  // 注释掉实际API调用，使用假数据
-  /*
-  return post('/auth/login', loginData);
-  */
+  const response = await post('/auth/login', loginData);
+
+  // 按 ApiResponse<LoginData> 解析
+  // { code, message, data: { token, userInfo } }
+  if (response && typeof response === 'object' && 'code' in response) {
+    const api: any = response;
+
+    // 非 200 直接抛出后端消息，便于提示“密码错误”等
+    if (api.code !== 200) {
+      throw new Error(api.message || '登录失败');
+    }
+
+    const data = api.data || {};
+
+    const token: string | undefined =
+      data.token || data.accessToken || data.jwt;
+
+    if (!token) {
+      throw new Error('登录响应中缺少 token 字段，请联系管理员');
+    }
+
+    // 从后端返回的 data.userDTO 提取用户信息（兼容多个字段名）
+    const rawUserInfo = data.userDTO || data.userInfo || data.user || data.userInfoDto || {};
+
+    const userInfo: UserInfo = {
+      USER_ID: rawUserInfo.userId ?? rawUserInfo.USER_ID ?? '',
+      DEPT_ID: rawUserInfo.deptId ?? rawUserInfo.DEPT_ID ?? '',
+      NAME: rawUserInfo.name ?? rawUserInfo.NAME ?? '',
+      USER_TYPE_NAME: rawUserInfo.userTypeName ?? rawUserInfo.USER_TYPE_NAME ?? '',
+    };
+
+    // 返回与 types/LoginResponse 定义一致的结构
+    return {
+      code: api.code,
+      message: api.message,
+      data: {
+        token,
+        userDTO: userInfo,
+      },
+    };
+  }
+
+  // 兜底：未知结构，直接提示
+  throw new Error('登录响应格式不正确，请联系管理员');
   
-  // 假数据 - 用于开发/演示
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (loginData.userId && loginData.password) {
-        if (loginData.password === 'password123') {
-          resolve({
-            token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-            userInfo: {
-              USER_ID: loginData.userId,
-              USER_NAME: '张三',
-              DEPARTMENT_CODE: 'DEPT001',
-              USER_LEVEL: 'ADMIN',
-              CREATED_DATE: new Date().toISOString(),
-              UPDATED_DATE: new Date().toISOString(),
-            },
-          });
-        } else {
-          reject(new Error('用户名或密码错误'));
-        }
-      } else {
-        reject(new Error('请输入用户名和密码'));
-      }
-    }, 500);
-  });
 };
 
 /**
@@ -48,21 +64,8 @@ export const loginService = async (loginData: LoginRequest): Promise<LoginRespon
  * @returns Promise
  */
 export const changePasswordService = async (changePasswordData: ChangePasswordRequest): Promise<any> => {
-  // 注释掉实际API调用
-  /*
   return post('/auth/change-password', changePasswordData);
-  */
   
-  // 假数据
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (changePasswordData.currentPassword === 'password123') {
-        resolve({ success: true, message: '密码修改成功' });
-      } else {
-        reject(new Error('当前密码不正确'));
-      }
-    }, 500);
-  });
 };
 
 /**
@@ -70,11 +73,6 @@ export const changePasswordService = async (changePasswordData: ChangePasswordRe
  * @returns Promise
  */
 export const logoutService = async (): Promise<any> => {
-  // 注释掉实际API调用
-  /*
   return post('/auth/logout');
-  */
-  
-  // 假数据
-  return Promise.resolve({ success: true });
+
 };

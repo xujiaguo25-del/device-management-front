@@ -5,11 +5,9 @@
 // 用户信息
 export interface UserInfo {
   USER_ID: string;
-  USER_NAME: string;
-  DEPARTMENT_CODE: string;
-  USER_LEVEL: string;
-  CREATED_DATE: string;
-  UPDATED_DATE: string;
+  DEPT_ID: string;
+  NAME: string;
+  USER_TYPE_NAME: string;
 }
 
 // 登录请求/响应
@@ -19,8 +17,12 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  token: string;
-  userInfo: UserInfo;
+  code: number;
+  message: string;
+  data: {
+    token: string;
+    userDTO: UserInfo;
+  };
 }
 
 // 密码更改请求
