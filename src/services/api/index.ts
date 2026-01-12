@@ -50,7 +50,7 @@ export const request = async (
           const errorData = await response.clone().json();
           errorMessage = errorData.message || errorData.error || errorMessage;
         } catch (e) {
-          // ignore parse error
+          // パースエラーは無視する
         }
         throw new Error(errorMessage);
       }
@@ -99,12 +99,12 @@ export const request = async (
   }
 };
 
-// GET
+// GET リクエスト
 export const get = (endpoint: string, options?: RequestOptions) => {
   return request(endpoint, { ...options, method: 'GET' });
 };
 
-// POST
+// POST リクエスト
 export const post = (endpoint: string, body?: any, options?: RequestOptions) => {
   return request(endpoint, {
     ...options,
@@ -113,7 +113,7 @@ export const post = (endpoint: string, body?: any, options?: RequestOptions) => 
   });
 };
 
-// PUT
+// PUT リクエスト
 export const put = (endpoint: string, body?: any, options?: RequestOptions) => {
   return request(endpoint, {
     ...options,
@@ -122,7 +122,7 @@ export const put = (endpoint: string, body?: any, options?: RequestOptions) => {
   });
 };
 
-// DELETE
+// DELETE リクエスト
 export const del = (endpoint: string, options?: RequestOptions) => {
   return request(endpoint, { ...options, method: 'DELETE' });
 };

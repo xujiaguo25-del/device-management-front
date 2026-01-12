@@ -7,11 +7,11 @@ export const useDict = (typeCode: string) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (force = false) => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // getDictByType will use the internal map cache for O(1) lookup
+      // getDictByType は内部のマップを使用して、typeCode の O(1) ルックアップを行います
       const items = await getDictByType(typeCode);
       setData(items);
     } catch (e: any) {
