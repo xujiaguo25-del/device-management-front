@@ -9,19 +9,16 @@ import {
     Select,
     DatePicker,
     message,
-    Popconfirm,
     Card,
     Row,
     Col,
     Tag,
 } from 'antd';
 import {
-    PlusOutlined,
     ExportOutlined,
     SearchOutlined,
-    DeleteOutlined,
     ReloadOutlined,
-    EditOutlined,
+    EyeOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useForm, Controller } from 'react-hook-form';
@@ -30,9 +27,7 @@ import Layout from '../components/common/Layout';
 import {
     getPermissions,
     getPermissionById,
-    addPermission,
     updatePermission,
-    deletePermission,
     exportPermissionsExcel,
 } from '../services/permission/permissionService';
 import type { DevicePermissionList, DevicePermissionInsert } from '../types';
@@ -115,13 +110,6 @@ const DevicePermissions: React.FC = () => {
         loadPermissions(1, pagination.pageSize);
     };
 
-    // 打开新增对话框
-    const handleAdd = () => {
-        setEditingPermission(null);
-        resetForm();
-        setModalVisible(true);
-    };
-
     // 打开编辑对话框
     const handleEdit = async (permissionId: string) => {
         try {
@@ -172,47 +160,24 @@ const DevicePermissions: React.FC = () => {
                 remark: data.remark,
             };
 
-            if (editingPermission) {
-                // 编辑模式
-                const response = await updatePermission(editingPermission.permissionId, permissionData);
-                if (response.code === 200) {
-                    message.success('权限更新成功');
-                    setModalVisible(false);
-                    resetForm();
-                    setEditingPermission(null);
-                    loadPermissions(pagination.current, pagination.pageSize);
-                } else {
-                    message.error(response.message || '权限更新失败');
-                }
-            } else {
-                // 新增模式
-                const response = await addPermission(permissionData);
-                if (response.code === 200) {
-                    message.success('权限添加成功');
-                    setModalVisible(false);
-                    resetForm();
-                    loadPermissions(pagination.current, pagination.pageSize);
-                } else {
-                    message.error(response.message || '权限添加失败');
-                }
+            // 编辑模式
+            if (!editingPermission) {
+                message.error('编辑权限信息不存在');
+                return;
             }
-        } catch (error: any) {
-            message.error(error.message || (editingPermission ? '权限更新失败' : '权限添加失败'));
-        }
-    };
 
-    // 删除权限
-    const handleDelete = async (permissionId: string) => {
-        try {
-            const response = await deletePermission(permissionId);
+            const response = await updatePermission(editingPermission.permissionId, permissionData);
             if (response.code === 200) {
-                message.success('权限删除成功');
+                message.success('权限更新成功');
+                setModalVisible(false);
+                resetForm();
+                setEditingPermission(null);
                 loadPermissions(pagination.current, pagination.pageSize);
             } else {
-                message.error(response.message || '权限删除失败');
+                message.error(response.message || '权限更新失败');
             }
         } catch (error: any) {
-            message.error(error.message || '权限删除失败');
+            message.error(error.message || '权限更新失败');
         }
     };
 
@@ -340,57 +305,19 @@ const DevicePermissions: React.FC = () => {
             ellipsis: true,
         },
         {
-            title: '创建时间',
-            dataIndex: 'createTime',
-            key: 'createTime',
-            width: 180,
-            render: (time: string) => (time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '-'),
-        },
-        {
-            title: '创建者',
-            dataIndex: 'creater',
-            key: 'creater',
-            width: 120,
-        },
-        {
-            title: '更新时间',
-            dataIndex: 'updateTime',
-            key: 'updateTime',
-            width: 180,
-            render: (time: string) => (time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '-'),
-        },
-        {
-            title: '更新者',
-            dataIndex: 'updater',
-            key: 'updater',
-            width: 120,
-        },
-        {
             title: '操作',
             key: 'action',
-            width: 150,
+            width: 100,
             fixed: 'right',
             render: (_, record) => (
-                <Space>
-                    <Button
-                        type="link"
-                        icon={<EditOutlined />}
-                        size="small"
-                        onClick={() => handleEdit(record.permissionId)}
-                    >
-                        编辑
-                    </Button>
-                    <Popconfirm
-                        title="确定要删除这条权限吗？"
-                        onConfirm={() => handleDelete(record.permissionId)}
-                        okText="确定"
-                        cancelText="取消"
-                    >
-                        <Button type="link" danger icon={<DeleteOutlined />} size="small">
-                            删除
-                        </Button>
-                    </Popconfirm>
-                </Space>
+                <Button
+                    type="link"
+                    icon={<EyeOutlined />}
+                    size="small"
+                    onClick={() => handleEdit(record.permissionId)}
+                >
+                    查看详情
+                </Button>
             ),
         },
     ];
@@ -432,46 +359,46 @@ const DevicePermissions: React.FC = () => {
                     </Space>
                 </div>
 
-                {/* 操作栏 */}
-                <Row justify="space-between" style={{ marginBottom: 16 }}>
-                    <Col>
-                        <Space>
-                            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-                                新增权限
-                            </Button>
-                            <Button icon={<ExportOutlined />} onClick={handleExport}>
-                                导出Excel
-                            </Button>
-                        </Space>
-                    </Col>
-                </Row>
-
                 {/* 表格 */}
-                <Table
-                    columns={columns}
-                    dataSource={permissions}
-                    rowKey="permissionId"
-                    loading={loading}
-                    scroll={{ x: 2500 }}
-                    pagination={{
-                        current: pagination.current,
-                        pageSize: pagination.pageSize,
-                        total: pagination.total,
-                        showSizeChanger: true,
-                        showTotal: (total) => `共 ${total} 条`,
-                        onChange: (page, pageSize) => {
-                            loadPermissions(page, pageSize);
-                        },
-                        onShowSizeChange: (_current, size) => {
-                            loadPermissions(1, size);
-                        },
-                    }}
-                />
+                <div>
+                    {/* 导出按钮 - 放在表格右上角（操作列上方） */}
+                    <Row justify="end" style={{ marginBottom: 8 }}>
+                        <Button icon={<ExportOutlined />} onClick={handleExport}>
+                            导出Excel
+                        </Button>
+                    </Row>
+                    <style>{`
+                        .ant-pagination {
+                            display: flex !important;
+                            justify-content: center !important;
+                        }
+                    `}</style>
+                    <Table
+                        columns={columns}
+                        dataSource={permissions}
+                        rowKey="permissionId"
+                        loading={loading}
+                        scroll={{ x: 2000 }}
+                        pagination={{
+                            current: pagination.current,
+                            pageSize: pagination.pageSize,
+                            total: pagination.total,
+                            showSizeChanger: true,
+                            showTotal: (total) => `共 ${total} 条`,
+                            onChange: (page, pageSize) => {
+                                loadPermissions(page, pageSize);
+                            },
+                            onShowSizeChange: (_current, size) => {
+                                loadPermissions(1, size);
+                            },
+                        }}
+                    />
+                </div>
             </Card>
 
             {/* 新增/编辑对话框 */}
             <Modal
-                title={editingPermission ? '编辑权限' : '新增权限'}
+                title="查看详情"
                 open={modalVisible}
                 onCancel={() => {
                     setModalVisible(false);
@@ -639,7 +566,7 @@ const DevicePermissions: React.FC = () => {
                     <Form.Item>
                         <Space>
                             <Button type="primary" htmlType="submit">
-                                提交
+                                更新
                             </Button>
                             <Button
                                 onClick={() => {

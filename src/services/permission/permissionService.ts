@@ -409,10 +409,6 @@ export const exportPermissionsExcel = async (): Promise<Blob> => {
                 '防病毒状态': p.antivirusStatus === 1 ? '是' : '否',
                 '无Symantec原因': p.noSymantecReason || '',
                 '备注': p.remark || '',
-                '创建时间': p.createTime,
-                '创建者': p.creater || '',
-                '更新时间': p.updateTime || '',
-                '更新者': p.updater || '',
             }));
 
             // 创建工作簿
@@ -439,10 +435,6 @@ export const exportPermissionsExcel = async (): Promise<Blob> => {
                 { wch: 15 }, // 防病毒状态
                 { wch: 20 }, // 无Symantec原因
                 { wch: 30 }, // 备注
-                { wch: 20 }, // 创建时间
-                { wch: 12 }, // 创建者
-                { wch: 20 }, // 更新时间
-                { wch: 12 }, // 更新者
             ];
             ws['!cols'] = colWidths;
 
