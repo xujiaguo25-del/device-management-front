@@ -21,6 +21,7 @@ import {
     SearchOutlined,
     DeleteOutlined,
     ReloadOutlined,
+    EditOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useForm, Controller } from 'react-hook-form';
@@ -28,7 +29,9 @@ import dayjs from 'dayjs';
 import Layout from '../components/common/Layout';
 import {
     getPermissions,
+    getPermissionById,
     addPermission,
+    updatePermission,
     deletePermission,
     exportPermissionsExcel,
 } from '../services/permission/permissionService';
@@ -116,6 +119,38 @@ const DevicePermissions: React.FC = () => {
         setModalVisible(true);
     };
 
+    // 打开编辑对话框
+    const handleEdit = async (permissionId: string) => {
+        try {
+            setLoading(true);
+            const response = await getPermissionById(permissionId);
+            if (response.code === 200 && response.data) {
+                const permission = response.data;
+                setEditingPermission(permission);
+                // 填充表单数据
+                setValue('deviceId', permission.deviceId);
+                setValue('domainStatus', permission.domainStatus);
+                setValue('domainGroup', permission.domainGroup);
+                setValue('noDomainReason', permission.noDomainReason);
+                setValue('smartitStatus', permission.smartitStatus);
+                setValue('noSmartitReason', permission.noSmartitReason);
+                setValue('usbStatus', permission.usbStatus);
+                setValue('usbReason', permission.usbReason);
+                setValue('usbExpireDate', permission.usbExpireDate ? dayjs(permission.usbExpireDate) : null);
+                setValue('antivirusStatus', permission.antivirusStatus);
+                setValue('noSymantecReason', permission.noSymantecReason);
+                setValue('remark', permission.remark);
+                setModalVisible(true);
+            } else {
+                message.error(response.message || '获取权限详情失败');
+            }
+        } catch (error: any) {
+            message.error(error.message || '获取权限详情失败');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // 提交表单
     const onSubmitForm = async (data: PermissionFormData) => {
         try {
@@ -134,17 +169,32 @@ const DevicePermissions: React.FC = () => {
                 remark: data.remark,
             };
 
-            const response = await addPermission(permissionData);
-            if (response.code === 200) {
-                message.success('权限添加成功');
-                setModalVisible(false);
-                resetForm();
-                loadPermissions(pagination.current, pagination.pageSize);
+            if (editingPermission) {
+                // 编辑模式
+                const response = await updatePermission(editingPermission.permissionId, permissionData);
+                if (response.code === 200) {
+                    message.success('权限更新成功');
+                    setModalVisible(false);
+                    resetForm();
+                    setEditingPermission(null);
+                    loadPermissions(pagination.current, pagination.pageSize);
+                } else {
+                    message.error(response.message || '权限更新失败');
+                }
             } else {
-                message.error(response.message || '权限添加失败');
+                // 新增模式
+                const response = await addPermission(permissionData);
+                if (response.code === 200) {
+                    message.success('权限添加成功');
+                    setModalVisible(false);
+                    resetForm();
+                    loadPermissions(pagination.current, pagination.pageSize);
+                } else {
+                    message.error(response.message || '权限添加失败');
+                }
             }
         } catch (error: any) {
-            message.error(error.message || '权限添加失败');
+            message.error(error.message || (editingPermission ? '权限更新失败' : '权限添加失败'));
         }
     };
 
@@ -296,19 +346,29 @@ const DevicePermissions: React.FC = () => {
         {
             title: '操作',
             key: 'action',
-            width: 100,
+            width: 150,
             fixed: 'right',
             render: (_, record) => (
-                <Popconfirm
-                    title="确定要删除这条权限吗？"
-                    onConfirm={() => handleDelete(record.permissionId)}
-                    okText="确定"
-                    cancelText="取消"
-                >
-                    <Button type="link" danger icon={<DeleteOutlined />} size="small">
-                        删除
+                <Space>
+                    <Button
+                        type="link"
+                        icon={<EditOutlined />}
+                        size="small"
+                        onClick={() => handleEdit(record.permissionId)}
+                    >
+                        编辑
                     </Button>
-                </Popconfirm>
+                    <Popconfirm
+                        title="确定要删除这条权限吗？"
+                        onConfirm={() => handleDelete(record.permissionId)}
+                        okText="确定"
+                        cancelText="取消"
+                    >
+                        <Button type="link" danger icon={<DeleteOutlined />} size="small">
+                            删除
+                        </Button>
+                    </Popconfirm>
+                </Space>
             ),
         },
     ];
@@ -388,6 +448,7 @@ const DevicePermissions: React.FC = () => {
                 onCancel={() => {
                     setModalVisible(false);
                     resetForm();
+                    setEditingPermission(null);
                 }}
                 footer={null}
                 width={800}
@@ -407,7 +468,7 @@ const DevicePermissions: React.FC = () => {
                                     rules={{ required: '请输入设备ID' }}
                                     render={({ field, fieldState: { error } }) => (
                                         <>
-                                            <Input {...field} placeholder="请输入设备ID" />
+                                            <Input {...field} placeholder="请输入设备ID" disabled={!!editingPermission} />
                                             {error && <div style={{ color: 'red', fontSize: '12px', marginTop: 4 }}>{error.message}</div>}
                                         </>
                                     )}
@@ -556,6 +617,7 @@ const DevicePermissions: React.FC = () => {
                                 onClick={() => {
                                     setModalVisible(false);
                                     resetForm();
+                                    setEditingPermission(null);
                                 }}
                             >
                                 取消
