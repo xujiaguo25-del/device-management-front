@@ -54,26 +54,63 @@ export interface Device {
   UPDATED_USER: string;
 }
 
-// 设备使用权限
-export interface DevicePermission {
-  ID: number;
-  DEVICE_ID: number;
-  USER_ID: string;
-  SMARTIT_STATUS: string;
-  NO_SMARTIT_REASON: string;
-  USB_STATUS: string;
-  USB_OPEN_REASON: string;
-  USB_OPEN_ENDDATE: string;
-  CONNECTION_STATUS: string;
-  NO_SYMENTEC_REASON: string;
-  DOMAIN_NAME: string;
-  DOMAIN_GROUP: string;
-  NO_DOMAIN_REASON: string;
-  COMMET: string;
-  CREATED_DATE: string;
-  CREATED_USER: string;
-  UPDATED_DATE: string;
-  UPDATED_USER: string;
+// 设备使用权限列表DTO（匹配后端PermissionsListDTO）
+export interface DevicePermissionList {
+  permissionId: string;
+  deviceId: string;
+  monitorNames: string[];
+  computerName: string;
+  ipAddress: string[];
+  userId: string;
+  name: string;
+  deptId: string;
+  loginUsername: string;
+  domainStatus: number;
+  domainGroup: string;
+  noDomainReason: string;
+  smartitStatus: number;
+  noSmartitReason: string;
+  usbStatus: number;
+  usbReason: string;
+  usbExpireDate: string | null;
+  antivirusStatus: number;
+  noSymantecReason: string;
+  remark: string;
+  createTime: string;
+  creater: string;
+  updateTime: string;
+  updater: string;
+}
+
+// 设备使用权限插入DTO（匹配后端PermissionInsertDTO）
+export interface DevicePermissionInsert {
+  permissionId?: string;
+  deviceId: string;
+  domainStatus?: number | null;
+  domainGroup?: string;
+  noDomainReason?: string;
+  smartitStatus?: number | null;
+  noSmartitReason?: string;
+  usbStatus?: number | null;
+  usbReason?: string;
+  usbExpireDate?: string | null;
+  antivirusStatus?: number | null;
+  noSymantecReason?: string;
+  remark?: string;
+  createTime?: string;
+  creater?: string;
+  updateTime?: string;
+  updater?: string;
+}
+
+// API响应结构（匹配后端ApiResponse）
+export interface ApiResponse<T> {
+  code: number;
+  message: string;
+  data?: T;
+  total?: number;
+  page?: number;
+  size?: number;
 }
 
 // 安全检查记录
