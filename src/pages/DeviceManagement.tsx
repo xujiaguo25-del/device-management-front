@@ -1,10 +1,9 @@
 // pages/DeviceManagement.tsx
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Space, Tag, Input, Select, Row, Col, Modal, message } from 'antd';
+import { Table, Card, Button, Space, Tag, Input, Select, Row, Col, Modal, message, Pagination } from 'antd';
 import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import Layout from '../components/common/Layout';
 import type { DeviceListItem, DeviceQueryParams } from '../types/device-list';
-import { DictTypeCode } from '../types/device';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -12,7 +11,6 @@ const { Option } = Select;
 const DeviceManagement: React.FC = () => {
   const [devices, setDevices] = useState<DeviceListItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [searchParams, setSearchParams] = useState<DeviceQueryParams>({
     page: 1,
     pageSize: 10,
@@ -30,67 +28,218 @@ const DeviceManagement: React.FC = () => {
       // setDevices(response.data.list);
       // setTotal(response.data.total);
       
-      // 模拟数据
+      // 模拟数据 - 修正重复字段和缺少的字段，并将deli改为dell
       const mockData: DeviceListItem[] = [
         {
           key: '1',
-          deviceId: 'DEV001',
-          deviceModel: 'ThinkPad X1 Carbon',
-          computerName: 'DEV-PC-001',
-          loginUsername: 'zhangsan',
+          deviceId: 'HYRON-1 PC-DC-01',
+          monitors: ['HYRON-1 Minibor-01'],
+          userId: 'JS0010',
+          deviceModel: 'dell-S000',
+          computerName: 'DA04-PC-1',
+          loginUsername: 'xming',
+          ipAddresses: ['192.168.0.1'],
+          osName: 'Windows11',
+          memorySize: '16',
+          ssdSize: '512',
+          hddSize: '—',
           project: '项目A',
-          devRoom: '开发室101',
-          userId: 'EMP001',
-          userName: '张三',
-          remark: '开发用机',
-          selfConfirmStatus: '已确认',
-          osName: 'Windows 11 Pro',
-          memorySize: '16GB',
-          ssdSize: '512GB',
-          hddSize: '无',
-          domainStatus: '已加域',
-          smartitStatus: '已安装',
-          usbStatus: '已禁用',
-          antivirusStatus: '已安装',
-          ipAddresses: ['192.168.1.100'],
-          monitors: ['Dell U2419H'],
-          createTime: '2024-01-15 10:30:25',
-          creater: 'admin',
-          updateTime: '2024-01-15 10:30:25',
-          updater: 'admin',
-          tags: ['在线', '正常'],
+          devRoom: '开发室A',
+          confirmStatus: '已确认',
+          remark: '',
+          userName: '小娟',
+          tags: [],
         },
         {
           key: '2',
-          deviceId: 'DEV002',
-          deviceModel: 'MacBook Pro',
-          computerName: 'DEV-MAC-001',
+          deviceId: 'HYRON-1 PC-DC-02',
+          monitors: ['HYRON-1 Minibor-02'],
+          userId: 'JS0011',
+          deviceModel: 'dell-S010',
+          computerName: 'DA04-PC-2',
+          loginUsername: 'zhban',
+          ipAddresses: ['192.168.0.2', '192.168.0.11'],
+          osName: 'Windows11',
+          memorySize: '16',
+          ssdSize: '512',
+          hddSize: '—',
+          project: '项目C',
+          devRoom: '开发室C',
+          confirmStatus: '已确认',
+          remark: '',
+          userName: '张三',
+          tags: [],
+        },
+        {
+          key: '3',
+          deviceId: 'HYRON-1 PC-DC-03',
+          monitors: ['HYRON-1 Minibor-03'],
+          userId: 'JS0012',
+          deviceModel: 'dell-S020',
+          computerName: 'DA04-PC-3',
           loginUsername: 'lisi',
-          project: '项目B',
-          devRoom: '开发室102',
-          userId: 'EMP002',
+          ipAddresses: ['192.168.0.3'],
+          osName: 'Windows11',
+          memorySize: '32',
+          ssdSize: '512',
+          hddSize: '512',
+          project: '项目A',
+          devRoom: '开发室A',
+          confirmStatus: '已确认',
+          remark: '',
           userName: '李四',
-          remark: '设计用机',
-          selfConfirmStatus: '未确认',
-          osName: 'macOS Ventura',
-          memorySize: '32GB',
-          ssdSize: '1TB',
-          hddSize: '无',
-          domainStatus: '未加域',
-          smartitStatus: '未安装',
-          usbStatus: '已启用',
-          antivirusStatus: '已安装',
-          ipAddresses: ['192.168.1.101'],
-          monitors: ['Apple Pro Display XDR'],
-          createTime: '2024-01-14 15:20:45',
-          creater: 'admin',
-          updateTime: '2024-01-14 15:20:45',
-          updater: 'admin',
-          tags: ['在线', '告警'],
+          tags: [],
+        },
+        {
+          key: '4',
+          deviceId: 'HYRON-1 PC-DC-04',
+          monitors: ['HYRON-1 Minibor-04', 'HYRON-1 Minibor-11'],
+          userId: 'JS0013',
+          deviceModel: 'dell-S030',
+          computerName: 'DA04-PC-4',
+          loginUsername: 'vangpuu',
+          ipAddresses: ['192.168.0.4'],
+          osName: 'Windows10',
+          memorySize: '16',
+          ssdSize: '512',
+          hddSize: '—',
+          project: '项目B',
+          devRoom: '开发室B',
+          confirmStatus: '未确认',
+          remark: '',
+          userName: '王五',
+          tags: [],
+        },
+        {
+          key: '5',
+          deviceId: 'HYRON-1 PC-DC-05',
+          monitors: ['HYRON-1 Minibor-05'],
+          userId: 'JS0014',
+          deviceModel: 'dell-S040',
+          computerName: 'DA04-PC-5',
+          loginUsername: 'nuke',
+          ipAddresses: ['192.168.0.5'],
+          osName: 'Windows11',
+          memorySize: '16',
+          ssdSize: '512',
+          hddSize: '—',
+          project: '项目D',
+          devRoom: '开发室D',
+          confirmStatus: '已确认',
+          remark: '',
+          userName: '李松',
+          tags: [],
+        },
+        {
+          key: '6',
+          deviceId: 'HYRON-1 PC-DC-06',
+          monitors: ['HYRON-1 Minibor-06'],
+          userId: 'JS0015',
+          deviceModel: 'Mac mini',
+          computerName: 'DA04-PC-6',
+          loginUsername: 'auxc',
+          ipAddresses: ['192.168.0.6', '192.168.0.12', '192.168.0.13'],
+          osName: 'Mac OS',
+          memorySize: '16',
+          ssdSize: '512',
+          hddSize: '—',
+          project: '项目C',
+          devRoom: '开发室C',
+          confirmStatus: '未确认',
+          remark: '',
+          userName: '李雪',
+          tags: [],
+        },
+        {
+          key: '7',
+          deviceId: 'HYRON-1 PC-DC-07',
+          monitors: ['HYRON-1 Minibor-07'],
+          userId: 'JS0016',
+          deviceModel: 'dell-S050',
+          computerName: 'DA04-PC-7',
+          loginUsername: 'jahr',
+          ipAddresses: ['192.168.0.7'],
+          osName: 'Windows11',
+          memorySize: '16',
+          ssdSize: '512',
+          hddSize: '1024',
+          project: '项目A',
+          devRoom: '开发室A',
+          confirmStatus: '已确认',
+          remark: '',
+          userName: '韩海峰',
+          tags: [],
+        },
+        {
+          key: '8',
+          deviceId: 'HYRON-1 PC-DC-08',
+          monitors: ['HYRON-1 Minibor-08'],
+          userId: 'JS0017',
+          deviceModel: 'dell-S060',
+          computerName: 'DA04-PC-8',
+          loginUsername: 'heyh',
+          ipAddresses: ['192.168.0.8'],
+          osName: 'Windows10',
+          memorySize: '32',
+          ssdSize: '1024',
+          hddSize: '—',
+          project: '项目B',
+          devRoom: '开发室B',
+          confirmStatus: '已确认',
+          remark: '',
+          userName: '小红',
+          tags: [],
+        },
+        {
+          key: '9',
+          deviceId: 'HYRON-1 PC-DC-09',
+          monitors: ['HYRON-1 Minibor-09'],
+          userId: 'JS0018',
+          deviceModel: 'dell-S070',
+          computerName: 'DA04-PC-9',
+          loginUsername: 'li',
+          ipAddresses: ['192.168.0.9'],
+          osName: 'Windows11',
+          memorySize: '16',
+          ssdSize: '512',
+          hddSize: '—',
+          project: '项目D',
+          devRoom: '开发室D',
+          confirmStatus: '已确认',
+          remark: '',
+          userName: '小芳',
+          tags: [],
+        },
+        {
+          key: '10',
+          deviceId: 'HYRON-1 PC-DC-10',
+          monitors: ['HYRON-1 Minibor-10'],
+          userId: 'JS0019',
+          deviceModel: 'dell-S080',
+          computerName: 'DA04-PC-10',
+          loginUsername: 'zhub',
+          ipAddresses: ['192.168.0.10'],
+          osName: 'Windows11',
+          memorySize: '16',
+          ssdSize: '512',
+          hddSize: '—',
+          project: '项目A',
+          devRoom: '开发室A',
+          confirmStatus: '已确认',
+          remark: '',
+          userName: '小李',
+          tags: [],
         },
       ];
       
-      setDevices(mockData);
+      // 模拟分页效果 - 添加默认值
+      const page = params.page ?? 1; // 使用空值合并运算符
+      const pageSize = params.pageSize ?? 10;
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedData = mockData.slice(startIndex, endIndex);
+      
+      setDevices(paginatedData);
       setTotal(mockData.length);
     } catch (error) {
       message.error('获取设备列表失败');
@@ -103,98 +252,294 @@ const DeviceManagement: React.FC = () => {
     fetchDevices(searchParams);
   }, [searchParams]);
 
+  // 处理分页变化
+  const handlePageChange = (page: number, pageSize?: number) => {
+    setSearchParams({
+      ...searchParams,
+      page,
+      pageSize: pageSize || searchParams.pageSize,
+    });
+  };
+
+  // 处理页面大小变化
+  const handlePageSizeChange = (current: number, size: number) => {
+    setSearchParams({
+      ...searchParams,
+      page: 1,
+      pageSize: size,
+    });
+  };
+
+  // 定义单元格样式
+  const cellStyle: React.CSSProperties = {
+    textAlign: 'center',
+    verticalAlign: 'middle',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  };
+
   // 表格列定义
   const columns = [
     {
-      title: '设备ID',
+      title: '主机编号',
       dataIndex: 'deviceId',
       key: 'deviceId',
+      align: 'center' as const,
+      width: 150,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '150px' }} title={text}>
+          {text}
+        </div>
+      ),
     },
     {
-      title: '计算机名',
-      dataIndex: 'computerName',
-      key: 'computerName',
+      title: '显示器编号',
+      dataIndex: 'monitors',
+      key: 'monitors',
+      align: 'center' as const,
+      width: 180,
+      ellipsis: true,
+      render: (monitors: string[]) => {
+        const text = monitors?.join('\n') || '';
+        return (
+          <div 
+            style={{ 
+              ...cellStyle, 
+              maxWidth: '180px',
+              whiteSpace: 'pre-line',
+              textAlign: 'center'
+            }} 
+            title={text}
+          >
+            {text}
+          </div>
+        );
+      },
     },
     {
-      title: '设备型号',
-      dataIndex: 'deviceModel',
-      key: 'deviceModel',
-    },
-    {
-      title: '登录用户',
-      dataIndex: 'loginUsername',
-      key: 'loginUsername',
-    },
-    {
-      title: '使用人',
+      title: '用户姓名',
       dataIndex: 'userName',
       key: 'userName',
+      align: 'center' as const,
+      width: 100,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
+          {text}
+        </div>
+      ),
     },
     {
-      title: '所属项目',
-      dataIndex: 'project',
-      key: 'project',
+      title: '用户工号',
+      dataIndex: 'userId',
+      key: 'userId',
+      align: 'center' as const,
+      width: 100,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
+          {text}
+        </div>
+      ),
+    },
+    {
+      title: '主机型号',
+      dataIndex: 'deviceModel',
+      key: 'deviceModel',
+      align: 'center' as const,
+      width: 120,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
+          {text}
+        </div>
+      ),
+    },
+    {
+      title: '电脑名',
+      dataIndex: 'computerName',
+      key: 'computerName',
+      align: 'center' as const,
+      width: 120,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
+          {text}
+        </div>
+      ),
+    },
+    {
+      title: '登录用户名',
+      dataIndex: 'loginUsername',
+      key: 'loginUsername',
+      align: 'center' as const,
+      width: 120,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
+          {text}
+        </div>
+      ),
+    },
+    {
+      title: 'IP地址',
+      dataIndex: 'ipAddresses',
+      key: 'ipAddresses',
+      align: 'center' as const,
+      width: 150,
+      ellipsis: true,
+      render: (ipAddresses: string[]) => {
+        const text = ipAddresses?.join('\n') || '';
+        return (
+          <div 
+            style={{ 
+              ...cellStyle, 
+              maxWidth: '150px',
+              whiteSpace: 'pre-line',
+              textAlign: 'center'
+            }} 
+            title={text}
+          >
+            {text}
+          </div>
+        );
+      },
     },
     {
       title: '操作系统',
       dataIndex: 'osName',
       key: 'osName',
+      align: 'center' as const,
+      width: 120,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
+          {text}
+        </div>
+      ),
     },
     {
-      title: '内存',
+      title: '内存(G)',
       dataIndex: 'memorySize',
       key: 'memorySize',
+      align: 'center' as const,
+      width: 80,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '80px' }} title={text}>
+          {text}
+        </div>
+      ),
     },
     {
-      title: 'SSD',
+      title: 'SSD(G)',
       dataIndex: 'ssdSize',
       key: 'ssdSize',
+      align: 'center' as const,
+      width: 80,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '80px' }} title={text}>
+          {text}
+        </div>
+      ),
     },
     {
-      title: '状态',
-      key: 'tags',
-      dataIndex: 'tags',
-      render: (tags: string[]) => (
-        <>
-          {tags.map((tag) => {
-            let color = tag === '在线' ? 'green' : tag === '正常' ? 'blue' : 'red';
-            return (
-              <Tag color={color} key={tag}>
-                {tag}
-              </Tag>
-            );
-          })}
-        </>
+      title: 'HDD(G)',
+      dataIndex: 'hddSize',
+      key: 'hddSize',
+      align: 'center' as const,
+      width: 80,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '80px' }} title={text}>
+          {text}
+        </div>
       ),
+    },
+    {
+      title: '项目',
+      dataIndex: 'project',
+      key: 'project',
+      align: 'center' as const,
+      width: 100,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
+          {text}
+        </div>
+      ),
+    },
+    {
+      title: '开发室',
+      dataIndex: 'devRoom',
+      key: 'devRoom',
+      align: 'center' as const,
+      width: 100,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
+          {text}
+        </div>
+      ),
+    },
+    {
+      title: '确认状态',
+      key: 'confirmStatus',
+      dataIndex: 'confirmStatus',
+      align: 'center' as const,
+      width: 100,
+      fixed: 'right' as const, // 和操作列一起固定在右侧
+      render: (status: string) => {
+        const color = status === '已确认' ? 'green' : 'red';
+        return (
+          <div style={cellStyle}>
+            <Tag color={color}>{status}</Tag>
+          </div>
+        );
+      },
     },
     {
       title: '操作',
       key: 'action',
+      align: 'center' as const,
+      width: 220, // 增加宽度
+      fixed: 'right' as const,
       render: (text: string | undefined, record: DeviceListItem) => (
-        <Space size="small">
-          <Button 
-            type="link" 
-            icon={<EyeOutlined />}
-            onClick={() => handleViewDevice(record)}
-          >
-            查看
-          </Button>
-          <Button 
-            type="link" 
-            icon={<EditOutlined />}
-            onClick={() => handleEditDevice(record)}
-          >
-            编辑
-          </Button>
-          <Button 
-            type="link" 
-            danger 
-            icon={<DeleteOutlined />}
-            onClick={() => handleDeleteDevice(record.deviceId)}
-          >
-            删除
-          </Button>
-        </Space>
+        <div style={{ ...cellStyle, padding: '0 4px' }}>
+          <Space size={[4, 0]} wrap>
+            <Button 
+              type="link" 
+              icon={<EyeOutlined />}
+              size="small"
+              onClick={() => handleViewDevice(record)}
+              style={{ padding: '0 4px' }}
+            >
+              查看
+            </Button>
+            <Button 
+              type="link" 
+              icon={<EditOutlined />}
+              size="small"
+              onClick={() => handleEditDevice(record)}
+              style={{ padding: '0 4px' }}
+            >
+              编辑
+            </Button>
+            <Button 
+              type="link" 
+              danger 
+              icon={<DeleteOutlined />}
+              size="small"
+              onClick={() => handleDeleteDevice(record.deviceId)}
+              style={{ padding: '0 4px' }}
+            >
+              删除
+            </Button>
+          </Space>
+        </div>
       ),
     },
   ];
@@ -234,31 +579,60 @@ const DeviceManagement: React.FC = () => {
 
   return (
     <Layout title="设备管理">
-      <div style={{ padding: 24 }}>
-        <Card>
+      <div style={{ 
+        padding: 24,
+        display: 'flex',
+        flexDirection: 'column',
+        height: 'calc(100vh - 64px)', // 减去Layout的header高度
+        overflow: 'hidden' // 防止外部滚动条
+      }}>
+        <Card style={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden' // 防止Card内部滚动条
+        }}>
           {/* 搜索栏 */}
-          <div style={{ marginBottom: 16 }}>
-            <Row gutter={16} align="middle">
+          <div style={{ marginBottom: 16, flexShrink: 0 }}>
+            <Row gutter={16} align="middle" justify="space-between">
+              {/* 左侧：搜索和筛选组件 */}
               <Col>
-                <Search
-                  placeholder="搜索计算机名或设备ID"
-                  allowClear
-                  enterButton={<SearchOutlined />}
-                  onSearch={handleSearch}
-                  style={{ width: 300 }}
-                />
+                <Row gutter={16} align="middle">
+                  <Col>
+                    <Search
+                      placeholder="搜索设备用户的工号"
+                      allowClear
+                      enterButton={<SearchOutlined />}
+                      onSearch={handleSearch}
+                      style={{ width: 300 }}
+                    />
+                  </Col>
+                  <Col>
+                    <Select 
+                      placeholder="项目筛选" 
+                      style={{ width: 120 }}
+                      onChange={(value) => setSearchParams({...searchParams, project: value})}
+                    >
+                      <Option value="all">全部项目</Option>
+                      <Option value="项目A">项目A</Option>
+                      <Option value="项目B">项目B</Option>
+                    </Select>
+                  </Col>
+                  <Col>
+                    <Select 
+                      placeholder="开发室筛选" 
+                      style={{ width: 120 }}
+                      onChange={(value) => setSearchParams({...searchParams, devRoom: value})}
+                    >
+                      <Option value="all">全部开发室</Option>
+                      <Option value="开发室A">开发室A</Option>
+                      <Option value="开发室B">开发室B</Option>
+                    </Select>
+                  </Col>
+                </Row>
               </Col>
-              <Col>
-                <Select 
-                  placeholder="项目筛选" 
-                  style={{ width: 120 }}
-                  onChange={(value) => setSearchParams({...searchParams, project: value})}
-                >
-                  <Option value="all">全部项目</Option>
-                  <Option value="项目A">项目A</Option>
-                  <Option value="项目B">项目B</Option>
-                </Select>
-              </Col>
+              
+              {/* 右侧：按钮 */}
               <Col>
                 <Button 
                   type="primary" 
@@ -271,25 +645,49 @@ const DeviceManagement: React.FC = () => {
             </Row>
           </div>
 
-          {/* 设备表格 */}
-          <Table<DeviceListItem>
-            rowKey="key"
-            columns={columns}
-            dataSource={devices}
-            loading={loading}
-            pagination={{
-              current: searchParams.page,
-              pageSize: searchParams.pageSize,
-              total,
-              onChange: (page, pageSize) => {
-                setSearchParams({
-                  ...searchParams,
-                  page,
-                  pageSize,
-                });
-              },
-            }}
-          />
+          {/* 设备表格 - 使用flex布局占满剩余空间 */}
+          <div style={{ 
+            flex: 1,
+            overflow: 'hidden', // 隐藏容器滚动条
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* 表格容器，只允许内部滚动 */}
+            <div style={{ 
+              flex: 1,
+              overflow: 'auto', // 只在Table内部滚动
+              marginBottom: 16
+            }}>
+              <Table<DeviceListItem>
+                rowKey="key"
+                columns={columns}
+                dataSource={devices}
+                loading={loading}
+                scroll={{
+                  x: 2100,
+                  y: 620, // 动态计算高度
+                }}
+                pagination={false}
+                style={{ minWidth: '100%' }}
+              />
+            </div>
+
+            {/* 分页组件 - 固定高度 */}
+            <div style={{ flexShrink: 0 }}>
+              <Pagination
+                current={searchParams.page}
+                pageSize={searchParams.pageSize}
+                total={total}
+                onChange={handlePageChange}
+                onShowSizeChange={handlePageSizeChange}
+                showQuickJumper
+                showSizeChanger
+                showTotal={(total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`}
+                pageSizeOptions={['10', '20', '50', '100']}
+                style={{ textAlign: 'left' }}
+              />
+            </div>
+          </div>
         </Card>
 
         {/* 设备详情弹窗 */}
@@ -317,16 +715,16 @@ const DeviceManagement: React.FC = () => {
                   <p><strong>内存：</strong>{selectedDevice.memorySize}</p>
                   <p><strong>SSD：</strong>{selectedDevice.ssdSize}</p>
                   <p><strong>HDD：</strong>{selectedDevice.hddSize}</p>
-                  <p><strong>本人确认：</strong>{selectedDevice.selfConfirmStatus}</p>
+                  <p><strong>本人确认：</strong>{selectedDevice.confirmStatus}</p>
                 </Col>
               </Row>
               <Row style={{ marginTop: 16 }}>
                 <Col span={24}>
-                  <p><strong>IP地址：</strong>{selectedDevice.ipAddresses?.join(', ')}</p>
-                  <p><strong>显示器：</strong>{selectedDevice.monitors?.join(', ')}</p>
+                  <p><strong>IP地址：</strong></p>
+                  <p style={{ whiteSpace: 'pre-line' }}>{selectedDevice.ipAddresses?.join('\n')}</p>
+                  <p><strong>显示器：</strong></p>
+                  <p style={{ whiteSpace: 'pre-line' }}>{selectedDevice.monitors?.join('\n')}</p>
                   <p><strong>备注：</strong>{selectedDevice.remark}</p>
-                  <p><strong>创建时间：</strong>{selectedDevice.createTime}</p>
-                  <p><strong>更新时间：</strong>{selectedDevice.updateTime}</p>
                 </Col>
               </Row>
             </div>

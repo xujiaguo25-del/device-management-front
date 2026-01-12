@@ -11,29 +11,18 @@ export interface DeviceListItem {
   remark: string; // 备注
   
   // 字典值
-  selfConfirmStatus?: string; // 本人确认状态
+  confirmStatus?: string; // 本人确认状态
   osName?: string; // 操作系统
   memorySize?: string; // 内存大小
   ssdSize?: string; // SSD大小
   hddSize?: string; // HDD大小
   
-  // 权限相关
-  domainStatus?: string; // 域状态
-  smartitStatus?: string; // SmartIT状态
-  usbStatus?: string; // USB状态
-  antivirusStatus?: string; // 杀毒软件状态
-  
   // IP和显示器信息
   ipAddresses?: string[]; // IP地址列表
   monitors?: string[]; // 显示器列表
   
-  createTime: string; // 创建时间
-  creater: string; // 创建者
-  updateTime: string; // 更新时间
-  updater: string; // 更新者
-  
   // 状态标签（用于前端展示）
-  tags: string[]; // 状态标签，如 ['在线', '正常']
+  tags: string[]; // 状态标签，如 ['已确认', '未确认']
 }
 
 // 设备查询参数接口
