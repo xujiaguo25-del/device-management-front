@@ -5,7 +5,8 @@
 // import { get, post, del, request } from '../api';
 import type { DevicePermissionList, DevicePermissionInsert, ApiResponse } from '../../types';
 import dayjs from 'dayjs';
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
+import { saveAs } from 'file-saver';
 
 // 模拟数据
 const mockPermissions: DevicePermissionList[] = [
@@ -363,10 +364,10 @@ export const deletePermission = async (permissionId: string): Promise<ApiRespons
 };
 
 /**
- * 导出权限列表为Excel
- * @returns Promise Blob
+ * 导出权限列表为Excel（美化版）
+ * 直接保存到下载文件夹，用户可以选择保存到桌面
  */
-export const exportPermissionsExcel = async (): Promise<Blob> => {
+export const exportPermissionsExcel = async (): Promise<void> => {
     // 注释掉实际API调用，使用模拟数据
     /*
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
@@ -383,37 +384,51 @@ export const exportPermissionsExcel = async (): Promise<Blob> => {
         throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return response.blob();
+    const blob = await response.blob();
+    const fileName = `权限列表_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`;
+    saveAs(blob, fileName);
+    return;
     */
 
     // 模拟数据 - 用于开发/演示
     return new Promise((resolve) => {
         setTimeout(() => {
+            // 准备表头
+            const headers = [
+                '权限ID', '设备ID', '电脑名', '用户ID', '用户名', '登录用户名',
+                'IP地址', 'Domain状态', 'Domain组', '无Domain原因',
+                'SmartIT状态', '无SmartIT原因', 'USB状态', 'USB原因', 'USB过期日期',
+                '防病毒状态', '无Symantec原因', '备注'
+            ];
+
             // 准备Excel数据
-            const excelData = mockPermissions.map(p => ({
-                '权限ID': p.permissionId,
-                '设备ID': p.deviceId,
-                '电脑名': p.computerName,
-                '用户ID': p.userId,
-                '用户名': p.name,
-                '登录用户名': p.loginUsername,
-                'IP地址': p.ipAddress?.join(', ') || '',
-                'Domain状态': p.domainStatus === 1 ? '是' : '否',
-                'Domain组': p.domainGroup || '',
-                '无Domain原因': p.noDomainReason || '',
-                'SmartIT状态': p.smartitStatus === 1 ? '是' : '否',
-                '无SmartIT原因': p.noSmartitReason || '',
-                'USB状态': p.usbStatus === 1 ? '是' : '否',
-                'USB原因': p.usbReason || '',
-                'USB过期日期': p.usbExpireDate || '',
-                '防病毒状态': p.antivirusStatus === 1 ? '是' : '否',
-                '无Symantec原因': p.noSymantecReason || '',
-                '备注': p.remark || '',
-            }));
+            const excelData = mockPermissions.map(p => [
+                p.permissionId,
+                p.deviceId,
+                p.computerName,
+                p.userId,
+                p.name,
+                p.loginUsername,
+                p.ipAddress?.join(', ') || '',
+                p.domainStatus === 1 ? '是' : '否',
+                p.domainGroup || '',
+                p.noDomainReason || '',
+                p.smartitStatus === 1 ? '是' : '否',
+                p.noSmartitReason || '',
+                p.usbStatus === 1 ? '是' : '否',
+                p.usbReason || '',
+                p.usbExpireDate || '',
+                p.antivirusStatus === 1 ? '是' : '否',
+                p.noSymantecReason || '',
+                p.remark || '',
+            ]);
 
             // 创建工作簿
             const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(excelData);
+            
+            // 创建数据数组（标题行 + 数据行）
+            const allData = [headers, ...excelData];
+            const ws = XLSX.utils.aoa_to_sheet(allData);
 
             // 设置列宽
             const colWidths = [
@@ -438,18 +453,99 @@ export const exportPermissionsExcel = async (): Promise<Blob> => {
             ];
             ws['!cols'] = colWidths;
 
+            // 设置行高
+            ws['!rows'] = [
+                { hpt: 25 }, // 表头行高
+            ];
+
+            // 定义样式
+            const headerStyle = {
+                font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+                fill: { fgColor: { rgb: '4472C4' } }, // 蓝色背景
+                alignment: { 
+                    horizontal: 'center', 
+                    vertical: 'center',
+                    wrapText: true
+                },
+                border: {
+                    top: { style: 'thin', color: { rgb: '000000' } },
+                    bottom: { style: 'thin', color: { rgb: '000000' } },
+                    left: { style: 'thin', color: { rgb: '000000' } },
+                    right: { style: 'thin', color: { rgb: '000000' } }
+                }
+            };
+
+            const cellStyle = {
+                alignment: { 
+                    vertical: 'center',
+                    wrapText: true
+                },
+                border: {
+                    top: { style: 'thin', color: { rgb: 'D0D0D0' } },
+                    bottom: { style: 'thin', color: { rgb: 'D0D0D0' } },
+                    left: { style: 'thin', color: { rgb: 'D0D0D0' } },
+                    right: { style: 'thin', color: { rgb: 'D0D0D0' } }
+                }
+            };
+
+            // 应用表头样式
+            for (let C = 0; C <= headers.length - 1; ++C) {
+                const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
+                if (!ws[cellAddress]) continue;
+                ws[cellAddress].s = headerStyle;
+            }
+
+            // 应用数据行样式
+            for (let R = 1; R <= excelData.length; ++R) {
+                for (let C = 0; C <= headers.length - 1; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!ws[cellAddress]) continue;
+                    ws[cellAddress].s = cellStyle;
+                    
+                    // 状态列特殊处理（是/否）
+                    const colIndex = C;
+                    if ([7, 10, 12, 15].includes(colIndex)) { // Domain状态、SmartIT状态、USB状态、防病毒状态
+                        const value = ws[cellAddress].v;
+                        if (value === '是') {
+                            ws[cellAddress].s = {
+                                ...cellStyle,
+                                fill: { fgColor: { rgb: 'C6EFCE' } }, // 浅绿色
+                                font: { color: { rgb: '006100' } } // 深绿色文字
+                            };
+                        } else if (value === '否') {
+                            ws[cellAddress].s = {
+                                ...cellStyle,
+                                fill: { fgColor: { rgb: 'FFC7CE' } }, // 浅红色
+                                font: { color: { rgb: '9C0006' } } // 深红色文字
+                            };
+                        }
+                    }
+                }
+            }
+
+            // 冻结首行
+            ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft', state: 'frozen' };
+
             // 将工作表添加到工作簿
             XLSX.utils.book_append_sheet(wb, ws, '权限列表');
 
             // 将工作簿转换为二进制数据
-            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const excelBuffer = XLSX.write(wb, { 
+                bookType: 'xlsx', 
+                type: 'array',
+                cellStyles: true
+            });
 
-            // 创建Blob对象
+            // 创建Blob对象并保存
             const blob = new Blob([excelBuffer], { 
                 type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
             });
 
-            resolve(blob);
+            // 使用 file-saver 保存文件，文件名包含时间戳
+            const fileName = `权限列表_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`;
+            saveAs(blob, fileName);
+
+            resolve();
         }, 500);
     });
 };

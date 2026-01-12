@@ -185,16 +185,8 @@ const DevicePermissions: React.FC = () => {
     const handleExport = async () => {
         try {
             setLoading(true);
-            const blob = await exportPermissionsExcel();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `权限列表_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-            message.success('导出成功');
+            await exportPermissionsExcel();
+            message.success('导出成功，文件已保存到下载文件夹');
         } catch (error: any) {
             message.error(error.message || '导出失败');
         } finally {
