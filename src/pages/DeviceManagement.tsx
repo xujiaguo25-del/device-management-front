@@ -577,120 +577,111 @@ const DeviceManagement: React.FC = () => {
     });
   };
 
+// ... 前面的代码保持不变 ...
+
   return (
     <Layout title="设备管理">
       <div style={{ 
-        padding: 24,
+        height: 'calc(100vh - 64px)', // 限制整体高度
         display: 'flex',
         flexDirection: 'column',
-        height: 'calc(100vh - 64px)', // 减去Layout的header高度
-        overflow: 'hidden' // 防止外部滚动条
+        backgroundColor: '#fff', // 纯白背景，消除灰色边框感
+        padding: '20px', // 统一的内边距
+        overflow: 'hidden' // 防止外层出现滚动条
       }}>
-        <Card style={{ 
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden' // 防止Card内部滚动条
-        }}>
-          {/* 搜索栏 */}
-          <div style={{ marginBottom: 16, flexShrink: 0 }}>
-            <Row gutter={16} align="middle" justify="space-between">
-              {/* 左侧：搜索和筛选组件 */}
-              <Col>
-                <Row gutter={16} align="middle">
-                  <Col>
-                    <Search
-                      placeholder="搜索设备用户的工号"
-                      allowClear
-                      enterButton={<SearchOutlined />}
-                      onSearch={handleSearch}
-                      style={{ width: 300 }}
-                    />
-                  </Col>
-                  <Col>
-                    <Select 
-                      placeholder="项目筛选" 
-                      style={{ width: 120 }}
-                      onChange={(value) => setSearchParams({...searchParams, project: value})}
-                    >
-                      <Option value="all">全部项目</Option>
-                      <Option value="项目A">项目A</Option>
-                      <Option value="项目B">项目B</Option>
-                    </Select>
-                  </Col>
-                  <Col>
-                    <Select 
-                      placeholder="开发室筛选" 
-                      style={{ width: 120 }}
-                      onChange={(value) => setSearchParams({...searchParams, devRoom: value})}
-                    >
-                      <Option value="all">全部开发室</Option>
-                      <Option value="开发室A">开发室A</Option>
-                      <Option value="开发室B">开发室B</Option>
-                    </Select>
-                  </Col>
-                </Row>
-              </Col>
-              
-              {/* 右侧：按钮 */}
-              <Col>
-                <Button 
-                  type="primary" 
-                  icon={<PlusOutlined />}
-                  onClick={() => message.info('添加设备')}
+        
+        {/* 1. 顶部搜索区 */}
+        <div style={{ marginBottom: 16, flexShrink: 0 }}>
+          <Row gutter={16} align="middle" justify="space-between">
+            <Col>
+              <Space>
+                <Search
+                  placeholder="搜索设备用户的工号"
+                  allowClear
+                  enterButton={<SearchOutlined />}
+                  onSearch={handleSearch}
+                  style={{ width: 260 }}
+                />
+                <Select 
+                  placeholder="项目筛选" 
+                  style={{ width: 120 }}
+                  onChange={(value) => setSearchParams({...searchParams, project: value})}
                 >
-                  添加设备
-                </Button>
-              </Col>
-            </Row>
-          </div>
+                  <Option value="all">全部项目</Option>
+                  <Option value="项目A">项目A</Option>
+                  <Option value="项目B">项目B</Option>
+                </Select>
+                <Select 
+                  placeholder="开发室筛选" 
+                  style={{ width: 120 }}
+                  onChange={(value) => setSearchParams({...searchParams, devRoom: value})}
+                >
+                  <Option value="all">全部开发室</Option>
+                  <Option value="开发室A">开发室A</Option>
+                  <Option value="开发室B">开发室B</Option>
+                </Select>
+              </Space>
+            </Col>
+            <Col>
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />}
+                onClick={() => message.info('添加设备')}
+              >
+                添加设备
+              </Button>
+            </Col>
+          </Row>
+        </div>
 
-          {/* 设备表格 - 使用flex布局占满剩余空间 */}
-          <div style={{ 
-            flex: 1,
-            overflow: 'hidden', // 隐藏容器滚动条
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            {/* 表格容器，只允许内部滚动 */}
-            <div style={{ 
-              flex: 1,
-              overflow: 'auto', // 只在Table内部滚动
-              marginBottom: 16
-            }}>
-              <Table<DeviceListItem>
-                rowKey="key"
-                columns={columns}
-                dataSource={devices}
-                loading={loading}
-                scroll={{
-                  x: 2100,
-                  y: 620, // 动态计算高度
-                }}
-                pagination={false}
-                style={{ minWidth: '100%' }}
-              />
-            </div>
+        {/* 2. 表格区域 */}
+        {/* 重点修改：移除了 flex: 1，改为自适应高度，但最大不超过页面底部 */}
+        <div style={{ 
+           // 移除 flex: 1，这样当数据少时，div高度会自动收缩，分页就会提上来
+           flex: '0 1 auto', 
+           overflow: 'hidden' 
+        }}>
+          <Table<DeviceListItem>
+            rowKey="key"
+            columns={columns}
+            dataSource={devices}
+            loading={loading}
+            // scroll.y 决定了表格的"最大"高度
+            // 当数据行数超过这个高度时，会出现表内滚动条
+            // 当数据行数很少时，表格高度会塌缩，不会强行撑开
+            scroll={{
+              x: 2100, 
+              y: 'calc(100vh - 280px)', 
+            }}
+            pagination={false} 
+            size="middle"
+            bordered={false}
+            // 彻底移除表格外层可能的边框样式
+            style={{ margin: 0, padding: 0 }} 
+          />
+        </div>
 
-            {/* 分页组件 - 固定高度 */}
-            <div style={{ flexShrink: 0 }}>
-              <Pagination
-                current={searchParams.page}
-                pageSize={searchParams.pageSize}
-                total={total}
-                onChange={handlePageChange}
-                onShowSizeChange={handlePageSizeChange}
-                showQuickJumper
-                showSizeChanger
-                showTotal={(total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`}
-                pageSizeOptions={['10', '20', '50', '100']}
-                style={{ textAlign: 'left' }}
-              />
-            </div>
-          </div>
-        </Card>
+        {/* 3. 分页区域 */}
+        <div style={{ 
+          marginTop: 16, // 控制与表格底部的距离
+          flexShrink: 0,
+          textAlign: 'right',
+          paddingRight: 10 // 微调右侧对齐
+        }}>
+          <Pagination
+            current={searchParams.page}
+            pageSize={searchParams.pageSize}
+            total={total}
+            onChange={handlePageChange}
+            onShowSizeChange={handlePageSizeChange}
+            showQuickJumper
+            showSizeChanger
+            showTotal={(total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`}
+            pageSizeOptions={['10', '20', '50', '100']}
+          />
+        </div>
 
-        {/* 设备详情弹窗 */}
+        {/* 4. 弹窗 (保持不变) */}
         <Modal
           title="设备详情"
           open={isModalVisible}
