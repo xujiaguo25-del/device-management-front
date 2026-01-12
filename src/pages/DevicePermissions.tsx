@@ -103,7 +103,10 @@ const DevicePermissions: React.FC = () => {
 
     // 搜索
     const onSearch = (data: SearchFormData) => {
-        loadPermissions(1, pagination.pageSize, data.userId, data.deviceId);
+        // 过滤空字符串，转换为 undefined
+        const userId = data.userId?.trim() || undefined;
+        const deviceId = data.deviceId?.trim() || undefined;
+        loadPermissions(1, pagination.pageSize, userId, deviceId);
     };
 
     // 重置搜索
@@ -377,32 +380,38 @@ const DevicePermissions: React.FC = () => {
         <Layout title="权限管理">
             <Card>
                 {/* 搜索栏 */}
-                <Form layout="inline" onFinish={handleSearchSubmit(onSearch)} style={{ marginBottom: 16 }}>
-                    <Form.Item label="用户ID">
-                        <Controller
-                            name="userId"
-                            control={searchControl}
-                            render={({ field }) => <Input {...field} placeholder="请输入用户ID" style={{ width: 150 }} />}
-                        />
-                    </Form.Item>
-                    <Form.Item label="设备ID">
-                        <Controller
-                            name="deviceId"
-                            control={searchControl}
-                            render={({ field }) => <Input {...field} placeholder="请输入设备ID" style={{ width: 150 }} />}
-                        />
-                    </Form.Item>
-                    <Form.Item>
-                        <Space>
-                            <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
-                                搜索
-                            </Button>
-                            <Button onClick={onResetSearch} icon={<ReloadOutlined />}>
-                                重置
-                            </Button>
-                        </Space>
-                    </Form.Item>
-                </Form>
+                <div style={{ marginBottom: 16 }}>
+                    <Space>
+                        <Form.Item label="用户ID" style={{ marginBottom: 0 }}>
+                            <Controller
+                                name="userId"
+                                control={searchControl}
+                                render={({ field }) => <Input {...field} placeholder="请输入用户ID" style={{ width: 150 }} />}
+                            />
+                        </Form.Item>
+                        <Form.Item label="设备ID" style={{ marginBottom: 0 }}>
+                            <Controller
+                                name="deviceId"
+                                control={searchControl}
+                                render={({ field }) => <Input {...field} placeholder="请输入设备ID" style={{ width: 150 }} />}
+                            />
+                        </Form.Item>
+                        <Form.Item style={{ marginBottom: 0 }}>
+                            <Space>
+                                <Button 
+                                    type="primary" 
+                                    icon={<SearchOutlined />}
+                                    onClick={handleSearchSubmit(onSearch)}
+                                >
+                                    搜索
+                                </Button>
+                                <Button onClick={onResetSearch} icon={<ReloadOutlined />}>
+                                    重置
+                                </Button>
+                            </Space>
+                        </Form.Item>
+                    </Space>
+                </div>
 
                 {/* 操作栏 */}
                 <Row justify="space-between" style={{ marginBottom: 16 }}>
@@ -434,7 +443,7 @@ const DevicePermissions: React.FC = () => {
                         onChange: (page, pageSize) => {
                             loadPermissions(page, pageSize);
                         },
-                        onShowSizeChange: (current, size) => {
+                        onShowSizeChange: (_current, size) => {
                             loadPermissions(1, size);
                         },
                     }}

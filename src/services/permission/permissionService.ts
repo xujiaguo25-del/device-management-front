@@ -5,6 +5,7 @@
 // import { get, post, del, request } from '../api';
 import type { DevicePermissionList, DevicePermissionInsert, ApiResponse } from '../../types';
 import dayjs from 'dayjs';
+import * as XLSX from 'xlsx';
 
 // 模拟数据
 const mockPermissions: DevicePermissionList[] = [
@@ -388,23 +389,68 @@ export const exportPermissionsExcel = async (): Promise<Blob> => {
     // 模拟数据 - 用于开发/演示
     return new Promise((resolve) => {
         setTimeout(() => {
-            // 创建一个简单的CSV格式的Blob（实际应该是Excel格式）
-            const csvContent = [
-                ['权限ID', '设备ID', '电脑名', '用户ID', '用户名', 'Domain状态', 'SmartIT状态', 'USB状态', '创建时间'].join(','),
-                ...mockPermissions.map(p => [
-                    p.permissionId,
-                    p.deviceId,
-                    p.computerName,
-                    p.userId,
-                    p.name,
-                    p.domainStatus === 1 ? '是' : '否',
-                    p.smartitStatus === 1 ? '是' : '否',
-                    p.usbStatus === 1 ? '是' : '否',
-                    p.createTime,
-                ].join(',')),
-            ].join('\n');
+            // 准备Excel数据
+            const excelData = mockPermissions.map(p => ({
+                '权限ID': p.permissionId,
+                '设备ID': p.deviceId,
+                '电脑名': p.computerName,
+                '用户ID': p.userId,
+                '用户名': p.name,
+                '登录用户名': p.loginUsername,
+                'IP地址': p.ipAddress?.join(', ') || '',
+                'Domain状态': p.domainStatus === 1 ? '是' : '否',
+                'Domain组': p.domainGroup || '',
+                '无Domain原因': p.noDomainReason || '',
+                'SmartIT状态': p.smartitStatus === 1 ? '是' : '否',
+                '无SmartIT原因': p.noSmartitReason || '',
+                'USB状态': p.usbStatus === 1 ? '是' : '否',
+                'USB原因': p.usbReason || '',
+                'USB过期日期': p.usbExpireDate || '',
+                '防病毒状态': p.antivirusStatus === 1 ? '是' : '否',
+                '无Symantec原因': p.noSymantecReason || '',
+                '备注': p.remark || '',
+                '创建时间': p.createTime,
+            }));
 
-            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(excelData);
+
+            // 设置列宽
+            const colWidths = [
+                { wch: 12 }, // 权限ID
+                { wch: 12 }, // 设备ID
+                { wch: 15 }, // 电脑名
+                { wch: 12 }, // 用户ID
+                { wch: 12 }, // 用户名
+                { wch: 15 }, // 登录用户名
+                { wch: 20 }, // IP地址
+                { wch: 12 }, // Domain状态
+                { wch: 12 }, // Domain组
+                { wch: 20 }, // 无Domain原因
+                { wch: 15 }, // SmartIT状态
+                { wch: 20 }, // 无SmartIT原因
+                { wch: 12 }, // USB状态
+                { wch: 20 }, // USB原因
+                { wch: 15 }, // USB过期日期
+                { wch: 15 }, // 防病毒状态
+                { wch: 20 }, // 无Symantec原因
+                { wch: 30 }, // 备注
+                { wch: 20 }, // 创建时间
+            ];
+            ws['!cols'] = colWidths;
+
+            // 将工作表添加到工作簿
+            XLSX.utils.book_append_sheet(wb, ws, '权限列表');
+
+            // 将工作簿转换为二进制数据
+            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+
+            // 创建Blob对象
+            const blob = new Blob([excelBuffer], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+
             resolve(blob);
         }, 500);
     });
