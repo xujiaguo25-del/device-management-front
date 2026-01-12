@@ -347,6 +347,25 @@ const DevicePermissions: React.FC = () => {
             render: (time: string) => (time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '-'),
         },
         {
+            title: '创建者',
+            dataIndex: 'creater',
+            key: 'creater',
+            width: 120,
+        },
+        {
+            title: '更新时间',
+            dataIndex: 'updateTime',
+            key: 'updateTime',
+            width: 180,
+            render: (time: string) => (time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '-'),
+        },
+        {
+            title: '更新者',
+            dataIndex: 'updater',
+            key: 'updater',
+            width: 120,
+        },
+        {
             title: '操作',
             key: 'action',
             width: 150,
@@ -433,7 +452,7 @@ const DevicePermissions: React.FC = () => {
                     dataSource={permissions}
                     rowKey="permissionId"
                     loading={loading}
-                    scroll={{ x: 2000 }}
+                    scroll={{ x: 2500 }}
                     pagination={{
                         current: pagination.current,
                         pageSize: pagination.pageSize,
