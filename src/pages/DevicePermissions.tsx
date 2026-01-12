@@ -13,6 +13,7 @@ import {
     Row,
     Col,
     Tag,
+    Descriptions,
 } from 'antd';
 import {
     ExportOutlined,
@@ -388,9 +389,9 @@ const DevicePermissions: React.FC = () => {
                 </div>
             </Card>
 
-            {/* 新增/编辑对话框 */}
+            {/* 查看详情对话框 */}
             <Modal
-                title="查看详情"
+                title={`设备权限详情 - ${editingPermission?.deviceId || ''}`}
                 open={modalVisible}
                 onCancel={() => {
                     setModalVisible(false);
@@ -398,179 +399,245 @@ const DevicePermissions: React.FC = () => {
                     setEditingPermission(null);
                 }}
                 footer={null}
-                width={800}
+                width={1000}
+                style={{ top: 20 }}
                 destroyOnClose
             >
                 <Form
                     layout="vertical"
                     onFinish={handleFormSubmit(onSubmitForm)}
-                    style={{ marginTop: 20 }}
                 >
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item label="设备ID" required>
-                                <Controller
-                                    name="deviceId"
-                                    control={formControl}
-                                    rules={{ required: '请输入设备ID' }}
-                                    render={({ field, fieldState: { error } }) => (
-                                        <>
-                                            <Input {...field} placeholder="请输入设备ID" disabled={!!editingPermission} />
-                                            {error && <div style={{ color: 'red', fontSize: '12px', marginTop: 4 }}>{error.message}</div>}
-                                        </>
-                                    )}
-                                />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item label="Domain状态">
-                                <Controller
-                                    name="domainStatus"
-                                    control={formControl}
-                                    render={({ field }) => (
-                                        <Select {...field} placeholder="请选择" allowClear>
-                                            <Option value={1}>是</Option>
-                                            <Option value={0}>否</Option>
-                                        </Select>
-                                    )}
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
+                    {/* 设备基本信息区域 - 不可编辑 */}
+                    <Card
+                        title="设备基本信息"
+                        size="small"
+                        style={{ marginBottom: 24 }}
+                        bordered={false}
+                    >
+                        <Descriptions column={2} bordered size="small">
+                            <Descriptions.Item label="权限ID" span={2}>
+                                {editingPermission?.permissionId || '-'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="设备ID" span={2}>
+                                {editingPermission?.deviceId || '-'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="电脑名">
+                                {editingPermission?.computerName || '-'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="IP地址">
+                                {editingPermission?.ipAddress && editingPermission.ipAddress.length > 0 
+                                    ? editingPermission.ipAddress.join(', ') 
+                                    : '-'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="用户ID">
+                                {editingPermission?.userId || '-'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="用户名">
+                                {editingPermission?.name || '-'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="登录用户名">
+                                {editingPermission?.loginUsername || '-'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="部门ID">
+                                {editingPermission?.deptId || '-'}
+                            </Descriptions.Item>
+                        </Descriptions>
+                    </Card>
 
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item label="Domain组">
-                                <Controller
-                                    name="domainGroup"
-                                    control={formControl}
-                                    render={({ field }) => <Input {...field} placeholder="请输入Domain组" />}
-                                />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item label="SmartIT状态">
-                                <Controller
-                                    name="smartitStatus"
-                                    control={formControl}
-                                    render={({ field }) => (
-                                        <Select {...field} placeholder="请选择" allowClear>
-                                            <Option value={1}>是</Option>
-                                            <Option value={0}>否</Option>
-                                        </Select>
-                                    )}
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Form.Item label="无Domain原因">
-                        <Controller
-                            name="noDomainReason"
-                            control={formControl}
-                            render={({ field }) => <TextArea {...field} placeholder="请输入无Domain原因" rows={2} />}
-                        />
-                    </Form.Item>
-
-                    <Form.Item label="无SmartIT原因">
-                        <Controller
-                            name="noSmartitReason"
-                            control={formControl}
-                            render={({ field }) => <TextArea {...field} placeholder="请输入无SmartIT原因" rows={2} />}
-                        />
-                    </Form.Item>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item label="USB状态">
-                                <Controller
-                                    name="usbStatus"
-                                    control={formControl}
-                                    render={({ field }) => (
-                                        <Select {...field} placeholder="请选择" allowClear>
-                                            <Option value={1}>是</Option>
-                                            <Option value={0}>否</Option>
-                                        </Select>
-                                    )}
-                                />
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item label="USB过期日期">
-                                <Controller
-                                    name="usbExpireDate"
-                                    control={formControl}
-                                    render={({ field }) => (
-                                        <DatePicker
-                                            {...field}
-                                            style={{ width: '100%' }}
-                                            format="YYYY-MM-DD"
-                                            value={field.value ? dayjs(field.value) : null}
-                                            onChange={(date) => field.onChange(date)}
+                    {/* 可编辑区域 */}
+                    <Card
+                        title="权限配置信息"
+                        size="small"
+                        style={{ marginBottom: 24 }}
+                        bordered={false}
+                    >
+                        {/* 域相关配置 */}
+                        <div style={{ marginBottom: 20 }}>
+                            <h4 style={{ marginBottom: 12, color: '#1890ff' }}>域配置</h4>
+                            <Row gutter={24} style={{ marginBottom: 16 }}>
+                                <Col span={6}>
+                                    <Form.Item label="Domain状态">
+                                        <Controller
+                                            name="domainStatus"
+                                            control={formControl}
+                                            render={({ field }) => (
+                                                <Select {...field} placeholder="请选择" allowClear>
+                                                    <Option value={1}>是</Option>
+                                                    <Option value={0}>否</Option>
+                                                </Select>
+                                            )}
                                         />
-                                    )}
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
+                                    </Form.Item>
+                                </Col>
+                                <Col span={6}>
+                                    <Form.Item label="Domain组">
+                                        <Controller
+                                            name="domainGroup"
+                                            control={formControl}
+                                            render={({ field }) => <Input {...field} placeholder="请输入Domain组" />}
+                                        />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={12}>
+                                    <Form.Item label="无Domain原因">
+                                        <Controller
+                                            name="noDomainReason"
+                                            control={formControl}
+                                            render={({ field }) => <TextArea {...field} placeholder="如设备无需加入域，请填写理由" rows={2} />}
+                                        />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                        </div>
 
-                    <Form.Item label="USB原因">
-                        <Controller
-                            name="usbReason"
-                            control={formControl}
-                            render={({ field }) => <TextArea {...field} placeholder="请输入USB原因" rows={2} />}
-                        />
-                    </Form.Item>
+                        {/* SmartIT配置 */}
+                        <div style={{ marginBottom: 20 }}>
+                            <h4 style={{ marginBottom: 12, color: '#1890ff' }}>SmartIT配置</h4>
+                            <Row gutter={24} style={{ marginBottom: 16 }}>
+                                <Col span={6}>
+                                    <Form.Item label="SmartIT状态">
+                                        <Controller
+                                            name="smartitStatus"
+                                            control={formControl}
+                                            render={({ field }) => (
+                                                <Select {...field} placeholder="请选择" allowClear>
+                                                    <Option value={1}>是</Option>
+                                                    <Option value={0}>否</Option>
+                                                </Select>
+                                            )}
+                                        />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={18}>
+                                    <Form.Item label="无SmartIT原因">
+                                        <Controller
+                                            name="noSmartitReason"
+                                            control={formControl}
+                                            render={({ field }) => <TextArea {...field} placeholder="如不安装SmartIT，请填写理由" rows={2} />}
+                                        />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                        </div>
 
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item label="防病毒状态">
-                                <Controller
-                                    name="antivirusStatus"
-                                    control={formControl}
-                                    render={({ field }) => (
-                                        <Select {...field} placeholder="请选择" allowClear>
-                                            <Option value={1}>是</Option>
-                                            <Option value={0}>否</Option>
-                                        </Select>
-                                    )}
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
+                        {/* USB配置 */}
+                        <div style={{ marginBottom: 20 }}>
+                            <h4 style={{ marginBottom: 12, color: '#1890ff' }}>USB配置</h4>
+                            <Row gutter={24} style={{ marginBottom: 16 }}>
+                                <Col span={6}>
+                                    <Form.Item label="USB状态">
+                                        <Controller
+                                            name="usbStatus"
+                                            control={formControl}
+                                            render={({ field }) => (
+                                                <Select {...field} placeholder="请选择" allowClear>
+                                                    <Option value={1}>是</Option>
+                                                    <Option value={0}>否</Option>
+                                                </Select>
+                                            )}
+                                        />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={8}>
+                                    <Form.Item label="USB原因">
+                                        <Controller
+                                            name="usbReason"
+                                            control={formControl}
+                                            render={({ field }) => <TextArea {...field} placeholder="如开通USB权限，请填写理由" rows={2} />}
+                                        />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={6}>
+                                    <Form.Item label="USB过期日期">
+                                        <Controller
+                                            name="usbExpireDate"
+                                            control={formControl}
+                                            render={({ field }) => (
+                                                <DatePicker
+                                                    {...field}
+                                                    style={{ width: '100%' }}
+                                                    format="YYYY-MM-DD"
+                                                    placeholder="截止日期"
+                                                    value={field.value ? dayjs(field.value) : null}
+                                                    onChange={(date) => field.onChange(date)}
+                                                />
+                                            )}
+                                        />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                        </div>
 
-                    <Form.Item label="无Symantec原因">
-                        <Controller
-                            name="noSymantecReason"
-                            control={formControl}
-                            render={({ field }) => <TextArea {...field} placeholder="请输入无Symantec原因" rows={2} />}
-                        />
-                    </Form.Item>
+                        {/* 防病毒配置 */}
+                        <div style={{ marginBottom: 20 }}>
+                            <h4 style={{ marginBottom: 12, color: '#1890ff' }}>防病毒配置</h4>
+                            <Row gutter={24} style={{ marginBottom: 16 }}>
+                                <Col span={6}>
+                                    <Form.Item label="防病毒状态">
+                                        <Controller
+                                            name="antivirusStatus"
+                                            control={formControl}
+                                            render={({ field }) => (
+                                                <Select {...field} placeholder="请选择" allowClear>
+                                                    <Option value={1}>是</Option>
+                                                    <Option value={0}>否</Option>
+                                                </Select>
+                                            )}
+                                        />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={18}>
+                                    <Form.Item label="无Symantec原因">
+                                        <Controller
+                                            name="noSymantecReason"
+                                            control={formControl}
+                                            render={({ field }) => <TextArea {...field} placeholder="如未安装Symantec防病毒软件，请填写理由" rows={2} />}
+                                        />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                        </div>
 
-                    <Form.Item label="备注">
-                        <Controller
-                            name="remark"
-                            control={formControl}
-                            render={({ field }) => <TextArea {...field} placeholder="请输入备注" rows={3} />}
-                        />
-                    </Form.Item>
-
-                    <Form.Item>
-                        <Space>
-                            <Button type="primary" htmlType="submit">
-                                更新
-                            </Button>
-                            <Button
-                                onClick={() => {
-                                    setModalVisible(false);
-                                    resetForm();
-                                    setEditingPermission(null);
-                                }}
+                        {/* 备注 */}
+                        <div style={{ marginBottom: 20 }}>
+                            <h4 style={{ marginBottom: 12, color: '#1890ff' }}>备注</h4>
+                            <Form.Item
+                                name="remark"
                             >
-                                取消
-                            </Button>
-                        </Space>
-                    </Form.Item>
+                                <Controller
+                                    name="remark"
+                                    control={formControl}
+                                    render={({ field }) => <TextArea {...field} placeholder="请输入备注信息" rows={2} style={{ width: '70%' }} />}
+                                />
+                            </Form.Item>
+                        </div>
+                    </Card>
+
+                    {/* 操作按钮 */}
+                    <Row gutter={24} style={{ marginTop: 24 }}>
+                        <Col span={12}>
+                            <Space size="middle">
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                    loading={loading}
+                                    size="middle"
+                                >
+                                    更新
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        setModalVisible(false);
+                                        resetForm();
+                                        setEditingPermission(null);
+                                    }}
+                                    size="middle"
+                                >
+                                    取消
+                                </Button>
+                            </Space>
+                        </Col>
+                    </Row>
                 </Form>
             </Modal>
         </Layout>
