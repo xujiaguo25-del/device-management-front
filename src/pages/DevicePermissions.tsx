@@ -121,7 +121,7 @@ const DevicePermissions: React.FC = () => {
                 setEditingPermission(permission);
                 // 填充表单数据，转换数据格式以匹配表单
                 setValue('deviceId', permission.deviceId);
-                setValue('domainName', ''); // 域名需要从后端获取或设置默认值
+                setValue('domainName', permission.domainName || ''); // 使用权限数据中的域名
                 setValue('domainGroup', permission.domainGroup || '');
                 setValue('noDomainReason', permission.noDomainReason || '');
                 // 转换 smartitStatus: 1->'本地', 0->'未安装'，或其他映射
@@ -152,18 +152,22 @@ const DevicePermissions: React.FC = () => {
             // 转换表单数据为后端需要的格式
             const permissionData: DevicePermissionInsert = {
                 deviceId: data.deviceId,
-                domainStatus: null, // 根据域名或其他逻辑设置
+                domainStatus: data.domainName ? 1 : 0, // 有域名则设置为1，否则为0
+                domainName: data.domainName,
                 domainGroup: data.domainGroup,
                 noDomainReason: data.noDomainReason,
                 // 转换 smartitStatus: '本地'->1, '远程'->1, '未安装'->0
                 smartitStatus: data.smartitStatus === '本地' || data.smartitStatus === '远程' ? 1 : data.smartitStatus === '未安装' ? 0 : null,
+                smartitStatusText: data.smartitStatus, // 保存文本值
                 noSmartitReason: data.noSmartitReason,
                 // 转换 usbStatus: '数据'->1, '3G网卡'->1, '关闭'->0
                 usbStatus: data.usbStatus === '数据' || data.usbStatus === '3G网卡' ? 1 : data.usbStatus === '关闭' ? 0 : null,
+                usbStatusText: data.usbStatus, // 保存文本值
                 usbReason: data.usbReason,
                 usbExpireDate: data.useEndDate ? data.useEndDate.format('YYYY-MM-DD') : null,
                 // 转换 connectionStatus: '自动'->1, '手动'->0
                 antivirusStatus: data.connectionStatus === '自动' ? 1 : data.connectionStatus === '手动' ? 0 : null,
+                antivirusStatusText: data.connectionStatus, // 保存文本值
                 noSymantecReason: data.noSymantecReason,
                 remark: data.remarks,
             };
@@ -224,6 +228,13 @@ const DevicePermissions: React.FC = () => {
             width: 150,
         },
         {
+            title: 'IP地址',
+            dataIndex: 'ipAddress',
+            key: 'ipAddress',
+            width: 150,
+            render: (ips: string[]) => (ips && ips.length > 0 ? ips.join(', ') : '-'),
+        },
+        {
             title: '用户ID',
             dataIndex: 'userId',
             key: 'userId',
@@ -236,26 +247,23 @@ const DevicePermissions: React.FC = () => {
             width: 120,
         },
         {
+            title: '部门',
+            dataIndex: 'deptId',
+            key: 'deptId',
+            width: 120,
+        },
+        {
             title: '登录用户名',
             dataIndex: 'loginUsername',
             key: 'loginUsername',
             width: 120,
         },
         {
-            title: 'IP地址',
-            dataIndex: 'ipAddress',
-            key: 'ipAddress',
-            width: 150,
-            render: (ips: string[]) => (ips && ips.length > 0 ? ips.join(', ') : '-'),
-        },
-        {
             title: 'Domain状态',
-            dataIndex: 'domainStatus',
-            key: 'domainStatus',
-            width: 100,
-            render: (status: number) => (
-                <Tag color={status === 1 ? 'green' : 'red'}>{status === 1 ? '是' : '否'}</Tag>
-            ),
+            dataIndex: 'domainName',
+            key: 'domainName',
+            width: 120,
+            render: (domainName: string) => domainName || '-',
         },
         {
             title: 'Domain组',
@@ -268,18 +276,66 @@ const DevicePermissions: React.FC = () => {
             dataIndex: 'smartitStatus',
             key: 'smartitStatus',
             width: 120,
-            render: (status: number) => (
-                <Tag color={status === 1 ? 'green' : 'red'}>{status === 1 ? '是' : '否'}</Tag>
-            ),
+            render: (_: number, record: DevicePermissionList) => {
+                // 优先使用存储的文本值
+                const statusText = record.smartitStatusText;
+                let color = 'default';
+                
+                if (statusText) {
+                    // 根据文本值设置颜色
+                    if (statusText === '本地' || statusText === '远程') {
+                        color = 'green';
+                    } else if (statusText === '未安装') {
+                        color = 'red';
+                    } else {
+                        color = 'orange';
+                    }
+                    return <Tag color={color}>{statusText}</Tag>;
+                } else {
+                    // 如果没有文本值，根据数字转换（兼容旧数据）
+                    const status = record.smartitStatus;
+                    if (status === 1) {
+                        return <Tag color="green">本地</Tag>;
+                    } else if (status === 0) {
+                        return <Tag color="red">未安装</Tag>;
+                    } else {
+                        return <Tag>-</Tag>;
+                    }
+                }
+            },
         },
         {
             title: 'USB状态',
             dataIndex: 'usbStatus',
             key: 'usbStatus',
             width: 100,
-            render: (status: number) => (
-                <Tag color={status === 1 ? 'green' : 'red'}>{status === 1 ? '是' : '否'}</Tag>
-            ),
+            render: (_: number, record: DevicePermissionList) => {
+                // 优先使用存储的文本值
+                const statusText = record.usbStatusText;
+                let color = 'default';
+                
+                if (statusText) {
+                    // 根据文本值设置颜色
+                    if (statusText === '数据' || statusText === '3G网卡') {
+                        color = 'green';
+                    } else if (statusText === '关闭') {
+                        color = 'red';
+                    } else {
+                        color = 'orange';
+                    }
+                    return <Tag color={color}>{statusText}</Tag>;
+                } else {
+                    // 如果没有文本值，根据数字转换（兼容旧数据）
+                    const status = record.usbStatus;
+                    if (status === 1) {
+                        return <Tag color="green">数据</Tag>;
+                    } else if (status === 0) {
+                        return <Tag color="red">关闭</Tag>;
+                    } else {
+                        return <Tag>-</Tag>;
+                    }
+                }
+            },
         },
         {
             title: 'USB过期日期',
@@ -293,9 +349,32 @@ const DevicePermissions: React.FC = () => {
             dataIndex: 'antivirusStatus',
             key: 'antivirusStatus',
             width: 120,
-            render: (status: number) => (
-                <Tag color={status === 1 ? 'green' : 'red'}>{status === 1 ? '是' : '否'}</Tag>
-            ),
+            render: (status: number, record: DevicePermissionList) => {
+                // 优先使用存储的文本值，如果没有则根据数字转换
+                let statusText = record.antivirusStatusText;
+                let color = 'default';
+                
+                if (!statusText) {
+                    // 如果没有文本值，根据数字转换
+                    if (status === 1) {
+                        statusText = '自动';
+                        color = 'green';
+                    } else if (status === 0) {
+                        statusText = '手动';
+                        color = 'orange';
+                    } else {
+                        statusText = '-';
+                    }
+                } else {
+                    // 根据文本值设置颜色
+                    if (statusText === '自动') {
+                        color = 'green';
+                    } else if (statusText === '手动') {
+                        color = 'orange';
+                    }
+                }
+                return <Tag color={color}>{statusText || '-'}</Tag>;
+            },
         },
         {
             title: '备注',
@@ -428,9 +507,6 @@ const DevicePermissions: React.FC = () => {
                             <Descriptions.Item label="设备ID" span={2}>
                                 {editingPermission?.deviceId || '-'}
                             </Descriptions.Item>
-                            <Descriptions.Item label="主机设备编号">
-                                -
-                            </Descriptions.Item>
                             <Descriptions.Item label="电脑名">
                                 {editingPermission?.computerName || '-'}
                             </Descriptions.Item>
@@ -443,7 +519,7 @@ const DevicePermissions: React.FC = () => {
                             <Descriptions.Item label="所在开发室">
                                 -
                             </Descriptions.Item>
-                            <Descriptions.Item label="登录用户编号">
+                            <Descriptions.Item label="登录用户ID">
                                 {editingPermission?.userId || '-'}
                             </Descriptions.Item>
                             <Descriptions.Item label="登录用户名">
@@ -475,7 +551,13 @@ const DevicePermissions: React.FC = () => {
                                             name="domainName"
                                             control={formControl}
                                             render={({ field }) => (
-                                                <Select {...field} placeholder="请选择">
+                                                <Select 
+                                                    {...field} 
+                                                    placeholder="请选择"
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    allowClear
+                                                >
                                                     <Option value="D1">D1</Option>
                                                     <Option value="D2">D2</Option>
                                                     <Option value="D3">D3</Option>

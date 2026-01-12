@@ -66,14 +66,18 @@ export interface DevicePermissionList {
   deptId: string;
   loginUsername: string;
   domainStatus: number;
+  domainName?: string;
   domainGroup: string;
   noDomainReason: string;
   smartitStatus: number;
+  smartitStatusText?: string; // 存储文本值：本地、远程、未安装
   noSmartitReason: string;
   usbStatus: number;
+  usbStatusText?: string; // 存储文本值：关闭、数据、3G网卡
   usbReason: string;
   usbExpireDate: string | null;
   antivirusStatus: number;
+  antivirusStatusText?: string; // 存储文本值：自动、手动
   noSymantecReason: string;
   remark: string;
   createTime: string;
@@ -87,14 +91,18 @@ export interface DevicePermissionInsert {
   permissionId?: string;
   deviceId: string;
   domainStatus?: number | null;
+  domainName?: string;
   domainGroup?: string;
   noDomainReason?: string;
   smartitStatus?: number | null;
+  smartitStatusText?: string; // 存储文本值：本地、远程、未安装
   noSmartitReason?: string;
   usbStatus?: number | null;
+  usbStatusText?: string; // 存储文本值：关闭、数据、3G网卡
   usbReason?: string;
   usbExpireDate?: string | null;
   antivirusStatus?: number | null;
+  antivirusStatusText?: string; // 存储文本值：自动、手动
   noSymantecReason?: string;
   remark?: string;
   createTime?: string;
