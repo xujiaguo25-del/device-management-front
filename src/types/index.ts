@@ -28,7 +28,7 @@ export interface LoginResponse {
 // パスワード変更リクエスト
 export interface ChangePasswordRequest {
   userId: string;
-  currentPassword: string;
+  currentPassword?: string; // 管理者が他のユーザーのパスワードを変更する場合は不要
   newPassword: string;
 }
 

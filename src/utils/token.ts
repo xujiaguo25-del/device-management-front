@@ -1,33 +1,41 @@
 /**
- * JWT Token 验证工具
+ * JWT Token 検証ユーティリティ
  */
 
 /**
- * 解析 JWT token 的 payload
+ * JWT token の payload を解析
  * @param token JWT token
- * @returns payload 对象或 null
+ * @returns payload オブジェクトまたは null
  */
-const parseJWTPayload = (token: string): any | null => {
+interface JWTPayload {
+  exp?: number;
+  [key: string]: unknown;
+}
+
+const parseJWTPayload = (token: string): JWTPayload | null => {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) {
       return null;
     }
     
-    // 解码 base64 payload
+    // base64 payload をデコード
     const payload = parts[1];
     const decodedPayload = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
     return JSON.parse(decodedPayload);
   } catch (error) {
-    console.error('JWT token 解析失败:', error);
+    // 開発環境でのみエラーログを出力
+    if (import.meta.env.DEV) {
+      console.error('JWT token 解析に失敗しました:', error);
+    }
     return null;
   }
 };
 
 /**
- * 检查 token 是否过期
+ * token が过期しているかチェック
  * @param token JWT token
- * @returns true 如果 token 有效（未过期），false 如果过期或无效
+ * @returns true の場合、token が有効（未过期）、false の場合、过期または無効
  */
 export const isTokenValid = (token: string | null): boolean => {
   if (!token) {
@@ -39,10 +47,10 @@ export const isTokenValid = (token: string | null): boolean => {
     return false;
   }
 
-  // 检查是否有 exp (expiration time) 字段
+  // exp (expiration time) フィールドがあるかチェック
   if (payload.exp) {
-    const currentTime = Math.floor(Date.now() / 1000); // 当前时间（秒）
-    // 如果过期时间小于当前时间，token 已过期
+    const currentTime = Math.floor(Date.now() / 1000); // 現在時刻（秒）
+    // 过期時刻が現在時刻より小さい場合、token は过期
     if (payload.exp < currentTime) {
       return false;
     }
@@ -52,10 +60,10 @@ export const isTokenValid = (token: string | null): boolean => {
 };
 
 /**
- * 检查 token 是否即将过期（在指定时间内过期）
+ * token が間もなく过期するかチェック（指定時間内に过期）
  * @param token JWT token
- * @param bufferSeconds 缓冲时间（秒），默认 300 秒（5分钟）
- * @returns true 如果 token 即将过期
+ * @param bufferSeconds バッファ時間（秒）、デフォルト 300 秒（5分）
+ * @returns true の場合、token が間もなく过期
  */
 export const isTokenExpiringSoon = (token: string | null, bufferSeconds: number = 300): boolean => {
   if (!token) {
