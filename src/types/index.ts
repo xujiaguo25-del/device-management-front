@@ -118,3 +118,24 @@ export interface ListResponse<T> {
   page: number;
   size: number;
 }
+
+// Dict types 
+export interface DictItem {
+  dictId: number;
+  dictItemName: string;
+  sort: number;
+}
+
+export interface DictTypeGroup {
+  typeCode: string;
+  items: DictItem[];
+}
+
+export interface DictSuccessResponse {
+  code: number;
+  message: string;
+  data: DictTypeGroup[];
+  total: number | null;
+  page: number | null;
+  size: number | null;
+}
