@@ -55,10 +55,10 @@ export const request = async (
         throw new Error(errorMessage);
       }
 
-      // その他の API：ローカル状態をクリアしてログインへリダイレクト
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_info');
-      window.location.href = '/login';
+      // その他の API：标记为401过期，触发事件通知组件
+      sessionStorage.setItem('token_expired_401', 'true');
+      // 触发自定义事件，通知组件token已过期
+      window.dispatchEvent(new CustomEvent('token-expired-401'));
       throw new Error('認証されていません。再度ログインしてください');
     }
     
