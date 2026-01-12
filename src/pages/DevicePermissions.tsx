@@ -38,17 +38,17 @@ const { TextArea } = Input;
 
 interface PermissionFormData {
     deviceId: string;
-    domainStatus?: number | null;
+    domainName?: string;
     domainGroup?: string;
     noDomainReason?: string;
-    smartitStatus?: number | null;
+    smartitStatus?: string;
     noSmartitReason?: string;
-    usbStatus?: number | null;
+    usbStatus?: string;
     usbReason?: string;
-    usbExpireDate?: dayjs.Dayjs | null;
-    antivirusStatus?: number | null;
+    useEndDate?: dayjs.Dayjs | null;
+    connectionStatus?: string;
     noSymantecReason?: string;
-    remark?: string;
+    remarks?: string;
 }
 
 interface SearchFormData {
@@ -119,19 +119,22 @@ const DevicePermissions: React.FC = () => {
             if (response.code === 200 && response.data) {
                 const permission = response.data;
                 setEditingPermission(permission);
-                // 填充表单数据
+                // 填充表单数据，转换数据格式以匹配表单
                 setValue('deviceId', permission.deviceId);
-                setValue('domainStatus', permission.domainStatus);
-                setValue('domainGroup', permission.domainGroup);
-                setValue('noDomainReason', permission.noDomainReason);
-                setValue('smartitStatus', permission.smartitStatus);
-                setValue('noSmartitReason', permission.noSmartitReason);
-                setValue('usbStatus', permission.usbStatus);
-                setValue('usbReason', permission.usbReason);
-                setValue('usbExpireDate', permission.usbExpireDate ? dayjs(permission.usbExpireDate) : null);
-                setValue('antivirusStatus', permission.antivirusStatus);
-                setValue('noSymantecReason', permission.noSymantecReason);
-                setValue('remark', permission.remark);
+                setValue('domainName', ''); // 域名需要从后端获取或设置默认值
+                setValue('domainGroup', permission.domainGroup || '');
+                setValue('noDomainReason', permission.noDomainReason || '');
+                // 转换 smartitStatus: 1->'本地', 0->'未安装'，或其他映射
+                setValue('smartitStatus', permission.smartitStatus === 1 ? '本地' : permission.smartitStatus === 0 ? '未安装' : '');
+                setValue('noSmartitReason', permission.noSmartitReason || '');
+                // 转换 usbStatus: 1->'数据', 0->'关闭'，或其他映射
+                setValue('usbStatus', permission.usbStatus === 1 ? '数据' : permission.usbStatus === 0 ? '关闭' : '');
+                setValue('usbReason', permission.usbReason || '');
+                setValue('useEndDate', permission.usbExpireDate ? dayjs(permission.usbExpireDate) : null);
+                // 转换 antivirusStatus: 1->'自动', 0->'手动'，或其他映射
+                setValue('connectionStatus', permission.antivirusStatus === 1 ? '自动' : permission.antivirusStatus === 0 ? '手动' : '');
+                setValue('noSymantecReason', permission.noSymantecReason || '');
+                setValue('remarks', permission.remark || '');
                 setModalVisible(true);
             } else {
                 message.error(response.message || '获取权限详情失败');
@@ -146,19 +149,23 @@ const DevicePermissions: React.FC = () => {
     // 提交表单
     const onSubmitForm = async (data: PermissionFormData) => {
         try {
+            // 转换表单数据为后端需要的格式
             const permissionData: DevicePermissionInsert = {
                 deviceId: data.deviceId,
-                domainStatus: data.domainStatus !== undefined ? Number(data.domainStatus) : null,
+                domainStatus: null, // 根据域名或其他逻辑设置
                 domainGroup: data.domainGroup,
                 noDomainReason: data.noDomainReason,
-                smartitStatus: data.smartitStatus !== undefined ? Number(data.smartitStatus) : null,
+                // 转换 smartitStatus: '本地'->1, '远程'->1, '未安装'->0
+                smartitStatus: data.smartitStatus === '本地' || data.smartitStatus === '远程' ? 1 : data.smartitStatus === '未安装' ? 0 : null,
                 noSmartitReason: data.noSmartitReason,
-                usbStatus: data.usbStatus !== undefined ? Number(data.usbStatus) : null,
+                // 转换 usbStatus: '数据'->1, '3G网卡'->1, '关闭'->0
+                usbStatus: data.usbStatus === '数据' || data.usbStatus === '3G网卡' ? 1 : data.usbStatus === '关闭' ? 0 : null,
                 usbReason: data.usbReason,
-                usbExpireDate: data.usbExpireDate ? data.usbExpireDate.format('YYYY-MM-DD') : null,
-                antivirusStatus: data.antivirusStatus !== undefined ? Number(data.antivirusStatus) : null,
+                usbExpireDate: data.useEndDate ? data.useEndDate.format('YYYY-MM-DD') : null,
+                // 转换 connectionStatus: '自动'->1, '手动'->0
+                antivirusStatus: data.connectionStatus === '自动' ? 1 : data.connectionStatus === '手动' ? 0 : null,
                 noSymantecReason: data.noSymantecReason,
-                remark: data.remark,
+                remark: data.remarks,
             };
 
             // 编辑模式
@@ -394,18 +401,21 @@ const DevicePermissions: React.FC = () => {
                 title={`设备权限详情 - ${editingPermission?.deviceId || ''}`}
                 open={modalVisible}
                 onCancel={() => {
+                    message.info('已取消编辑');
                     setModalVisible(false);
                     resetForm();
                     setEditingPermission(null);
                 }}
                 footer={null}
                 width={1000}
+                confirmLoading={loading}
                 style={{ top: 20 }}
                 destroyOnClose
             >
                 <Form
                     layout="vertical"
                     onFinish={handleFormSubmit(onSubmitForm)}
+                    initialValues={{ remember: true }}
                 >
                     {/* 设备基本信息区域 - 不可编辑 */}
                     <Card
@@ -415,30 +425,31 @@ const DevicePermissions: React.FC = () => {
                         bordered={false}
                     >
                         <Descriptions column={2} bordered size="small">
-                            <Descriptions.Item label="权限ID" span={2}>
-                                {editingPermission?.permissionId || '-'}
-                            </Descriptions.Item>
                             <Descriptions.Item label="设备ID" span={2}>
                                 {editingPermission?.deviceId || '-'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="主机设备编号">
+                                -
                             </Descriptions.Item>
                             <Descriptions.Item label="电脑名">
                                 {editingPermission?.computerName || '-'}
                             </Descriptions.Item>
-                            <Descriptions.Item label="IP地址">
-                                {editingPermission?.ipAddress && editingPermission.ipAddress.length > 0 
-                                    ? editingPermission.ipAddress.join(', ') 
-                                    : '-'}
+                            <Descriptions.Item label="主机型号">
+                                -
                             </Descriptions.Item>
-                            <Descriptions.Item label="用户ID">
+                            <Descriptions.Item label="所在项目">
+                                -
+                            </Descriptions.Item>
+                            <Descriptions.Item label="所在开发室">
+                                -
+                            </Descriptions.Item>
+                            <Descriptions.Item label="登录用户编号">
                                 {editingPermission?.userId || '-'}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="用户名">
-                                {editingPermission?.name || '-'}
                             </Descriptions.Item>
                             <Descriptions.Item label="登录用户名">
                                 {editingPermission?.loginUsername || '-'}
                             </Descriptions.Item>
-                            <Descriptions.Item label="部门ID">
+                            <Descriptions.Item label="部门">
                                 {editingPermission?.deptId || '-'}
                             </Descriptions.Item>
                         </Descriptions>
@@ -456,34 +467,59 @@ const DevicePermissions: React.FC = () => {
                             <h4 style={{ marginBottom: 12, color: '#1890ff' }}>域配置</h4>
                             <Row gutter={24} style={{ marginBottom: 16 }}>
                                 <Col span={6}>
-                                    <Form.Item label="Domain状态">
+                                    <Form.Item
+                                        label="域名："
+                                        name="domainName"
+                                    >
                                         <Controller
-                                            name="domainStatus"
+                                            name="domainName"
                                             control={formControl}
                                             render={({ field }) => (
-                                                <Select {...field} placeholder="请选择" allowClear>
-                                                    <Option value={1}>是</Option>
-                                                    <Option value={0}>否</Option>
+                                                <Select {...field} placeholder="请选择">
+                                                    <Option value="D1">D1</Option>
+                                                    <Option value="D2">D2</Option>
+                                                    <Option value="D3">D3</Option>
+                                                    <Option value="D4">D4</Option>
+                                                    <Option value="D5">D5</Option>
+                                                    <Option value="D6">D6</Option>
+                                                    <Option value="D7">D7</Option>
+                                                    <Option value="EU">EU</Option>
+                                                    <Option value="MG">MG</Option>
+                                                    <Option value="EQU">EQU</Option>
+                                                    <Option value="NRI-01">NRI-01</Option>
+                                                    <Option value="MS">MS</Option>
                                                 </Select>
                                             )}
                                         />
                                     </Form.Item>
                                 </Col>
                                 <Col span={6}>
-                                    <Form.Item label="Domain组">
+                                    <Form.Item
+                                        label="域内组名："
+                                        name="domainGroup"
+                                        rules={[
+                                            { max: 50, message: '域内组名长度不能超过50个字符！' }
+                                        ]}
+                                    >
                                         <Controller
                                             name="domainGroup"
                                             control={formControl}
-                                            render={({ field }) => <Input {...field} placeholder="请输入Domain组" />}
+                                            render={({ field }) => <Input {...field} placeholder="请输入域内组名" />}
                                         />
                                     </Form.Item>
                                 </Col>
-                                <Col span={12}>
-                                    <Form.Item label="无Domain原因">
+                                <Col span={8}>
+                                    <Form.Item
+                                        label="不加域理由："
+                                        name="noDomainReason"
+                                        rules={[
+                                            { max: 200, message: '不加域理由长度不能超过200个字符！' }
+                                        ]}
+                                    >
                                         <Controller
                                             name="noDomainReason"
                                             control={formControl}
-                                            render={({ field }) => <TextArea {...field} placeholder="如设备无需加入域，请填写理由" rows={2} />}
+                                            render={({ field }) => <TextArea {...field} rows={2} placeholder="如设备无需加入域，请填写理由" />}
                                         />
                                     </Form.Item>
                                 </Col>
@@ -495,25 +531,35 @@ const DevicePermissions: React.FC = () => {
                             <h4 style={{ marginBottom: 12, color: '#1890ff' }}>SmartIT配置</h4>
                             <Row gutter={24} style={{ marginBottom: 16 }}>
                                 <Col span={6}>
-                                    <Form.Item label="SmartIT状态">
+                                    <Form.Item
+                                        label="SmartIT状态："
+                                        name="smartitStatus"
+                                    >
                                         <Controller
                                             name="smartitStatus"
                                             control={formControl}
                                             render={({ field }) => (
-                                                <Select {...field} placeholder="请选择" allowClear>
-                                                    <Option value={1}>是</Option>
-                                                    <Option value={0}>否</Option>
+                                                <Select {...field} placeholder="请选择">
+                                                    <Option value="本地">本地</Option>
+                                                    <Option value="远程">远程</Option>
+                                                    <Option value="未安装">未安装</Option>
                                                 </Select>
                                             )}
                                         />
                                     </Form.Item>
                                 </Col>
-                                <Col span={18}>
-                                    <Form.Item label="无SmartIT原因">
+                                <Col span={8}>
+                                    <Form.Item
+                                        label="不安装SmartIT理由："
+                                        name="noSmartitReason"
+                                        rules={[
+                                            { max: 200, message: '不安装SmartIT理由长度不能超过200个字符！' }
+                                        ]}
+                                    >
                                         <Controller
                                             name="noSmartitReason"
                                             control={formControl}
-                                            render={({ field }) => <TextArea {...field} placeholder="如不安装SmartIT，请填写理由" rows={2} />}
+                                            render={({ field }) => <TextArea {...field} rows={2} placeholder="如不安装SmartIT，请填写理由" />}
                                         />
                                     </Form.Item>
                                 </Col>
@@ -525,39 +571,52 @@ const DevicePermissions: React.FC = () => {
                             <h4 style={{ marginBottom: 12, color: '#1890ff' }}>USB配置</h4>
                             <Row gutter={24} style={{ marginBottom: 16 }}>
                                 <Col span={6}>
-                                    <Form.Item label="USB状态">
+                                    <Form.Item
+                                        label="USB状态："
+                                        name="usbStatus"
+                                    >
                                         <Controller
                                             name="usbStatus"
                                             control={formControl}
                                             render={({ field }) => (
-                                                <Select {...field} placeholder="请选择" allowClear>
-                                                    <Option value={1}>是</Option>
-                                                    <Option value={0}>否</Option>
+                                                <Select {...field} placeholder="请选择">
+                                                    <Option value="关闭">关闭</Option>
+                                                    <Option value="数据">数据</Option>
+                                                    <Option value="3G网卡">3G网卡</Option>
                                                 </Select>
                                             )}
                                         />
                                     </Form.Item>
                                 </Col>
                                 <Col span={8}>
-                                    <Form.Item label="USB原因">
+                                    <Form.Item
+                                        label="USB开通理由："
+                                        name="usbReason"
+                                        rules={[
+                                            { max: 200, message: 'USB开通理由长度不能超过200个字符！' }
+                                        ]}
+                                    >
                                         <Controller
                                             name="usbReason"
                                             control={formControl}
-                                            render={({ field }) => <TextArea {...field} placeholder="如开通USB权限，请填写理由" rows={2} />}
+                                            render={({ field }) => <TextArea {...field} rows={2} placeholder="如开通USB权限，请填写理由" />}
                                         />
                                     </Form.Item>
                                 </Col>
                                 <Col span={6}>
-                                    <Form.Item label="USB过期日期">
+                                    <Form.Item
+                                        label="使用截止日期："
+                                        name="useEndDate"
+                                    >
                                         <Controller
-                                            name="usbExpireDate"
+                                            name="useEndDate"
                                             control={formControl}
                                             render={({ field }) => (
                                                 <DatePicker
                                                     {...field}
                                                     style={{ width: '100%' }}
-                                                    format="YYYY-MM-DD"
                                                     placeholder="截止日期"
+                                                    format="YYYY-MM-DD"
                                                     value={field.value ? dayjs(field.value) : null}
                                                     onChange={(date) => field.onChange(date)}
                                                 />
@@ -573,25 +632,34 @@ const DevicePermissions: React.FC = () => {
                             <h4 style={{ marginBottom: 12, color: '#1890ff' }}>防病毒配置</h4>
                             <Row gutter={24} style={{ marginBottom: 16 }}>
                                 <Col span={6}>
-                                    <Form.Item label="防病毒状态">
+                                    <Form.Item
+                                        label="连接状态："
+                                        name="connectionStatus"
+                                    >
                                         <Controller
-                                            name="antivirusStatus"
+                                            name="connectionStatus"
                                             control={formControl}
                                             render={({ field }) => (
-                                                <Select {...field} placeholder="请选择" allowClear>
-                                                    <Option value={1}>是</Option>
-                                                    <Option value={0}>否</Option>
+                                                <Select {...field} placeholder="请选择">
+                                                    <Option value="自动">自动</Option>
+                                                    <Option value="手动">手动</Option>
                                                 </Select>
                                             )}
                                         />
                                     </Form.Item>
                                 </Col>
-                                <Col span={18}>
-                                    <Form.Item label="无Symantec原因">
+                                <Col span={8}>
+                                    <Form.Item
+                                        label="无Symantec理由："
+                                        name="noSymantecReason"
+                                        rules={[
+                                            { max: 200, message: '理由长度不能超过200个字符！' }
+                                        ]}
+                                    >
                                         <Controller
                                             name="noSymantecReason"
                                             control={formControl}
-                                            render={({ field }) => <TextArea {...field} placeholder="如未安装Symantec防病毒软件，请填写理由" rows={2} />}
+                                            render={({ field }) => <TextArea {...field} rows={2} placeholder="如未安装Symantec防病毒软件，请填写理由" />}
                                         />
                                     </Form.Item>
                                 </Col>
@@ -602,18 +670,21 @@ const DevicePermissions: React.FC = () => {
                         <div style={{ marginBottom: 20 }}>
                             <h4 style={{ marginBottom: 12, color: '#1890ff' }}>备注</h4>
                             <Form.Item
-                                name="remark"
+                                name="remarks"
+                                rules={[
+                                    { max: 500, message: '备注长度不能超过500个字符！' }
+                                ]}
                             >
                                 <Controller
-                                    name="remark"
+                                    name="remarks"
                                     control={formControl}
-                                    render={({ field }) => <TextArea {...field} placeholder="请输入备注信息" rows={2} style={{ width: '70%' }} />}
+                                    render={({ field }) => <TextArea {...field} rows={2} placeholder="请输入备注信息" style={{ width: '70%' }} />}
                                 />
                             </Form.Item>
                         </div>
                     </Card>
 
-                    {/* 操作按钮 */}
+                    {/* 操作按钮和更新信息 */}
                     <Row gutter={24} style={{ marginTop: 24 }}>
                         <Col span={12}>
                             <Space size="middle">
@@ -627,6 +698,7 @@ const DevicePermissions: React.FC = () => {
                                 </Button>
                                 <Button
                                     onClick={() => {
+                                        message.info('已取消编辑');
                                         setModalVisible(false);
                                         resetForm();
                                         setEditingPermission(null);
