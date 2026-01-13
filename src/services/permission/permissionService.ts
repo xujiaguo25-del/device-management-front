@@ -419,10 +419,9 @@ export const exportPermissionsExcel = async (): Promise<void> => {
         setTimeout(() => {
             // 准备表头
             const headers = [
-                '权限ID', '设备ID', '电脑名', '用户ID', '用户名', '登录用户名',
-                'IP地址', 'Domain状态', 'Domain组', '无Domain原因',
-                'SmartIT状态', '无SmartIT原因', 'USB状态', 'USB原因', 'USB过期日期',
-                '防病毒状态', '无Symantec原因', '备注'
+                '权限ID', '设备ID', '电脑名', 'IP地址', '用户ID', '用户名', '部门', 
+                '登录用户名', 'Domain状态', 'Domain组', 'SmartIT状态', 'USB状态', 'USB过期日期',
+                '防病毒状态', '备注'
             ];
 
             // 准备Excel数据
@@ -430,21 +429,18 @@ export const exportPermissionsExcel = async (): Promise<void> => {
                 p.permissionId,
                 p.deviceId,
                 p.computerName,
+                p.ipAddress?.join(', ') || '',
                 p.userId,
                 p.name,
+                p.deptId || '',
                 p.loginUsername,
-                p.ipAddress?.join(', ') || '',
-                p.domainStatus === 1 ? '是' : '否',
+                p.domainName || '', // Domain状态显示domainName
                 p.domainGroup || '',
-                p.noDomainReason || '',
-                p.smartitStatus === 1 ? '是' : '否',
-                p.noSmartitReason || '',
-                p.usbStatus === 1 ? '是' : '否',
-                p.usbReason || '',
-                p.usbExpireDate || '',
-                p.antivirusStatus === 1 ? '是' : '否',
-                p.noSymantecReason || '',
-                p.remark || '',
+                p.smartitStatusText || '', // SmartIT状态使用文本值
+                p.usbStatusText || '', // USB状态使用文本值
+                p.usbExpireDate || '', // USB过期日期
+                p.antivirusStatusText || '', // 防病毒状态使用文本值
+                p.remark || '', // 备注
             ]);
 
             // 创建工作簿
@@ -459,20 +455,17 @@ export const exportPermissionsExcel = async (): Promise<void> => {
                 { wch: 12 }, // 权限ID
                 { wch: 12 }, // 设备ID
                 { wch: 15 }, // 电脑名
+                { wch: 20 }, // IP地址
                 { wch: 12 }, // 用户ID
                 { wch: 12 }, // 用户名
+                { wch: 12 }, // 部门
                 { wch: 15 }, // 登录用户名
-                { wch: 20 }, // IP地址
-                { wch: 12 }, // Domain状态
+                { wch: 15 }, // Domain状态
                 { wch: 12 }, // Domain组
-                { wch: 20 }, // 无Domain原因
                 { wch: 15 }, // SmartIT状态
-                { wch: 20 }, // 无SmartIT原因
-                { wch: 12 }, // USB状态
-                { wch: 20 }, // USB原因
+                { wch: 15 }, // USB状态
                 { wch: 15 }, // USB过期日期
                 { wch: 15 }, // 防病毒状态
-                { wch: 20 }, // 无Symantec原因
                 { wch: 30 }, // 备注
             ];
             ws['!cols'] = colWidths;
@@ -526,29 +519,57 @@ export const exportPermissionsExcel = async (): Promise<void> => {
                     if (!ws[cellAddress]) continue;
                     ws[cellAddress].s = cellStyle;
                     
-                    // 状态列特殊处理（是/否）
+                    // 状态列特殊处理（根据文本值设置颜色）
                     const colIndex = C;
-                    if ([7, 10, 12, 15].includes(colIndex)) { // Domain状态、SmartIT状态、USB状态、防病毒状态
-                        const value = ws[cellAddress].v;
-                        if (value === '是') {
+                    const value = ws[cellAddress].v;
+                    
+                    if (colIndex === 10) { // SmartIT状态（第11列，索引10）
+                        if (value === '本地' || value === '远程') {
                             ws[cellAddress].s = {
                                 ...cellStyle,
                                 fill: { fgColor: { rgb: 'C6EFCE' } }, // 浅绿色
                                 font: { color: { rgb: '006100' } } // 深绿色文字
                             };
-                        } else if (value === '否') {
+                        } else if (value === '未安装') {
                             ws[cellAddress].s = {
                                 ...cellStyle,
                                 fill: { fgColor: { rgb: 'FFC7CE' } }, // 浅红色
                                 font: { color: { rgb: '9C0006' } } // 深红色文字
                             };
                         }
+                    } else if (colIndex === 11) { // USB状态（第12列，索引11）
+                        if (value === '数据' || value === '3G网卡') {
+                            ws[cellAddress].s = {
+                                ...cellStyle,
+                                fill: { fgColor: { rgb: 'C6EFCE' } }, // 浅绿色
+                                font: { color: { rgb: '006100' } } // 深绿色文字
+                            };
+                        } else if (value === '关闭') {
+                            ws[cellAddress].s = {
+                                ...cellStyle,
+                                fill: { fgColor: { rgb: 'FFC7CE' } }, // 浅红色
+                                font: { color: { rgb: '9C0006' } } // 深红色文字
+                            };
+                        }
+                    } else if (colIndex === 13) { // 防病毒状态（第14列，索引13）
+                        if (value === '自动') {
+                            ws[cellAddress].s = {
+                                ...cellStyle,
+                                fill: { fgColor: { rgb: 'C6EFCE' } }, // 浅绿色
+                                font: { color: { rgb: '006100' } } // 深绿色文字
+                            };
+                        } else if (value === '手动') {
+                            ws[cellAddress].s = {
+                                ...cellStyle,
+                                fill: { fgColor: { rgb: 'FFE699' } }, // 浅黄色
+                                font: { color: { rgb: '9C6500' } } // 深黄色文字
+                            };
+                        }
                     }
                 }
             }
 
-            // 冻结首行
-            ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft', state: 'frozen' };
+            // 注意：xlsx-js-style 不支持冻结行功能，已移除 !freeze 属性
 
             // 将工作表添加到工作簿
             XLSX.utils.book_append_sheet(wb, ws, '权限列表');
