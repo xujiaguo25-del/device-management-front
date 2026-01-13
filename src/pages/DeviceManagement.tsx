@@ -1,6 +1,6 @@
 // pages/DeviceManagement.tsx
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Space, Tag, Input, Select, Row, Col, Modal, message, Pagination } from 'antd';
+import { Table, Button, Space, Tag, Input, Select, Row, Col, Modal, message, Pagination } from 'antd';
 import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import Layout from '../components/common/Layout';
 import type { DeviceListItem, DeviceQueryParams } from '../types/index';
@@ -309,7 +309,7 @@ const DeviceManagement: React.FC = () => {
   };
 
   // 处理页面大小变化
-  const handlePageSizeChange = (current: number, size: number) => {
+  const handlePageSizeChange = (size: number) => {
     setSearchParams({
       ...searchParams,
       page: 1,
@@ -554,7 +554,7 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 220, // 增加宽度
       fixed: 'right' as const,
-      render: (text: string | undefined, record: DeviceListItem) => (
+      render: (_: string | undefined, record: DeviceListItem) => (
         <div style={{ ...cellStyle, padding: '0 4px' }}>
           <Space size={[4, 0]} wrap>
             <Button 
