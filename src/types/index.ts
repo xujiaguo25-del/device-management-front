@@ -71,11 +71,11 @@ export interface DeviceQueryParams {
 }
 
 // 设备响应接口
-export interface DeviceResponse {
+export interface DeviceApiResponse<T> {
   code: number; // 响应码
   message: string; // 响应消息
   data: {
-    list: DeviceListItem[]; // 设备列表
+    list: T[]; // 设备列表
     total: number; // 总数量
     page: number; // 当前页码
     pageSize: number; // 每页大小

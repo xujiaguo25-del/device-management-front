@@ -4,6 +4,7 @@ import { Table, Button, Space, Tag, Input, Select, Row, Col, Modal, message, Pag
 import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import Layout from '../components/common/Layout';
 import type { DeviceListItem, DeviceQueryParams } from '../types/index';
+import { getDeviceList } from '../services/device/deviceService'; // 导入 service
 
 const { Search } = Input;
 const { Option } = Select;
@@ -23,271 +24,9 @@ const DeviceManagement: React.FC = () => {
   const fetchDevices = async (params: DeviceQueryParams) => {
     setLoading(true);
     try {
-      // 这里应该调用API接口
-      // const response = await deviceApi.getDeviceList(params);
-      // setDevices(response.data.list);
-      // setTotal(response.data.total);
-      
-      // 模拟数据 - 修正重复字段和缺少的字段，并将deli改为dell
-      const mockData: DeviceListItem[] = [
-        {
-          deviceId: 'HYRON-1 PC-DC-01',
-          monitors: ['HYRON-1 Minibor-01'],
-          userId: 'JS0010',
-          deviceModel: 'dell-S000',
-          computerName: 'DA04-PC-1',
-          loginUsername: 'xming',
-          ipAddresses: ['192.168.0.1'],
-          osName: 'Windows11',
-          memorySize: '16',
-          ssdSize: '512',
-          hddSize: '—',
-          project: '项目A',
-          devRoom: '开发室A',
-          confirmStatus: '已确认',
-          remark: '',
-          userName: '小娟',
-          tags: [],
-        },
-        {
-          deviceId: 'HYRON-1 PC-DC-02',
-          monitors: ['HYRON-1 Minibor-02'],
-          userId: 'JS0011',
-          deviceModel: 'dell-S010',
-          computerName: 'DA04-PC-2',
-          loginUsername: 'zhban',
-          ipAddresses: ['192.168.0.2', '192.168.0.11'],
-          osName: 'Windows11',
-          memorySize: '16',
-          ssdSize: '512',
-          hddSize: '—',
-          project: '项目C',
-          devRoom: '开发室C',
-          confirmStatus: '已确认',
-          remark: '',
-          userName: '张三',
-          tags: [],
-        },
-        {
-          deviceId: 'HYRON-1 PC-DC-03',
-          monitors: ['HYRON-1 Minibor-03'],
-          userId: 'JS0012',
-          deviceModel: 'dell-S020',
-          computerName: 'DA04-PC-3',
-          loginUsername: 'lisi',
-          ipAddresses: ['192.168.0.3'],
-          osName: 'Windows11',
-          memorySize: '32',
-          ssdSize: '512',
-          hddSize: '512',
-          project: '项目A',
-          devRoom: '开发室A',
-          confirmStatus: '已确认',
-          remark: '',
-          userName: '李四',
-          tags: [],
-        },
-        {
-          deviceId: 'HYRON-1 PC-DC-04',
-          monitors: ['HYRON-1 Minibor-04', 'HYRON-1 Minibor-11'],
-          userId: 'JS0013',
-          deviceModel: 'dell-S030',
-          computerName: 'DA04-PC-4',
-          loginUsername: 'vangpuu',
-          ipAddresses: ['192.168.0.4'],
-          osName: 'Windows10',
-          memorySize: '16',
-          ssdSize: '512',
-          hddSize: '—',
-          project: '项目B',
-          devRoom: '开发室B',
-          confirmStatus: '未确认',
-          remark: '',
-          userName: '王五',
-          tags: [],
-        },
-        {
-          deviceId: 'HYRON-1 PC-DC-05',
-          monitors: ['HYRON-1 Minibor-05'],
-          userId: 'JS0014',
-          deviceModel: 'dell-S040',
-          computerName: 'DA04-PC-5',
-          loginUsername: 'nuke',
-          ipAddresses: ['192.168.0.5'],
-          osName: 'Windows11',
-          memorySize: '16',
-          ssdSize: '512',
-          hddSize: '—',
-          project: '项目D',
-          devRoom: '开发室D',
-          confirmStatus: '已确认',
-          remark: '',
-          userName: '李松',
-          tags: [],
-        },
-        {
-          deviceId: 'HYRON-1 PC-DC-06',
-          monitors: ['HYRON-1 Minibor-06'],
-          userId: 'JS0015',
-          deviceModel: 'Mac mini',
-          computerName: 'DA04-PC-6',
-          loginUsername: 'auxc',
-          ipAddresses: ['192.168.0.6', '192.168.0.12', '192.168.0.13'],
-          osName: 'Mac OS',
-          memorySize: '16',
-          ssdSize: '512',
-          hddSize: '—',
-          project: '项目C',
-          devRoom: '开发室C',
-          confirmStatus: '未确认',
-          remark: '',
-          userName: '李雪',
-          tags: [],
-        },
-        {
-          deviceId: 'HYRON-1 PC-DC-07',
-          monitors: ['HYRON-1 Minibor-07'],
-          userId: 'JS0016',
-          deviceModel: 'dell-S050',
-          computerName: 'DA04-PC-7',
-          loginUsername: 'jahr',
-          ipAddresses: ['192.168.0.7'],
-          osName: 'Windows11',
-          memorySize: '16',
-          ssdSize: '512',
-          hddSize: '1024',
-          project: '项目A',
-          devRoom: '开发室A',
-          confirmStatus: '已确认',
-          remark: '',
-          userName: '韩海峰',
-          tags: [],
-        },
-        {
-          deviceId: 'HYRON-1 PC-DC-08',
-          monitors: ['HYRON-1 Minibor-08'],
-          userId: 'JS0017',
-          deviceModel: 'dell-S060',
-          computerName: 'DA04-PC-8',
-          loginUsername: 'heyh',
-          ipAddresses: ['192.168.0.8'],
-          osName: 'Windows10',
-          memorySize: '32',
-          ssdSize: '1024',
-          hddSize: '—',
-          project: '项目B',
-          devRoom: '开发室B',
-          confirmStatus: '已确认',
-          remark: '',
-          userName: '小红',
-          tags: [],
-        },
-        {
-          deviceId: 'HYRON-1 PC-DC-09',
-          monitors: ['HYRON-1 Minibor-09'],
-          userId: 'JS0018',
-          deviceModel: 'dell-S070',
-          computerName: 'DA04-PC-9',
-          loginUsername: 'li',
-          ipAddresses: ['192.168.0.9'],
-          osName: 'Windows11',
-          memorySize: '16',
-          ssdSize: '512',
-          hddSize: '—',
-          project: '项目D',
-          devRoom: '开发室D',
-          confirmStatus: '已确认',
-          remark: '',
-          userName: '小芳',
-          tags: [],
-        },
-        {
-          deviceId: 'HYRON-1 PC-DC-10',
-          monitors: ['HYRON-1 Minibor-10'],
-          userId: 'JS0019',
-          deviceModel: 'dell-S080',
-          computerName: 'DA04-PC-10',
-          loginUsername: 'zhub',
-          ipAddresses: ['192.168.0.10'],
-          osName: 'Windows11',
-          memorySize: '16',
-          ssdSize: '512',
-          hddSize: '—',
-          project: '项目A',
-          devRoom: '开发室A',
-          confirmStatus: '已确认',
-          remark: '',
-          userName: '小李',
-          tags: [],
-        },
-        {
-          deviceId: 'HYRON-1 PC-DC-11',
-          monitors: ['HYRON-1 Minibor-11'],
-          userId: 'JS0020',
-          deviceModel: 'dell-S090',
-          computerName: 'DA04-PC-11',
-          loginUsername: 'zhub',
-          ipAddresses: ['192.168.0.13'],
-          osName: 'Windows11',
-          memorySize: '16',
-          ssdSize: '512',
-          hddSize: '—',
-          project: '项目A',
-          devRoom: '开发室A',
-          confirmStatus: '已确认',
-          remark: '',
-          userName: '老丁',
-          tags: [],
-        },
-        {
-          deviceId: 'HYRON-1 PC-DC-12',
-          monitors: ['HYRON-1 Minibor-12'],
-          userId: 'JS0021',
-          deviceModel: 'dell-S100',
-          computerName: 'DA04-PC-12',
-          loginUsername: 'zhub',
-          ipAddresses: ['192.168.0.14'],
-          osName: 'Windows11',
-          memorySize: '16',
-          ssdSize: '512',
-          hddSize: '—',
-          project: '项目A',
-          devRoom: '开发室A',
-          confirmStatus: '已确认',
-          remark: '',
-          userName: '老张',
-          tags: [],
-        },
-        {
-          deviceId: 'HYRON-1 PC-DC-13',
-          monitors: ['HYRON-1 Minibor-13'],
-          userId: 'JS0022',
-          deviceModel: 'dell-S110',
-          computerName: 'DA04-PC-13',
-          loginUsername: 'zhub',
-          ipAddresses: ['192.168.0.15'],
-          osName: 'Windows11',
-          memorySize: '16',
-          ssdSize: '512',
-          hddSize: '—',
-          project: '项目C',
-          devRoom: '开发室B',
-          confirmStatus: '已确认',
-          remark: '',
-          userName: '老刘',
-          tags: [],
-        },
-      ];
-      
-      // 模拟分页效果 - 添加默认值
-      const page = params.page ?? 1; // 使用空值合并运算符
-      const pageSize = params.pageSize ?? 10;
-      const startIndex = (page - 1) * pageSize;
-      const endIndex = startIndex + pageSize;
-      const paginatedData = mockData.slice(startIndex, endIndex);
-      
-      setDevices(paginatedData);
-      setTotal(mockData.length);
+      const response = await getDeviceList(params);
+      setDevices(response.data.list);
+      setTotal(response.data.total);
     } catch (error) {
       message.error('获取设备列表失败');
     } finally {
@@ -538,7 +277,7 @@ const DeviceManagement: React.FC = () => {
       dataIndex: 'confirmStatus',
       align: 'center' as const,
       width: 100,
-      fixed: 'right' as const, // 和操作列一起固定在右侧
+      fixed: 'right' as const,
       render: (status: string) => {
         const color = status === '已确认' ? 'green' : 'red';
         return (
@@ -552,7 +291,7 @@ const DeviceManagement: React.FC = () => {
       title: '操作',
       key: 'action',
       align: 'center' as const,
-      width: 220, // 增加宽度
+      width: 220,
       fixed: 'right' as const,
       render: (_: string | undefined, record: DeviceListItem) => (
         <div style={{ ...cellStyle, padding: '0 4px' }}>
@@ -604,13 +343,21 @@ const DeviceManagement: React.FC = () => {
   };
 
   // 删除设备
-  const handleDeleteDevice = (deviceId: string) => {
+  const handleDeleteDevice = async (deviceId: string) => {
     Modal.confirm({
       title: '确认删除',
       content: `确定要删除设备 ${deviceId} 吗？`,
-      onOk: () => {
-        message.success(`设备 ${deviceId} 删除成功`);
-        // 调用API删除
+      onOk: async () => {
+        try {
+          // 在实际项目中，这里会调用真正的 API
+          // await deleteDevice(deviceId);
+          
+          // 重新获取列表
+          await fetchDevices(searchParams);
+          message.success(`设备 ${deviceId} 删除成功`);
+        } catch (error) {
+          message.error('删除设备失败');
+        }
       },
     });
   };
@@ -627,12 +374,12 @@ const DeviceManagement: React.FC = () => {
   return (
     <Layout title="设备管理">
       <div style={{ 
-        height: 'calc(94vh-200px)', // 限制整体高度
+        height: 'calc(94vh-200px)',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#fff', // 纯白背景，消除灰色边框感
-        padding: '20px', // 统一的内边距
-        overflow: 'hidden' // 防止外层出现滚动条
+        backgroundColor: '#fff',
+        padding: '20px',
+        overflow: 'hidden'
       }}>
         
         {/* 1. 顶部搜索区 */}
@@ -680,38 +427,32 @@ const DeviceManagement: React.FC = () => {
         </div>
 
         {/* 2. 表格区域 */}
-        {/*移除了 flex: 1，改为自适应高度，但最大不超过页面底部 */}
         <div style={{ 
-           // 移除 flex: 1，这样当数据少时，div高度会自动收缩，分页就会提上来
-           flex: '0 1 auto', 
-           overflow: 'hidden' 
+          flex: '0 1 auto',
+          overflow: 'hidden' 
         }}>
           <Table<DeviceListItem>
-            rowKey="key"
+            rowKey="deviceId"
             columns={columns}
             dataSource={devices}
             loading={loading}
-            // scroll.y 决定了表格的"最大"高度
-            // 当数据行数超过这个高度时，会出现表内滚动条
-            // 当数据行数很少时，表格高度会塌缩，不会强行撑开
             scroll={{
               x: 2100, 
               y: 'calc(100vh - 280px)', 
             }}
-            pagination={false} 
+            pagination={false}
             size="middle"
             bordered={false}
-            // 彻底移除表格外层可能的边框样式
-            style={{ margin: 0, padding: 0 }} 
+            style={{ margin: 0, padding: 0 }}
           />
         </div>
 
         {/* 3. 分页区域 */}
         <div style={{ 
-          marginTop: 16, // 控制与表格底部的距离
+          marginTop: 16,
           flexShrink: 0,
           textAlign: 'right',
-          paddingRight: 10 // 微调右侧对齐
+          paddingRight: 10
         }}>
           <Pagination
             current={searchParams.page}
@@ -722,11 +463,11 @@ const DeviceManagement: React.FC = () => {
             showQuickJumper
             showSizeChanger
             showTotal={(total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`}
-            pageSizeOptions={['10', '20', '50', '100']}
+            pageSizeOptions={['10', '15', '20']}
           />
         </div>
 
-        {/* 4. 弹窗 (保持不变) */}
+        {/* 4. 弹窗 */}
         <Modal
           title="设备详情"
           open={isModalVisible}
