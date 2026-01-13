@@ -501,7 +501,7 @@ const DeviceManagement: React.FC = () => {
                   onSearch={handleSearch}
                   onChange={(e) => setSearchValue(e.target.value)}
                   value={searchValue}
-                  style={{ width: 260 }}
+                  style={{ width: 285 }}
                 />
                 <Select 
                   placeholder="项目筛选" 
