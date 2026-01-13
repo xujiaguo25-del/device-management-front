@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { DictItem } from '../types';
-import { getDictByType, refreshDictCache } from '../services/api/dict';
+import { getDictByType } from '../services/api/dict';
 
 export const useDict = (typeCode: string) => {
   const [data, setData] = useState<DictItem[]>([]);
@@ -25,19 +25,5 @@ export const useDict = (typeCode: string) => {
     load();
   }, [load]);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      await refreshDictCache();
-      const items = await getDictByType(typeCode);
-      setData(items);
-    } catch (e: any) {
-      setError(e?.message || 'Failed to refresh');
-    } finally {
-      setLoading(false);
-    }
-  }, [typeCode]);
-
-  return { data, loading, error, refresh } as const;
+  return { data, loading, error } as const;
 };

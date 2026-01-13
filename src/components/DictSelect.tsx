@@ -1,24 +1,32 @@
 import React from 'react';
-import { Select, Button, Spin } from 'antd';
+import { Select, Spin } from 'antd';
 import type { DictItem } from '../types';
 import { useDict } from '../hooks/useDict';
 
 const { Option } = Select;
 
 interface DictSelectProps {
-  typeCode?: string; // optional when passing items directly
-  items?: DictItem[]; // if provided, use these items and don't call useDict
-  value?: number | string | null;
-  onChange?: (value: number | null) => void;
-  placeholder?: string;
-  style?: React.CSSProperties;
-  allowEmpty?: boolean;
-  emptyLabel?: string;
-  showRefresh?: boolean;
-  onRefresh?: () => void; // parent can provide refresh handler when using items
-  disabled?: boolean;
+  typeCode?: string; // 辞書タイプコード
+  items?: DictItem[]; // 直接提供する辞書アイテム
+  value?: number | string | null; // 選択値
+  onChange?: (value: number | null) => void; // 値変更コールバック
+  placeholder?: string; // プレースホルダー
+  style?: React.CSSProperties; // スタイル
+  allowEmpty?: boolean; // 空のオプションを表示
+  emptyLabel?: string; // 空オプションのラベル
+  disabled?: boolean; // 無効状態
 }
 
+/**
+ * 辞書データを表示するセレクトコンポーネント
+ * 
+ * 使い方:
+ * 1. 直接データを提供する場合（推奨）:
+ *    <DictSelect items={osOptions} placeholder="OSを選択" />
+ * 
+ * 2. 辞書タイプコードで自動取得:
+ *    <DictSelect typeCode="OS_TYPE" placeholder="OSを選択" />
+ */
 const DictSelect: React.FC<DictSelectProps> = ({
   typeCode,
   items,
@@ -28,18 +36,17 @@ const DictSelect: React.FC<DictSelectProps> = ({
   style,
   allowEmpty = true,
   emptyLabel = '-- 无 --',
-  showRefresh = false,
-  onRefresh,
   disabled = false,
 }) => {
-  // If parent provided items, use them; otherwise fall back to useDict
-  const { data, loading, error, refresh } = items ? { data: items, loading: false, error: null, refresh: undefined as unknown as () => void } : useDict(typeCode || '');
+  // itemsが提供されている場合はそれを使用、そうでない場合はuseDictで取得
+  const { data, loading, error } = items ? { data: items, loading: false, error: null } : useDict(typeCode || '');
 
+  // 値変更処理
   const handleChange = (v: string | number) => {
-    if (!onChange) return;
-    onChange(v ? Number(v) : null);
+    onChange?.(v ? Number(v) : null);
   };
 
+  // 選択値の処理
   const selectedValue = value === null || value === undefined ? undefined : Number(value);
 
   return (
@@ -65,12 +72,6 @@ const DictSelect: React.FC<DictSelectProps> = ({
         ))}
       </Select>
 
-      {showRefresh && (
-        <Button onClick={() => (onRefresh ? onRefresh() : refresh && refresh())} style={{ marginLeft: 12 }}>
-          刷新
-        </Button>
-      )}
-
       {loading && (
         <span style={{ marginLeft: 12 }}>
           <Spin size="small" />
@@ -78,7 +79,7 @@ const DictSelect: React.FC<DictSelectProps> = ({
       )}
 
       {error && (
-        <div style={{ color: 'red', marginLeft: 12 }}>加载失败: {error}</div>
+        <div style={{ color: 'red', marginLeft: 12 }}>読み込み失敗: {error}</div>
       )}
     </div>
   );

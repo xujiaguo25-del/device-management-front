@@ -33,7 +33,7 @@ export const useDicts = (typeCodes: string[]) => {
       }
       setMap(next);
     } catch (e: any) {
-      setError(e?.message || 'Failed to load dicts');
+      setError(e?.message || '辞書の読み込みに失敗しました');
     } finally {
       setLoading(false);
     }
@@ -56,7 +56,7 @@ export const useDicts = (typeCodes: string[]) => {
       await refreshDictCache();
       await load();
     } catch (e: any) {
-      setError(e?.message || 'Failed to refresh dicts');
+      setError(e?.message || '辞書の更新に失敗しました');
     } finally {
       setLoading(false);
     }

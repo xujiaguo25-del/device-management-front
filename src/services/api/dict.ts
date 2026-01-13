@@ -4,7 +4,7 @@ import { get } from './index';
 // typeCode をキーにした dict グループのキャッシュ
 const dictMapCache: { map?: Record<string, DictTypeGroup>; fetchedAt?: number } = {};
 
-// 缓存过期时间（毫秒），设置为1小时
+// キャッシュの有効期限（ミリ秒）、1時間に設定
 const CACHE_EXPIRY_TIME = 60 * 60 * 1000; // 1 hour
 
 /**
@@ -14,10 +14,10 @@ const CACHE_EXPIRY_TIME = 60 * 60 * 1000; // 1 hour
  * バックエンドは `dictTypeCode` / `dictItems` のようなキーを返す場合があるため、
  * どちらの形状も内部の `DictTypeGroup` ({ typeCode, items }) に正規化します。
  *
- * 自动刷新机制：检查缓存是否过期（默认1小时），如果过期则重新获取
+ * 自動リフレッシュ機能：キャッシュが期限切れ（デフォルト1時間）の場合は、自動的に再取得します。
  */
 export const fetchAllDict = async (): Promise<DictTypeGroup[]> => {
-  // 检查缓存是否存在且未过期
+  // キャッシュが存在し、未过期の場合はキャッシュを返す
   const now = Date.now();
   const isCacheValid = dictMapCache.map && 
                      dictMapCache.fetchedAt && 
