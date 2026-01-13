@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Card, Button, Space, Tag, Input, Select, Row, Col, Modal, message, Pagination } from 'antd';
 import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import Layout from '../components/common/Layout';
-import type { DeviceListItem, DeviceQueryParams } from '../types/device-list';
+import type { DeviceListItem, DeviceQueryParams } from '../types/index';
 
 const { Search } = Input;
 const { Option } = Select;
