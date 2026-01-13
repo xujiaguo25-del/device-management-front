@@ -2,20 +2,23 @@
  * API 設定と基本リクエスト処理
  */
 
+import { getAuthStore } from '../../stores/authStore';
+import { parseError } from '../../utils/errorHandler';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 type RequestOptions = RequestInit & { skipAuthRedirect?: boolean };
 
 // token を取得
 export const getToken = (): string | null => {
-  return localStorage.getItem('auth_token');
+  return getAuthStore().token;
 };
 
 // 共通リクエスト
-export const request = async (
+export const request = async <T = unknown>(
   endpoint: string,
   options: RequestOptions = {}
-): Promise<any> => {
+): Promise<T> => {
   const url = `${API_BASE_URL}${endpoint}`;
   const token = getToken();
   const skipAuthRedirect = Boolean((options as RequestOptions).skipAuthRedirect);
@@ -55,15 +58,15 @@ export const request = async (
         throw new Error(errorMessage);
       }
 
-      // その他の API：401 エラーを期限切れとしてマークし、イベントでコンポーネントに通知します
-      sessionStorage.setItem('token_expired_401', 'true');
-      // カスタムイベントを発火し、コンポーネントに token の有効期限切れを通知します
-      window.dispatchEvent(new CustomEvent('token-expired-401'));
+      // その他の API：401期限切れとしてマーク
+      // authStore を通じて状態を更新（ProtectedRoute が自動的に検知）
+      const authStore = getAuthStore();
+      authStore.setTokenExpiredBy401(true);
       throw new Error('認証されていません。再度ログインしてください');
     }
     
     if (!response.ok) {
-      // エラー内容を解析
+      // 統一エラーハンドリング：エラーレスポンスを解析
       let errorMessage = `HTTP error! status: ${response.status}`;
       try {
         const errorData = await response.json();
@@ -71,42 +74,55 @@ export const request = async (
       } catch (e) {
         // JSON でない場合はデフォルトのエラーを使う
       }
-      throw new Error(errorMessage);
+      
+      // 統一エラーハンドリングツールを使用してエラーを解析
+      const appError = parseError({
+        response: {
+          status: response.status,
+          data: { message: errorMessage },
+        },
+      });
+      
+      throw new Error(appError.message);
     }
-    
-    // レスポンステキストを取得（デバッグ用）
-    const responseText = await response.clone().text();
-    console.log('API 生レスポンステキスト:', responseText);
     
     // JSON を解析
     let data;
     try {
-      data = JSON.parse(responseText);
+      data = await response.json();
     } catch (e) {
-      console.error('レスポンスが有効な JSON ではありません:', responseText);
+      // 開発環境でのみエラーログを出力
+      if (import.meta.env.DEV) {
+        console.error('レスポンスが有効な JSON ではありません:', e);
+      }
       throw new Error('バックエンドの返却データ形式が不正です（JSON ではありません）');
     }
     
-    console.log('API 解析後データ:', data);
-    return data;
-  } catch (error: any) {
-    console.error('API request failed:', error);
-    // ネットワークエラー
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error('ネットワーク接続に失敗しました。バックエンドが起動しているか確認してください');
+    return data as T;
+  } catch (error: unknown) {
+    // 開発環境でのみエラーログを出力
+    if (import.meta.env.DEV) {
+      console.error('API request failed:', error);
     }
-    throw error;
+    
+    // 統一エラーハンドリングツールを使用してエラーを解析し、スロー
+    const appError = parseError(error);
+    throw new Error(appError.message);
   }
 };
 
 // GET
-export const get = (endpoint: string, options?: RequestOptions) => {
-  return request(endpoint, { ...options, method: 'GET' });
+export const get = <T = unknown>(endpoint: string, options?: RequestOptions): Promise<T> => {
+  return request<T>(endpoint, { ...options, method: 'GET' });
 };
 
 // POST
-export const post = (endpoint: string, body?: any, options?: RequestOptions) => {
-  return request(endpoint, {
+export const post = <T = unknown>(
+  endpoint: string,
+  body?: unknown,
+  options?: RequestOptions
+): Promise<T> => {
+  return request<T>(endpoint, {
     ...options,
     method: 'POST',
     body: body ? JSON.stringify(body) : undefined,
@@ -114,8 +130,12 @@ export const post = (endpoint: string, body?: any, options?: RequestOptions) => 
 };
 
 // PUT
-export const put = (endpoint: string, body?: any, options?: RequestOptions) => {
-  return request(endpoint, {
+export const put = <T = unknown>(
+  endpoint: string,
+  body?: unknown,
+  options?: RequestOptions
+): Promise<T> => {
+  return request<T>(endpoint, {
     ...options,
     method: 'PUT',
     body: body ? JSON.stringify(body) : undefined,

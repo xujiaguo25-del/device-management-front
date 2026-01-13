@@ -6,7 +6,7 @@
 import CryptoJS from 'crypto-js';
 
 const KEY = '1234567890abcdef';
-// crypto-js では ECB モードがデフォルトです
+// crypto-js では ECB モードがデフォルト
 
 /**
  * AES 暗号化（ECB / PKCS5Padding）

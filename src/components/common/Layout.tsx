@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Layout as AntLayout, Menu, Dropdown, Button, Avatar, Drawer, message } from 'antd';
 import {
   MenuFoldOutlined,
@@ -28,63 +28,72 @@ const Layout: React.FC<LayoutProps> = ({ children, title = 'デバイス管理�
   const navigate = useNavigate();
   const { userInfo, logout } = useAuthStore();
 
-  const menuItems = [
-    {
-      key: '/devices',
-      icon: <DesktopOutlined />,
-      label: 'デバイス管理',
-      onClick: () => {
-        navigate('/devices');
-        setMobileDrawerVisible(false);
-      },
+  const handleMenuClick = useCallback(
+    (path: string) => {
+      navigate(path);
+      setMobileDrawerVisible(false);
     },
-    {
-      key: '/permissions',
-      icon: <KeyOutlined />,
-      label: '権限管理',
-      onClick: () => {
-        navigate('/permissions');
-        setMobileDrawerVisible(false);
-      },
-    },
-    {
-      key: '/security-checks',
-      icon: <SecurityScanOutlined />,
-      label: 'セキュリティチェック',
-      onClick: () => {
-        navigate('/security-checks');
-        setMobileDrawerVisible(false);
-      },
-    },
-  ];
+    [navigate]
+  );
 
-  const userMenuItems = [
-    {
-      key: 'change-password',
-      icon: <LockOutlined />,
-      label: 'パスワード変更',
-      onClick: () => navigate('/change-password'),
-    },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: 'ログアウト',
-      onClick: async () => {
-        try {
-          // バックエンドのログアウト API を呼び出す
-          await logoutService();
-          message.success('ログアウトしました');
-        } catch (error) {
-          console.error('ログアウト失敗:', error);
-          // バックエンドのログアウトが失敗してもローカル状態はクリアする
-        } finally {
-          // ローカル状態をクリアし、ログイン画面へ遷移
-          logout();
-          navigate('/login');
-        }
+  const menuItems = useMemo(
+    () => [
+      {
+        key: '/devices',
+        icon: <DesktopOutlined />,
+        label: 'デバイス管理',
+        onClick: () => handleMenuClick('/devices'),
       },
-    },
-  ];
+      {
+        key: '/permissions',
+        icon: <KeyOutlined />,
+        label: '権限管理',
+        onClick: () => handleMenuClick('/permissions'),
+      },
+      {
+        key: '/security-checks',
+        icon: <SecurityScanOutlined />,
+        label: 'セキュリティチェック',
+        onClick: () => handleMenuClick('/security-checks'),
+      },
+    ],
+    [handleMenuClick]
+  );
+
+  const handleLogout = useCallback(async () => {
+    try {
+      // バックエンドのログアウト API を呼び出す
+      await logoutService();
+      message.success('ログアウトしました');
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('ログアウト失敗:', error);
+      }
+      // バックエンドのログアウトが失敗してもローカル状態はクリアする
+    } finally {
+      // ローカル状態をクリアし、ログイン画面へ遷移
+      logout();
+      navigate('/login');
+    }
+  }, [logout, navigate]);
+
+  const userMenuItems = useMemo(
+    () => [
+      {
+        key: 'change-password',
+        icon: <LockOutlined />,
+        label: 'パスワード変更',
+        onClick: () => navigate('/change-password'),
+      },
+      {
+        key: 'logout',
+        icon: <LogoutOutlined />,
+        label: 'ログアウト',
+        onClick: handleLogout,
+      },
+    ],
+    [navigate, handleLogout]
+  );
 
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
