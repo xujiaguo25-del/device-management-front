@@ -1,21 +1,62 @@
 // pages/DeviceManagement.tsx
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Tag, Input, Select, Row, Col, Modal, message, Pagination } from 'antd';
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import { 
+  Table, 
+  Button, 
+  Space, 
+  Tag, 
+  Input, 
+  Select, 
+  Row, 
+  Col, 
+  Modal, 
+  message, 
+  Pagination 
+} from 'antd';
+import { 
+  SearchOutlined, 
+  PlusOutlined, 
+  EditOutlined, 
+  DeleteOutlined, 
+  EyeOutlined,
+  RedoOutlined 
+} from '@ant-design/icons';
 import Layout from '../components/common/Layout';
+
+// 导入类型和API函数
 import type { DeviceListItem, DeviceQueryParams } from '../types/index';
-import { getDeviceList } from '../services/device/deviceService'; // 导入 service
+import { 
+  getDeviceList, 
+  deleteDevice,
+  getFilterOptions 
+} from '../services/device/deviceService';
 
 const { Search } = Input;
 const { Option } = Select;
 
 const DeviceManagement: React.FC = () => {
+  // 状态管理
   const [devices, setDevices] = useState<DeviceListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchParams, setSearchParams] = useState<DeviceQueryParams>({
     page: 1,
     pageSize: 10,
   });
+  const [searchValue, setSearchValue] = useState('');
+  const [projectValue, setProjectValue] = useState<string>('all');
+  const [devRoomValue, setDevRoomValue] = useState<string>('all');
+  const [confirmStatusValue, setConfirmStatusValue] = useState<string>('all');
+  
+  const [filterOptions, setFilterOptions] = useState<{
+    projects: string[];
+    devRooms: string[];
+    confirmStatuses: string[];
+  }>({
+    projects: [],
+    devRooms: [],
+    confirmStatuses: []
+  });
+  
   const [total, setTotal] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<DeviceListItem | null>(null);
@@ -29,16 +70,29 @@ const DeviceManagement: React.FC = () => {
       setTotal(response.data.total);
     } catch (error) {
       message.error('获取设备列表失败');
+      console.error('获取设备列表失败:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  // 获取筛选选项
+  const fetchFilterOptions = async () => {
+    try {
+      const options = await getFilterOptions();
+      setFilterOptions(options);
+    } catch (error) {
+      console.error('获取筛选选项失败:', error);
+    }
+  };
+
+  // 初始化数据
   useEffect(() => {
     fetchDevices(searchParams);
+    fetchFilterOptions();
   }, [searchParams]);
 
-  // 处理分页变化
+  // 分页处理函数
   const handlePageChange = (page: number, pageSize?: number) => {
     setSearchParams({
       ...searchParams,
@@ -47,7 +101,6 @@ const DeviceManagement: React.FC = () => {
     });
   };
 
-  // 处理页面大小变化
   const handlePageSizeChange = (size: number) => {
     setSearchParams({
       ...searchParams,
@@ -56,7 +109,7 @@ const DeviceManagement: React.FC = () => {
     });
   };
 
-  // 定义单元格样式
+  // 单元格样式
   const cellStyle: React.CSSProperties = {
     textAlign: 'center',
     verticalAlign: 'middle',
@@ -75,7 +128,7 @@ const DeviceManagement: React.FC = () => {
       width: 150,
       ellipsis: true,
       render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '200px' }} title={text}>
+        <div style={{ ...cellStyle, maxWidth: '150px' }} title={text}>
           {text}
         </div>
       ),
@@ -93,7 +146,7 @@ const DeviceManagement: React.FC = () => {
           <div 
             style={{ 
               ...cellStyle, 
-              maxWidth: '200px',
+              maxWidth: '180px',
               whiteSpace: 'pre-line',
               textAlign: 'center'
             }} 
@@ -339,7 +392,8 @@ const DeviceManagement: React.FC = () => {
   // 编辑设备
   const handleEditDevice = (device: DeviceListItem) => {
     message.info(`编辑设备: ${device.deviceId}`);
-    // 跳转到编辑页面
+    // 实际项目中应跳转到编辑页面
+    // history.push(`/device/edit/${device.deviceId}`);
   };
 
   // 删除设备
@@ -347,16 +401,20 @@ const DeviceManagement: React.FC = () => {
     Modal.confirm({
       title: '确认删除',
       content: `确定要删除设备 ${deviceId} 吗？`,
+      okText: '确认',
+      cancelText: '取消',
       onOk: async () => {
         try {
-          // 在实际项目中，这里会调用真正的 API
-          // await deleteDevice(deviceId);
-          
-          // 重新获取列表
-          await fetchDevices(searchParams);
-          message.success(`设备 ${deviceId} 删除成功`);
+          const success = await deleteDevice(deviceId);
+          if (success) {
+            await fetchDevices(searchParams);
+            message.success(`设备 ${deviceId} 删除成功`);
+          } else {
+            message.error('删除设备失败，设备不存在');
+          }
         } catch (error) {
           message.error('删除设备失败');
+          console.error('删除设备失败:', error);
         }
       },
     });
@@ -364,11 +422,60 @@ const DeviceManagement: React.FC = () => {
 
   // 处理搜索
   const handleSearch = (value: string) => {
+    setSearchValue(value);
     setSearchParams({
       ...searchParams,
       computerName: value,
       page: 1,
     });
+  };
+
+  // 处理筛选变化
+  const handleProjectChange = (value: string) => {
+    setProjectValue(value);
+    setSearchParams({
+      ...searchParams,
+      project: value === 'all' ? undefined : value,
+      page: 1,
+    });
+  };
+
+  const handleDevRoomChange = (value: string) => {
+    setDevRoomValue(value);
+    setSearchParams({
+      ...searchParams,
+      devRoom: value === 'all' ? undefined : value,
+      page: 1,
+    });
+  };
+
+  const handleConfirmStatusChange = (value: string) => {
+    setConfirmStatusValue(value);
+    setSearchParams({
+      ...searchParams,
+      confirmStatus: value === 'all' ? undefined : value,
+      page: 1,
+    });
+  };
+
+  // 重置筛选条件
+  const handleReset = () => {
+    setSearchValue('');
+    setProjectValue('all');
+    setDevRoomValue('all');
+    setConfirmStatusValue('all');
+    
+    setSearchParams({
+      page: 1,
+      pageSize: searchParams.pageSize,
+    });
+  };
+
+  // 添加设备
+  const handleAddDevice = () => {
+    message.info('添加设备功能');
+    // 实际项目中应跳转到添加页面
+    // history.push('/device/add');
   };
 
   return (
@@ -382,43 +489,66 @@ const DeviceManagement: React.FC = () => {
         overflow: 'hidden'
       }}>
         
-        {/* 1. 顶部搜索区 */}
-        <div style={{ marginBottom: 16, flexShrink: 0 }}>
+        {/* 顶部搜索区 */}
+        <div style={{ marginBottom: 20, flexShrink: 0 }}>
           <Row gutter={16} align="middle" justify="space-between">
             <Col>
               <Space>
                 <Search
-                  placeholder="搜索设备用户的工号"
+                  placeholder="搜索用户姓名、工号或设备编号"
                   allowClear
                   enterButton={<SearchOutlined />}
                   onSearch={handleSearch}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  value={searchValue}
                   style={{ width: 260 }}
                 />
                 <Select 
                   placeholder="项目筛选" 
                   style={{ width: 120 }}
-                  onChange={(value) => setSearchParams({...searchParams, project: value})}
+                  value={projectValue}
+                  onChange={handleProjectChange}
                 >
                   <Option value="all">全部项目</Option>
-                  <Option value="项目A">项目A</Option>
-                  <Option value="项目B">项目B</Option>
+                  {filterOptions.projects.map(project => (
+                    <Option key={project} value={project}>{project}</Option>
+                  ))}
                 </Select>
                 <Select 
                   placeholder="开发室筛选" 
                   style={{ width: 120 }}
-                  onChange={(value) => setSearchParams({...searchParams, devRoom: value})}
+                  value={devRoomValue}
+                  onChange={handleDevRoomChange}
                 >
                   <Option value="all">全部开发室</Option>
-                  <Option value="开发室A">开发室A</Option>
-                  <Option value="开发室B">开发室B</Option>
+                  {filterOptions.devRooms.map(room => (
+                    <Option key={room} value={room}>{room}</Option>
+                  ))}
                 </Select>
+                <Select 
+                  placeholder="确认状态" 
+                  style={{ width: 120 }}
+                  value={confirmStatusValue}
+                  onChange={handleConfirmStatusChange}
+                >
+                  <Option value="all">全部状态</Option>
+                  {filterOptions.confirmStatuses.map(status => (
+                    <Option key={status} value={status}>{status}</Option>
+                  ))}
+                </Select>
+                <Button 
+                  icon={<RedoOutlined />}
+                  onClick={handleReset}
+                >
+                  重置
+                </Button>
               </Space>
             </Col>
             <Col>
               <Button 
                 type="primary" 
                 icon={<PlusOutlined />}
-                onClick={() => message.info('添加设备')}
+                onClick={handleAddDevice}
               >
                 添加设备
               </Button>
@@ -426,7 +556,7 @@ const DeviceManagement: React.FC = () => {
           </Row>
         </div>
 
-        {/* 2. 表格区域 */}
+        {/* 表格区域 */}
         <div style={{ 
           flex: '0 1 auto',
           overflow: 'hidden' 
@@ -447,7 +577,7 @@ const DeviceManagement: React.FC = () => {
           />
         </div>
 
-        {/* 3. 分页区域 */}
+        {/* 分页区域 */}
         <div style={{ 
           marginTop: 16,
           flexShrink: 0,
@@ -467,7 +597,7 @@ const DeviceManagement: React.FC = () => {
           />
         </div>
 
-        {/* 4. 弹窗 */}
+        {/* 设备详情弹窗 */}
         <Modal
           title="设备详情"
           open={isModalVisible}
@@ -489,19 +619,46 @@ const DeviceManagement: React.FC = () => {
                 <Col span={12}>
                   <p><strong>开发室：</strong>{selectedDevice.devRoom}</p>
                   <p><strong>操作系统：</strong>{selectedDevice.osName}</p>
-                  <p><strong>内存：</strong>{selectedDevice.memorySize}</p>
-                  <p><strong>SSD：</strong>{selectedDevice.ssdSize}</p>
-                  <p><strong>HDD：</strong>{selectedDevice.hddSize}</p>
-                  <p><strong>本人确认：</strong>{selectedDevice.confirmStatus}</p>
+                  <p><strong>内存：</strong>{selectedDevice.memorySize} G</p>
+                  <p><strong>SSD：</strong>{selectedDevice.ssdSize} G</p>
+                  <p><strong>HDD：</strong>{selectedDevice.hddSize} G</p>
+                  <p><strong>本人确认：</strong>
+                    <Tag color={selectedDevice.confirmStatus === '已确认' ? 'green' : 'red'}>
+                      {selectedDevice.confirmStatus}
+                    </Tag>
+                  </p>
                 </Col>
               </Row>
               <Row style={{ marginTop: 16 }}>
                 <Col span={24}>
                   <p><strong>IP地址：</strong></p>
-                  <p style={{ whiteSpace: 'pre-line' }}>{selectedDevice.ipAddresses?.join('\n')}</p>
-                  <p><strong>显示器：</strong></p>
-                  <p style={{ whiteSpace: 'pre-line' }}>{selectedDevice.monitors?.join('\n')}</p>
-                  <p><strong>备注：</strong>{selectedDevice.remark}</p>
+                  <div style={{ 
+                    padding: '8px', 
+                    backgroundColor: '#f5f5f5', 
+                    borderRadius: '4px',
+                    whiteSpace: 'pre-line' 
+                  }}>
+                    {selectedDevice.ipAddresses?.join('\n')}
+                  </div>
+                  
+                  <p style={{ marginTop: 16 }}><strong>显示器：</strong></p>
+                  <div style={{ 
+                    padding: '8px', 
+                    backgroundColor: '#f5f5f5', 
+                    borderRadius: '4px',
+                    whiteSpace: 'pre-line' 
+                  }}>
+                    {selectedDevice.monitors?.join('\n')}
+                  </div>
+                  
+                  <p style={{ marginTop: 16 }}><strong>备注：</strong></p>
+                  <div style={{ 
+                    padding: '8px', 
+                    backgroundColor: '#f5f5f5', 
+                    borderRadius: '4px'
+                  }}>
+                    {selectedDevice.remark || '无备注'}
+                  </div>
                 </Col>
               </Row>
             </div>

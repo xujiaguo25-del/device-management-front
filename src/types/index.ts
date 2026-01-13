@@ -52,8 +52,6 @@ export interface DeviceListItem {
   // IP和显示器信息
   ipAddresses?: string[]; // IP地址列表
   monitors?: string[]; // 显示器列表
-  // 状态标签,用于前端展示
-  tags: string[]; // 状态标签，如 ['已确认', '未确认']
 }
 // 设备查询参数接口
 export interface DeviceQueryParams {
@@ -65,7 +63,7 @@ export interface DeviceQueryParams {
   userId?: string; // 用户ID
   project?: string; // 项目
   devRoom?: string; // 开发室
-  status?: string; // 状态
+  confirmStatus?: string; // 状态
   createTimeStart?: string; // 创建时间开始
   createTimeEnd?: string; // 创建时间结束
 }

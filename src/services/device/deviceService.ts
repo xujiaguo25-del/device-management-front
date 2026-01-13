@@ -20,7 +20,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '已确认',
     remark: '',
     userName: '小娟',
-    tags: [],
   },
   {
     deviceId: 'HYRON-1 PC-DC-02',
@@ -39,7 +38,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '已确认',
     remark: '',
     userName: '张三',
-    tags: [],
   },
   {
     deviceId: 'HYRON-1 PC-DC-03',
@@ -58,7 +56,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '已确认',
     remark: '',
     userName: '李四',
-    tags: [],
   },
   {
     deviceId: 'HYRON-1 PC-DC-04',
@@ -77,7 +74,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '未确认',
     remark: '',
     userName: '王五',
-    tags: [],
   },
   {
     deviceId: 'HYRON-1 PC-DC-05',
@@ -96,7 +92,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '已确认',
     remark: '',
     userName: '李松',
-    tags: [],
   },
   {
     deviceId: 'HYRON-1 PC-DC-06',
@@ -115,7 +110,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '未确认',
     remark: '',
     userName: '李雪',
-    tags: [],
   },
   {
     deviceId: 'HYRON-1 PC-DC-07',
@@ -134,7 +128,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '已确认',
     remark: '',
     userName: '韩海峰',
-    tags: [],
   },
   {
     deviceId: 'HYRON-1 PC-DC-08',
@@ -153,7 +146,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '已确认',
     remark: '',
     userName: '小红',
-    tags: [],
   },
   {
     deviceId: 'HYRON-1 PC-DC-09',
@@ -172,7 +164,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '已确认',
     remark: '',
     userName: '小芳',
-    tags: [],
   },
   {
     deviceId: 'HYRON-1 PC-DC-10',
@@ -191,7 +182,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '已确认',
     remark: '',
     userName: '小李',
-    tags: [],
   },
   {
     deviceId: 'HYRON-1 PC-DC-11',
@@ -210,7 +200,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '已确认',
     remark: '',
     userName: '老丁',
-    tags: [],
   },
   {
     deviceId: 'HYRON-1 PC-DC-12',
@@ -229,7 +218,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '已确认',
     remark: '',
     userName: '老张',
-    tags: [],
   },
   {
     deviceId: 'HYRON-1 PC-DC-13',
@@ -248,7 +236,6 @@ export const mockDeviceData: DeviceListItem[] = [
     confirmStatus: '已确认',
     remark: '',
     userName: '老刘',
-    tags: [],
   },
 ];
 
@@ -257,14 +244,15 @@ export const getDeviceList = async (
   params: DeviceQueryParams
 ): Promise<DeviceApiResponse<DeviceListItem>> => {
   // 模拟网络延迟
-  await new Promise(resolve => setTimeout(resolve, 500));
+  //await new Promise(resolve => setTimeout(resolve, 500));
   
   const {
     page = 1,
     pageSize = 10,
     computerName,
     project,
-    devRoom
+    devRoom,
+    confirmStatus
   } = params;
   
   // 过滤数据
@@ -287,6 +275,10 @@ export const getDeviceList = async (
     filteredData = filteredData.filter(item => item.devRoom === devRoom);
   }
   
+  if (confirmStatus && confirmStatus !== 'all') {
+    filteredData = filteredData.filter(item => item.confirmStatus === confirmStatus);
+  }
+  
   // 分页处理
   const startIndex = (page - 1) * pageSize;
   const endIndex = startIndex + pageSize;
@@ -301,6 +293,20 @@ export const getDeviceList = async (
       page,
       pageSize
     }
+  };
+};
+
+//获取筛选选项
+export const getFilterOptions = async () => {
+  // 从数据中提取唯一的选项
+  const projects = Array.from(new Set(mockDeviceData.map(item => item.project).filter(Boolean))) as string[];
+  const devRooms = Array.from(new Set(mockDeviceData.map(item => item.devRoom).filter(Boolean))) as string[];
+  const confirmStatuses = Array.from(new Set(mockDeviceData.map(item => item.confirmStatus).filter(Boolean))) as string[];
+  
+  return {
+    projects,
+    devRooms,
+    confirmStatuses
   };
 };
 
