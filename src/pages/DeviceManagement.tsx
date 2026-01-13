@@ -47,7 +47,7 @@ import type {
   DictItem,
   MonitorDTO,
   DeviceIpDTO
-} from '../types/index';
+} from '../types/device';
 import {
   getDeviceList,
   deleteDevice,
