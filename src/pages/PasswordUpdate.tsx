@@ -198,7 +198,7 @@ const PasswordUpdate: React.FC = () => {
           {/* 管理者が他のユーザーのパスワードを変更する場合のヒント */}
           {isAdmin && watch('userId') && watch('userId') !== userInfo?.USER_ID && (
             <Alert
-              message="管理者として他のユーザーのパスワードを変更する場合、現在のパスワードは不要です"
+              title="管理者として他のユーザーのパスワードを変更する場合、現在のパスワードは不要です"
               type="info"
               showIcon
               style={{ marginBottom: '16px' }}
