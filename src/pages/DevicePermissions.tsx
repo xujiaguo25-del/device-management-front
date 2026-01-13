@@ -25,6 +25,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useForm, Controller } from 'react-hook-form';
 import dayjs from 'dayjs';
 import Layout from '../components/common/Layout';
+import { getDict } from '../services/api/dictMock';
 import {
     getPermissions,
     getPermissionById,
@@ -263,7 +264,14 @@ const DevicePermissions: React.FC = () => {
             dataIndex: 'domainName',
             key: 'domainName',
             width: 120,
-            render: (domainName: string) => domainName || '-',
+            render: (_: string, record: DevicePermissionList) => {
+                const dictItems = getDict('DOMAIN_STATUS');
+                // domainStatus from backend may be 1 (参加済み) or 0 (未参加)
+                let label = '-';
+                if (record.domainStatus === 1) label = dictItems[0]?.dictItemName || '-';
+                else if (record.domainStatus === 0) label = dictItems[1]?.dictItemName || '-';
+                return label;
+            },
         },
         {
             title: 'Domain组',
@@ -277,31 +285,19 @@ const DevicePermissions: React.FC = () => {
             key: 'smartitStatus',
             width: 120,
             render: (_: number, record: DevicePermissionList) => {
-                // 优先使用存储的文本值
-                const statusText = record.smartitStatusText;
-                let color = 'default';
-                
-                if (statusText) {
-                    // 根据文本值设置颜色
-                    if (statusText === '本地' || statusText === '远程') {
-                        color = 'green';
-                    } else if (statusText === '未安装') {
-                        color = 'red';
-                    } else {
-                        color = 'orange';
-                    }
-                    return <Tag color={color}>{statusText}</Tag>;
-                } else {
-                    // 如果没有文本值，根据数字转换（兼容旧数据）
+                const dictItems = getDict('SMARTIT_STATUS');
+                let label = record.smartitStatusText || '';
+                if (!label) {
                     const status = record.smartitStatus;
-                    if (status === 1) {
-                        return <Tag color="green">本地</Tag>;
-                    } else if (status === 0) {
-                        return <Tag color="red">未安装</Tag>;
-                    } else {
-                        return <Tag>-</Tag>;
-                    }
+                    if (status === 1) label = dictItems[0]?.dictItemName || '1';
+                    else if (status === 0) label = dictItems[1]?.dictItemName || '0';
+                    else label = '-';
                 }
+                let color: any = 'default';
+                if (label === dictItems[0]?.dictItemName) color = 'green';
+                else if (label === dictItems[1]?.dictItemName) color = 'red';
+                else color = 'orange';
+                return <Tag color={color}>{label || '-'}</Tag>;
             },
         },
         {
@@ -310,31 +306,19 @@ const DevicePermissions: React.FC = () => {
             key: 'usbStatus',
             width: 100,
             render: (_: number, record: DevicePermissionList) => {
-                // 优先使用存储的文本值
-                const statusText = record.usbStatusText;
-                let color = 'default';
-                
-                if (statusText) {
-                    // 根据文本值设置颜色
-                    if (statusText === '数据' || statusText === '3G网卡') {
-                        color = 'green';
-                    } else if (statusText === '关闭') {
-                        color = 'red';
-                    } else {
-                        color = 'orange';
-                    }
-                    return <Tag color={color}>{statusText}</Tag>;
-                } else {
-                    // 如果没有文本值，根据数字转换（兼容旧数据）
+                const dictItems = getDict('USB_STATUS');
+                let label = record.usbStatusText || '';
+                if (!label) {
                     const status = record.usbStatus;
-                    if (status === 1) {
-                        return <Tag color="green">数据</Tag>;
-                    } else if (status === 0) {
-                        return <Tag color="red">关闭</Tag>;
-                    } else {
-                        return <Tag>-</Tag>;
-                    }
+                    if (status === 1) label = dictItems[0]?.dictItemName || '1';
+                    else if (status === 0) label = dictItems[1]?.dictItemName || '0';
+                    else label = dictItems[2]?.dictItemName || '-';
                 }
+                let color: any = 'default';
+                if (label === dictItems[0]?.dictItemName) color = 'green';
+                else if (label === dictItems[1]?.dictItemName) color = 'red';
+                else color = 'orange';
+                return <Tag color={color}>{label || '-'}</Tag>;
             },
         },
         {
@@ -350,30 +334,19 @@ const DevicePermissions: React.FC = () => {
             key: 'antivirusStatus',
             width: 120,
             render: (status: number, record: DevicePermissionList) => {
-                // 优先使用存储的文本值，如果没有则根据数字转换
-                let statusText = record.antivirusStatusText;
-                let color = 'default';
-                
-                if (!statusText) {
-                    // 如果没有文本值，根据数字转换
-                    if (status === 1) {
-                        statusText = '自动';
-                        color = 'green';
-                    } else if (status === 0) {
-                        statusText = '手动';
-                        color = 'orange';
-                    } else {
-                        statusText = '-';
-                    }
-                } else {
-                    // 根据文本值设置颜色
-                    if (statusText === '自动') {
-                        color = 'green';
-                    } else if (statusText === '手动') {
-                        color = 'orange';
-                    }
+                const dictItems = getDict('ANTIVIRUS_STATUS');
+                let label = record.antivirusStatusText || '';
+                if (!label) {
+                    if (status === 1) label = dictItems[0]?.dictItemName || '1';
+                    else if (status === 0) label = dictItems[1]?.dictItemName || '0';
+                    else label = dictItems[2]?.dictItemName || '-';
                 }
-                return <Tag color={color}>{statusText || '-'}</Tag>;
+                let color: any = 'default';
+                if (label === dictItems[0]?.dictItemName) color = 'green';
+                else if (label === dictItems[1]?.dictItemName) color = 'orange';
+                else if (label === dictItems[2]?.dictItemName) color = 'red';
+                else color = 'default';
+                return <Tag color={color}>{label || '-'}</Tag>;
             },
         },
         {
@@ -622,9 +595,11 @@ const DevicePermissions: React.FC = () => {
                                             control={formControl}
                                             render={({ field }) => (
                                                 <Select {...field} placeholder="请选择">
-                                                    <Option value="本地">本地</Option>
-                                                    <Option value="远程">远程</Option>
-                                                    <Option value="未安装">未安装</Option>
+                                                    {getDict('SMARTIT_STATUS').map(item => (
+                                                        <Option key={item.dictId} value={item.dictItemName}>
+                                                            {item.dictItemName}
+                                                        </Option>
+                                                    ))}
                                                 </Select>
                                             )}
                                         />
@@ -662,9 +637,11 @@ const DevicePermissions: React.FC = () => {
                                             control={formControl}
                                             render={({ field }) => (
                                                 <Select {...field} placeholder="请选择">
-                                                    <Option value="关闭">关闭</Option>
-                                                    <Option value="数据">数据</Option>
-                                                    <Option value="3G网卡">3G网卡</Option>
+                                                    {getDict('USB_STATUS').map(item => (
+                                                        <Option key={item.dictId} value={item.dictItemName}>
+                                                            {item.dictItemName}
+                                                        </Option>
+                                                    ))}
                                                 </Select>
                                             )}
                                         />
@@ -723,8 +700,11 @@ const DevicePermissions: React.FC = () => {
                                             control={formControl}
                                             render={({ field }) => (
                                                 <Select {...field} placeholder="请选择">
-                                                    <Option value="自动">自动</Option>
-                                                    <Option value="手动">手动</Option>
+                                                    {getDict('ANTIVIRUS_STATUS').map(item => (
+                                                        <Option key={item.dictId} value={item.dictItemName}>
+                                                            {item.dictItemName}
+                                                        </Option>
+                                                    ))}
                                                 </Select>
                                             )}
                                         />

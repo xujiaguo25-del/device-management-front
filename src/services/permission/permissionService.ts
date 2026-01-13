@@ -7,6 +7,7 @@ import type { DevicePermissionList, DevicePermissionInsert, ApiResponse } from '
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
+import {get} from '../api'
 
 // 模拟数据
 const mockPermissions: DevicePermissionList[] = [
@@ -174,7 +175,7 @@ export const getPermissions = async (params: {
     deviceId?: string;
 }): Promise<ApiResponse<DevicePermissionList[]>> => {
     // 注释掉实际API调用，使用模拟数据
-    /*
+    
     const queryParams = new URLSearchParams();
     if (params.page !== undefined) queryParams.append('page', params.page.toString());
     if (params.size !== undefined) queryParams.append('size', params.size.toString());
@@ -183,38 +184,38 @@ export const getPermissions = async (params: {
 
     const endpoint = `/permissions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return get(endpoint);
-    */
+    
 
     // 模拟数据 - 用于开发/演示
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            let filteredData = [...mockPermissions];
+    // return new Promise((resolve) => {
+    //     setTimeout(() => {
+    //         let filteredData = [...mockPermissions];
 
-            // 应用筛选
-            if (params.userId) {
-                filteredData = filteredData.filter(p => p.userId.includes(params.userId!));
-            }
-            if (params.deviceId) {
-                filteredData = filteredData.filter(p => p.deviceId.includes(params.deviceId!));
-            }
+    //         // 应用筛选
+    //         if (params.userId) {
+    //             filteredData = filteredData.filter(p => p.userId.includes(params.userId!));
+    //         }
+    //         if (params.deviceId) {
+    //             filteredData = filteredData.filter(p => p.deviceId.includes(params.deviceId!));
+    //         }
 
-            // 分页处理
-            const page = params.page || 1;
-            const size = params.size || 10;
-            const start = (page - 1) * size;
-            const end = start + size;
-            const paginatedData = filteredData.slice(start, end);
+    //         // 分页处理
+    //         const page = params.page || 1;
+    //         const size = params.size || 10;
+    //         const start = (page - 1) * size;
+    //         const end = start + size;
+    //         const paginatedData = filteredData.slice(start, end);
 
-            resolve({
-                code: 200,
-                message: '获取成功',
-                data: paginatedData,
-                total: filteredData.length,
-                page: page,
-                size: size,
-            });
-        }, 300);
-    });
+    //         resolve({
+    //             code: 200,
+    //             message: '获取成功',
+    //             data: paginatedData,
+    //             total: filteredData.length,
+    //             page: page,
+    //             size: size,
+    //         });
+    //     }, 300);
+    // });
 };
 
 /**
