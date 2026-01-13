@@ -4,15 +4,26 @@ import { get } from './index';
 // typeCode をキーにした dict グループのキャッシュ
 const dictMapCache: { map?: Record<string, DictTypeGroup>; fetchedAt?: number } = {};
 
+// 缓存过期时间（毫秒），设置为1小时
+const CACHE_EXPIRY_TIME = 60 * 60 * 1000; // 1 hour
+
 /**
  * API (/dict/items) からすべての辞書グループを取得し、内部のマップを作成します。
  * DictTypeGroup の配列を返します（typeCode + items[]）。
  *
  * バックエンドは `dictTypeCode` / `dictItems` のようなキーを返す場合があるため、
  * どちらの形状も内部の `DictTypeGroup` ({ typeCode, items }) に正規化します。
+ *
+ * 自动刷新机制：检查缓存是否过期（默认1小时），如果过期则重新获取
  */
 export const fetchAllDict = async (): Promise<DictTypeGroup[]> => {
-  if (dictMapCache.map) return Object.values(dictMapCache.map);
+  // 检查缓存是否存在且未过期
+  const now = Date.now();
+  const isCacheValid = dictMapCache.map && 
+                     dictMapCache.fetchedAt && 
+                     (now - dictMapCache.fetchedAt < CACHE_EXPIRY_TIME);
+  
+  if (isCacheValid && dictMapCache.map) return Object.values(dictMapCache.map);
   // API のレスポンスの形状が内部の型と一致しない可能性があるため、unknown として扱い正規化します
   const res: any = await get('/dict/items');
   const rawGroups = Array.isArray(res.data) ? res.data : [];
@@ -44,7 +55,13 @@ export const fetchAllDict = async (): Promise<DictTypeGroup[]> => {
  * 内部マップを使用して typeCode による O(1) のルックアップを行います。
  */
 export const getDictByType = async (typeCode: string): Promise<DictItem[]> => {
-  if (!dictMapCache.map) {
+  // 检查缓存是否存在且未过期
+  const now = Date.now();
+  const isCacheValid = dictMapCache.map && 
+                     dictMapCache.fetchedAt && 
+                     (now - dictMapCache.fetchedAt < CACHE_EXPIRY_TIME);
+  
+  if (!isCacheValid) {
     await fetchAllDict();
   }
   const g = dictMapCache.map ? dictMapCache.map[typeCode] : undefined;
