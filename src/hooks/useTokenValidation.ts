@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { useAuthStore } from '../stores/authStore';
 import { isTokenValid } from '../utils/token';
@@ -18,7 +18,6 @@ interface UseTokenValidationResult {
 export const useTokenValidation = (): UseTokenValidationResult => {
   const { token, logout, tokenExpiredBy401, setTokenExpiredBy401, checkTokenExpired } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
-  const location = useLocation();
   const navigate = useNavigate();
   const hasShownMessageRef = useRef(false);
   const redirectTimerRef = useRef<number | null>(null);
