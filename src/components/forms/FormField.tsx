@@ -39,7 +39,7 @@ const FormField: React.FC<FormFieldProps> = ({
   disabled = false,
   autoComplete,
 }) => {
-  // 如果没有 label，自动调整布局
+// ラベルがない場合は、自動でレイアウトを調整
   const finalLabelCol = label ? (labelCol || { span: 6 }) : { span: 0 };
   const finalWrapperCol = label ? (wrapperCol || { span: 18 }) : { span: 24 };
   const validationRules: RegisterOptions<FieldValues> = required
