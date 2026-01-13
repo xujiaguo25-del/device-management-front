@@ -1,11 +1,11 @@
 /**
- * JWT Token 验证工具
+ * JWT トークン検証ユーティリティ
  */
 
 /**
- * 解析 JWT token 的 payload
+ * JWT トークンの payload を解析します
  * @param token JWT token
- * @returns payload 对象或 null
+ * @returns payload オブジェクトまたは null
  */
 const parseJWTPayload = (token: string): any | null => {
   try {
@@ -14,7 +14,7 @@ const parseJWTPayload = (token: string): any | null => {
       return null;
     }
     
-    // 解码 base64 payload
+    // base64 エンコードされた payload をデコードします
     const payload = parts[1];
     const decodedPayload = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
     return JSON.parse(decodedPayload);
@@ -25,9 +25,9 @@ const parseJWTPayload = (token: string): any | null => {
 };
 
 /**
- * 检查 token 是否过期
+ * トークンが期限切れかどうかをチェックします
  * @param token JWT token
- * @returns true 如果 token 有效（未过期），false 如果过期或无效
+ * @returns true: トークンが有効（期限内）の場合、false: 期限切れまたは無効な場合
  */
 export const isTokenValid = (token: string | null): boolean => {
   if (!token) {
@@ -39,10 +39,10 @@ export const isTokenValid = (token: string | null): boolean => {
     return false;
   }
 
-  // 检查是否有 exp (expiration time) 字段
+  // exp (有効期限) フィールドがあるかチェックします
   if (payload.exp) {
-    const currentTime = Math.floor(Date.now() / 1000); // 当前时间（秒）
-    // 如果过期时间小于当前时间，token 已过期
+    const currentTime = Math.floor(Date.now() / 1000); // 現在時刻（秒）
+    // exp が現在時刻より小さい場合、トークンは期限切れです
     if (payload.exp < currentTime) {
       return false;
     }
@@ -52,10 +52,10 @@ export const isTokenValid = (token: string | null): boolean => {
 };
 
 /**
- * 检查 token 是否即将过期（在指定时间内过期）
+ * トークンがまもなく期限切れになるかどうかをチェックします
  * @param token JWT token
- * @param bufferSeconds 缓冲时间（秒），默认 300 秒（5分钟）
- * @returns true 如果 token 即将过期
+ * @param bufferSeconds バッファ時間（秒）、デフォルトは 300 秒（5 分）
+ * @returns true: トークンがまもなく期限切れになる場合
  */
 export const isTokenExpiringSoon = (token: string | null, bufferSeconds: number = 300): boolean => {
   if (!token) {

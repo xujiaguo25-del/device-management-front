@@ -62,5 +62,5 @@ export const authStore = create<AuthStore>((set) => ({
 // React hook
 export const useAuthStore = authStore;
 
-// 非React环境中访问store的方法
+// 非 React 環境からストアにアクセスする方法
 export const getAuthStore = () => authStore.getState();

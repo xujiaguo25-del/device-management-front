@@ -14,7 +14,7 @@ type DeviceRow = {
 };
 
 const DeviceManagement: React.FC = () => {
-  // 需要的字典类型在页面一次性拉取，避免重复请求
+  // 必要な辞書タイプはページで一括取得し、重複リクエストを避けます。
   const { map: dictMap } = useDicts(['OS_TYPE', 'DOMAIN_STATUS', 'USB_STATUS']);
 
   const osOptions = (dictMap['OS_TYPE'] || []) as DictItem[];

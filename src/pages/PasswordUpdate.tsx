@@ -21,10 +21,10 @@ const PasswordUpdate: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // 先初始化 isAdmin 状态
+  // isAdmin 状態を初期化します
   useEffect(() => {
     if (userInfo?.USER_TYPE_NAME) {
-      // 根据 token 中的 userTypeName，管理员的值是 "ADMIN"
+      // token の userTypeName が 'ADMIN' の場合、管理者とみなします
       const adminStatus = userInfo.USER_TYPE_NAME.toUpperCase() === 'ADMIN';
       setIsAdmin(adminStatus);
     }
@@ -38,17 +38,17 @@ const PasswordUpdate: React.FC = () => {
     reset,
   } = useForm<ChangePasswordFormData>({
     defaultValues: {
-      userId: isAdmin ? '' : (userInfo?.USER_ID || ''), // 管理员默认为空，一般用户默认为自己的ID
+      userId: isAdmin ? '' : (userInfo?.USER_ID || ''), // 管理者は空に、一般ユーザーは自分のIDをデフォルト値とします
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
     },
   });
 
-  // 当 isAdmin 或 userInfo 改变时，重置表单
+  // isAdmin や userInfo が変化したときにフォームをリセットします
   useEffect(() => {
     if (userInfo?.USER_ID !== undefined) {
-      // 如果是管理员，重置userId为空；如果是一般用户，设置为自己的ID
+      // 管理者の場合は userId を空に、一般ユーザーの場合は自分の ID を設定します
       if (isAdmin) {
         reset({
           userId: '',
@@ -69,9 +69,9 @@ const PasswordUpdate: React.FC = () => {
 
   const newPassword = watch('newPassword');
 
-  // 密码强度验证函数
+  // パスワード強度を検証する関数
   const validatePasswordStrength = (password: string): boolean => {
-    // 至少8位，包含字母、数字和特殊字符（@$!%*?）
+    // 8文字以上で英字・数字・特殊文字（@$!%*?）を含む必要があります
     const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?])[A-Za-z\d@$!%*?]{8,}$/;
     return passwordRegex.test(password);
   };
@@ -80,36 +80,36 @@ const PasswordUpdate: React.FC = () => {
     try {
       setLoading(true);
 
-      // 验证新密码和确认密码是否一致
+      // 新しいパスワードと確認パスワードが一致するかを検証します
       if (data.newPassword !== data.confirmPassword) {
         message.error('新しいパスワードと確認パスワードが一致しません');
         return;
       }
 
-      // 验证密码强度
+      // パスワード強度を検証します
       if (!validatePasswordStrength(data.newPassword)) {
         message.error('新しいパスワードは、8文字以上で、英字、数字、特殊文字（@$!%*?）を含む必要があります');
         return;
       }
 
-      // 如果是管理员修改其他用户的密码，需要验证用户ID
+      // 管理者が他のユーザーのパスワードを変更する場合はユーザーIDを検証します
       if (isAdmin && !data.userId) {
         message.error('ユーザーIDを入力してください');
         return;
       }
 
-      // 确定要修改的用户ID
+      // 変更対象のユーザーIDを決定します
       const targetUserId = isAdmin ? data.userId : (userInfo?.USER_ID || '');
       
-      // 如果是管理员修改其他用户的密码，不需要当前密码
-      // 如果是一般用户修改自己的密码，或管理员修改自己的密码，需要当前密码
+      // 管理者が他のユーザーのパスワードを変更する場合、現在のパスワードは不要です
+      // 一般ユーザーが自分のパスワードを変更する場合、または管理者が自分のパスワードを変更する場合は現在のパスワードが必要です
       const isChangingOwnPassword = targetUserId === userInfo?.USER_ID;
       
       const requestData: any = {
         userId: targetUserId,
       };
 
-      // 一般用户或管理员修改自己的密码时，需要提供当前密码
+      // 一般ユーザーまたは管理者が自分のパスワードを変更する場合、現在のパスワードを提供する必要があります
       if (!isAdmin || isChangingOwnPassword) {
         if (!data.currentPassword) {
           message.error('現在のパスワードを入力してください');
@@ -117,17 +117,17 @@ const PasswordUpdate: React.FC = () => {
         }
         requestData.currentPassword = encrypt(data.currentPassword);
       }
-      // 管理员修改其他用户密码时，不发送currentPassword字段
+      // 管理者が他のユーザーのパスワードを変更する場合、currentPassword フィールドを送信しません
 
-      // 加密新密码
+      // 新しいパスワードを暗号化します
       requestData.newPassword = encrypt(data.newPassword);
 
       const response = await changePasswordService(requestData);
 
-      // 成功提示
+      // 成功メッセージを表示します
       message.success(response?.message || 'パスワードが正常に変更されました');
 
-      // 重置表单
+      // フォームをリセットします
       reset({
         userId: isAdmin ? '' : (userInfo?.USER_ID || ''),
         currentPassword: '',
@@ -135,7 +135,7 @@ const PasswordUpdate: React.FC = () => {
         confirmPassword: '',
       });
 
-      // 如果是修改自己的密码，提示需要重新登录
+      // 自分のパスワードを変更した場合は再ログインを促します
       if (targetUserId === userInfo?.USER_ID) {
         message.info('パスワードが更新されました。再度ログインしてください。', 3);
         setTimeout(() => {
@@ -158,7 +158,7 @@ const PasswordUpdate: React.FC = () => {
         <Card>
           <Spin spinning={loading}>
             <form onSubmit={handleSubmit(onSubmit)}>
-              {/* 管理员可以修改任何用户的密码 */}
+              {/* 管理者は任意のユーザーのパスワードを変更できます */}
               {isAdmin && (
                 <Form.Item
                   label="ユーザーID"
@@ -182,8 +182,8 @@ const PasswordUpdate: React.FC = () => {
                 </Form.Item>
               )}
 
-              {/* 一般用户修改自己的密码时需要当前密码，管理员修改自己的密码时也需要 */}
-              {/* 管理员修改其他用户密码时不需要当前密码 */}
+              {/* 一般ユーザーが自分のパスワードを変更する場合、または管理者が自分のパスワードを変更する場合は現在のパスワードが必要です */}
+              {/* 管理者が他のユーザーのパスワードを変更する場合は現在のパスワードは不要です */}
               {(!isAdmin || !watch('userId') || watch('userId') === userInfo?.USER_ID) && (
                 <Form.Item
                   label="現在のパスワード"

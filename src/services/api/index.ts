@@ -50,14 +50,14 @@ export const request = async (
           const errorData = await response.clone().json();
           errorMessage = errorData.message || errorData.error || errorMessage;
         } catch (e) {
-          // パースエラーは無視する
+          // ignore parse error
         }
         throw new Error(errorMessage);
       }
 
-      // その他の API：标记为401过期，触发事件通知组件
+      // その他の API：401 エラーを期限切れとしてマークし、イベントでコンポーネントに通知します
       sessionStorage.setItem('token_expired_401', 'true');
-      // 触发自定义事件，通知组件token已过期
+      // カスタムイベントを発火し、コンポーネントに token の有効期限切れを通知します
       window.dispatchEvent(new CustomEvent('token-expired-401'));
       throw new Error('認証されていません。再度ログインしてください');
     }
@@ -99,12 +99,12 @@ export const request = async (
   }
 };
 
-// GET リクエスト
+// GET
 export const get = (endpoint: string, options?: RequestOptions) => {
   return request(endpoint, { ...options, method: 'GET' });
 };
 
-// POST リクエスト
+// POST
 export const post = (endpoint: string, body?: any, options?: RequestOptions) => {
   return request(endpoint, {
     ...options,
@@ -113,7 +113,7 @@ export const post = (endpoint: string, body?: any, options?: RequestOptions) => 
   });
 };
 
-// PUT リクエスト
+// PUT
 export const put = (endpoint: string, body?: any, options?: RequestOptions) => {
   return request(endpoint, {
     ...options,
@@ -122,7 +122,7 @@ export const put = (endpoint: string, body?: any, options?: RequestOptions) => {
   });
 };
 
-// DELETE リクエスト
+// DELETE
 export const del = (endpoint: string, options?: RequestOptions) => {
   return request(endpoint, { ...options, method: 'DELETE' });
 };

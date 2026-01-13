@@ -17,50 +17,50 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ component: Component })
   const redirectTimerRef = useRef<number | null>(null);
   const handleTokenExpiredRef = useRef<(() => void) | null>(null);
 
-  // 初始化检查和token验证
+  // 初期チェックとトークン検証を行います
   useEffect(() => {
-    // 处理token过期的函数
+    // トークン期限切れを処理する関数
     const handleTokenExpired = () => {
       if (hasShownMessage.current) return;
       
       hasShownMessage.current = true;
       
-      // 清除401标志
+      // 401 フラグをクリアします
       sessionStorage.removeItem('token_expired_401');
       
-      // 3秒后重定向到登录页面
+      // 3 秒後にログインページへリダイレクトします
       redirectTimerRef.current = window.setTimeout(() => {
         logout();
         navigate('/login', { replace: true, state: { from: location } });
       }, 3000);
-    };
+    }; 
 
-    // 将函数保存到ref中，供事件监听器使用
+    // 関数を ref に保存し、イベントリスナーで使用します
     handleTokenExpiredRef.current = handleTokenExpired;
 
-    // 清理之前的定时器
+    // 以前のタイマーをクリアします
     if (redirectTimerRef.current) {
       clearTimeout(redirectTimerRef.current);
       redirectTimerRef.current = null;
     }
 
-    // 短暂延迟以确保token已加载
+    // トークンが読み込まれるまで短時間遅延させます
     const checkTimer = setTimeout(() => {
       setIsChecking(false);
       
-      // 检查是否有401过期标志
+      // 401 期限切れフラグがあるかチェックします
       const expiredBy401 = sessionStorage.getItem('token_expired_401') === 'true';
       
-      // 检查token是否过期（JWT验证或401标志）
+      // トークンが期限切れかどうか（JWT 検証または 401 フラグ）をチェックします
       if (expiredBy401 || (token && !isTokenValid(token))) {
         handleTokenExpired();
       } else if (token && isTokenValid(token)) {
-        // token有效，重置状态
+        // トークンが有効な場合、状態をリセットします
         hasShownMessage.current = false;
       }
     }, 100);
 
-    // 监听token过期事件（从API拦截器触发）
+    // トークン期限切れイベント（API インターセプターから発行）をリッスンします
     const handleTokenExpiredEvent = () => {
       if (handleTokenExpiredRef.current) {
         handleTokenExpiredRef.current();
