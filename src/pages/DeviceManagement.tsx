@@ -31,7 +31,6 @@ const DeviceManagement: React.FC = () => {
       // 模拟数据 - 修正重复字段和缺少的字段，并将deli改为dell
       const mockData: DeviceListItem[] = [
         {
-          key: '1',
           deviceId: 'HYRON-1 PC-DC-01',
           monitors: ['HYRON-1 Minibor-01'],
           userId: 'JS0010',
@@ -51,7 +50,6 @@ const DeviceManagement: React.FC = () => {
           tags: [],
         },
         {
-          key: '2',
           deviceId: 'HYRON-1 PC-DC-02',
           monitors: ['HYRON-1 Minibor-02'],
           userId: 'JS0011',
@@ -71,7 +69,6 @@ const DeviceManagement: React.FC = () => {
           tags: [],
         },
         {
-          key: '3',
           deviceId: 'HYRON-1 PC-DC-03',
           monitors: ['HYRON-1 Minibor-03'],
           userId: 'JS0012',
@@ -91,7 +88,6 @@ const DeviceManagement: React.FC = () => {
           tags: [],
         },
         {
-          key: '4',
           deviceId: 'HYRON-1 PC-DC-04',
           monitors: ['HYRON-1 Minibor-04', 'HYRON-1 Minibor-11'],
           userId: 'JS0013',
@@ -111,7 +107,6 @@ const DeviceManagement: React.FC = () => {
           tags: [],
         },
         {
-          key: '5',
           deviceId: 'HYRON-1 PC-DC-05',
           monitors: ['HYRON-1 Minibor-05'],
           userId: 'JS0014',
@@ -131,7 +126,6 @@ const DeviceManagement: React.FC = () => {
           tags: [],
         },
         {
-          key: '6',
           deviceId: 'HYRON-1 PC-DC-06',
           monitors: ['HYRON-1 Minibor-06'],
           userId: 'JS0015',
@@ -151,7 +145,6 @@ const DeviceManagement: React.FC = () => {
           tags: [],
         },
         {
-          key: '7',
           deviceId: 'HYRON-1 PC-DC-07',
           monitors: ['HYRON-1 Minibor-07'],
           userId: 'JS0016',
@@ -171,7 +164,6 @@ const DeviceManagement: React.FC = () => {
           tags: [],
         },
         {
-          key: '8',
           deviceId: 'HYRON-1 PC-DC-08',
           monitors: ['HYRON-1 Minibor-08'],
           userId: 'JS0017',
@@ -191,7 +183,6 @@ const DeviceManagement: React.FC = () => {
           tags: [],
         },
         {
-          key: '9',
           deviceId: 'HYRON-1 PC-DC-09',
           monitors: ['HYRON-1 Minibor-09'],
           userId: 'JS0018',
@@ -211,7 +202,6 @@ const DeviceManagement: React.FC = () => {
           tags: [],
         },
         {
-          key: '10',
           deviceId: 'HYRON-1 PC-DC-10',
           monitors: ['HYRON-1 Minibor-10'],
           userId: 'JS0019',
@@ -231,7 +221,6 @@ const DeviceManagement: React.FC = () => {
           tags: [],
         },
         {
-          key: '11',
           deviceId: 'HYRON-1 PC-DC-11',
           monitors: ['HYRON-1 Minibor-11'],
           userId: 'JS0020',
@@ -251,7 +240,6 @@ const DeviceManagement: React.FC = () => {
           tags: [],
         },
         {
-          key: '12',
           deviceId: 'HYRON-1 PC-DC-12',
           monitors: ['HYRON-1 Minibor-12'],
           userId: 'JS0021',
@@ -271,7 +259,6 @@ const DeviceManagement: React.FC = () => {
           tags: [],
         },
         {
-          key: '13',
           deviceId: 'HYRON-1 PC-DC-13',
           monitors: ['HYRON-1 Minibor-13'],
           userId: 'JS0022',
@@ -640,7 +627,7 @@ const DeviceManagement: React.FC = () => {
   return (
     <Layout title="设备管理">
       <div style={{ 
-        height: 'calc(90vh - 64px)', // 限制整体高度
+        height: 'calc(94vh-200px)', // 限制整体高度
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: '#fff', // 纯白背景，消除灰色边框感

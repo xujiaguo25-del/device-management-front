@@ -1,5 +1,4 @@
 export interface DeviceListItem {
-  key: string; // 用于表格的key
   deviceId: string; // 设备ID
   deviceModel: string; // 设备型号
   computerName: string; // 计算机名
