@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, message, Spin, Checkbox, Row, Col } from 'antd';
+import { Form, Button, Checkbox, Row, Col, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useForm, Controller } from 'react-hook-form';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { loginService } from '../services/auth/authService';
 import { encrypt } from '../utils/crypto';
+import FormField from '../components/forms/FormField';
+import FormContainer from '../components/forms/FormContainer';
 import './Login.css';
 
 interface LoginFormData {
@@ -101,49 +103,36 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-container">
-      <Card className="login-card" title="デバイス管理システム ログイン">
-        <Spin spinning={loading}>
-          {/* ネイティブの form 要素でラップし、Ant Design Form の型衝突を回避 */}
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <Form.Item
+      <FormContainer
+        loading={loading}
+        title="デバイス管理システム ログイン"
+        maxWidth="400px"
+      >
+        {/* ネイティブの form 要素でラップし、Ant Design Form の型衝突を回避 */}
+        <form onSubmit={handleSubmit(onSubmit)}>
+            <FormField
+              name="userId"
+              control={control as any}
               label="社員番号"
+              type="text"
+              prefix={<UserOutlined />}
+              placeholder="社員番号を入力してください"
+              error={errors.userId}
+              required
               labelCol={{ span: 6, style: { textAlign: 'right' } }}
-              validateStatus={errors.userId ? 'error' : ''}
-              help={errors.userId?.message}
-            >
-              <Controller
-                name="userId"
-                control={control}
-                rules={{ required: '社員番号を入力してください' }}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    prefix={<UserOutlined />}
-                    placeholder="社員番号を入力してください"
-                  />
-                )}
-              />
-            </Form.Item>
+            />
 
-            <Form.Item
+            <FormField
+              name="password"
+              control={control as any}
               label="パスワード"
+              type="password"
+              prefix={<LockOutlined />}
+              placeholder="パスワードを入力してください"
+              error={errors.password}
+              required
               labelCol={{ span: 6, style: { textAlign: 'right' } }}
-              validateStatus={errors.password ? 'error' : ''}
-              help={errors.password?.message}
-            >
-              <Controller
-                name="password"
-                control={control}
-                rules={{ required: 'パスワードを入力してください' }}
-                render={({ field }) => (
-                  <Input.Password
-                    {...field}
-                    prefix={<LockOutlined />}
-                    placeholder="パスワードを入力してください"
-                  />
-                )}
-              />
-            </Form.Item>
+            />
 
             <Form.Item>
               <Row justify="space-between" align="middle">
@@ -175,9 +164,8 @@ const Login: React.FC = () => {
                 ログイン
               </Button>
             </Form.Item>
-          </form>
-        </Spin>
-      </Card>
+        </form>
+      </FormContainer>
     </div>
   );
 };
