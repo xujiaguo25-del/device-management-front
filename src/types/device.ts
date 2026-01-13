@@ -29,8 +29,6 @@ export interface Device {
   user?: User; // 用户
   deviceIps?: DeviceIp[]; // IP地址列表
   monitorInfos?: Monitor[]; // 显示器信息
-  devicePermission?: DevicePermission; // 设备权限
-  samplingChecks?: SamplingCheck[]; // 采样检查
 }
 
 export interface DeviceIp {
@@ -42,34 +40,6 @@ export interface DeviceIp {
   creater: string; // 创建者
   updateTime: string; // 更新时间
   updater: string; // 更新者
-}
-
-export interface DevicePermission {
-  permissionId: string; // 权限ID
-  domainGroup: string; // 域组
-  noDomainReason: string; // 未加域原因
-  noSmartitReason: string; // 未安装SmartIT原因
-  usbReason: string; // USB使用原因
-  usbExpireDate: string; // USB使用过期日期
-  noSymantecReason: string; // 未安装Symantec原因
-  remark: string; // 备注
-  createTime: string; // 创建时间
-  creater: string; // 创建者
-  updateTime: string; // 更新时间
-  updater: string; // 更新者
-  
-  device?: Device; // 设备
-  deviceId: string; // 设备ID
-  
-  // 字典状态
-  domainStatus?: Dict; // 域状态
-  domainStatusId: number; // 域状态ID
-  smartitStatus?: Dict; // SmartIT状态
-  smartitStatusId: number; // SmartIT状态ID
-  usbStatus?: Dict; // USB状态
-  usbStatusId: number; // USB状态ID
-  antivirusStatus?: Dict; // 杀毒软件状态
-  antivirusStatusId: number; // 杀毒软件状态ID
 }
 
 export interface Dict {

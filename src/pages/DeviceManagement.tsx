@@ -230,6 +230,66 @@ const DeviceManagement: React.FC = () => {
           userName: '小李',
           tags: [],
         },
+        {
+          key: '11',
+          deviceId: 'HYRON-1 PC-DC-11',
+          monitors: ['HYRON-1 Minibor-11'],
+          userId: 'JS0020',
+          deviceModel: 'dell-S090',
+          computerName: 'DA04-PC-11',
+          loginUsername: 'zhub',
+          ipAddresses: ['192.168.0.13'],
+          osName: 'Windows11',
+          memorySize: '16',
+          ssdSize: '512',
+          hddSize: '—',
+          project: '项目A',
+          devRoom: '开发室A',
+          confirmStatus: '已确认',
+          remark: '',
+          userName: '老丁',
+          tags: [],
+        },
+        {
+          key: '12',
+          deviceId: 'HYRON-1 PC-DC-12',
+          monitors: ['HYRON-1 Minibor-12'],
+          userId: 'JS0021',
+          deviceModel: 'dell-S100',
+          computerName: 'DA04-PC-12',
+          loginUsername: 'zhub',
+          ipAddresses: ['192.168.0.14'],
+          osName: 'Windows11',
+          memorySize: '16',
+          ssdSize: '512',
+          hddSize: '—',
+          project: '项目A',
+          devRoom: '开发室A',
+          confirmStatus: '已确认',
+          remark: '',
+          userName: '老张',
+          tags: [],
+        },
+        {
+          key: '13',
+          deviceId: 'HYRON-1 PC-DC-13',
+          monitors: ['HYRON-1 Minibor-13'],
+          userId: 'JS0022',
+          deviceModel: 'dell-S110',
+          computerName: 'DA04-PC-13',
+          loginUsername: 'zhub',
+          ipAddresses: ['192.168.0.15'],
+          osName: 'Windows11',
+          memorySize: '16',
+          ssdSize: '512',
+          hddSize: '—',
+          project: '项目C',
+          devRoom: '开发室B',
+          confirmStatus: '已确认',
+          remark: '',
+          userName: '老刘',
+          tags: [],
+        },
       ];
       
       // 模拟分页效果 - 添加默认值
@@ -289,7 +349,7 @@ const DeviceManagement: React.FC = () => {
       width: 150,
       ellipsis: true,
       render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '150px' }} title={text}>
+        <div style={{ ...cellStyle, maxWidth: '200px' }} title={text}>
           {text}
         </div>
       ),
@@ -307,7 +367,7 @@ const DeviceManagement: React.FC = () => {
           <div 
             style={{ 
               ...cellStyle, 
-              maxWidth: '180px',
+              maxWidth: '200px',
               whiteSpace: 'pre-line',
               textAlign: 'center'
             }} 
@@ -577,12 +637,10 @@ const DeviceManagement: React.FC = () => {
     });
   };
 
-// ... 前面的代码保持不变 ...
-
   return (
     <Layout title="设备管理">
       <div style={{ 
-        height: 'calc(100vh - 64px)', // 限制整体高度
+        height: 'calc(90vh - 64px)', // 限制整体高度
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: '#fff', // 纯白背景，消除灰色边框感
@@ -635,7 +693,7 @@ const DeviceManagement: React.FC = () => {
         </div>
 
         {/* 2. 表格区域 */}
-        {/* 重点修改：移除了 flex: 1，改为自适应高度，但最大不超过页面底部 */}
+        {/*移除了 flex: 1，改为自适应高度，但最大不超过页面底部 */}
         <div style={{ 
            // 移除 flex: 1，这样当数据少时，div高度会自动收缩，分页就会提上来
            flex: '0 1 auto', 

@@ -21,7 +21,7 @@ export interface DeviceListItem {
   ipAddresses?: string[]; // IP地址列表
   monitors?: string[]; // 显示器列表
   
-  // 状态标签（用于前端展示）
+  // 状态标签,用于前端展示
   tags: string[]; // 状态标签，如 ['已确认', '未确认']
 }
 
