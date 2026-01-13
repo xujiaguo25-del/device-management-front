@@ -22,8 +22,12 @@ const FormContainer: React.FC<FormContainerProps> = ({
   padding = '24px',
 }) => {
   return (
-    <div style={{ maxWidth, margin: '0 auto', padding }}>
-      <Card title={title}>
+    <div style={{ maxWidth, margin: '0 auto', padding, width: '100%' }}>
+      <Card 
+        title={title}
+        style={{ width: '100%' }}
+        headStyle={{ textAlign: 'center' }}
+      >
         <Spin spinning={loading}>{children}</Spin>
       </Card>
     </div>

@@ -105,33 +105,30 @@ const Login: React.FC = () => {
     <div className="login-container">
       <FormContainer
         loading={loading}
-        title="デバイス管理システム ログイン"
-        maxWidth="400px"
+        title="デバイス管理システム"
+        maxWidth="450px"
+        padding="24px"
       >
         {/* ネイティブの form 要素でラップし、Ant Design Form の型衝突を回避 */}
         <form onSubmit={handleSubmit(onSubmit)}>
             <FormField
               name="userId"
               control={control as any}
-              label="社員番号"
               type="text"
               prefix={<UserOutlined />}
               placeholder="社員番号を入力してください"
               error={errors.userId}
               required
-              labelCol={{ span: 6, style: { textAlign: 'right' } }}
             />
 
             <FormField
               name="password"
               control={control as any}
-              label="パスワード"
               type="password"
               prefix={<LockOutlined />}
               placeholder="パスワードを入力してください"
               error={errors.password}
               required
-              labelCol={{ span: 6, style: { textAlign: 'right' } }}
             />
 
             <Form.Item>

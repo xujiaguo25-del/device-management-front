@@ -11,7 +11,7 @@ import type { Control, FieldError, RegisterOptions, FieldValues } from 'react-ho
 export interface FormFieldProps {
   name: string;
   control: Control<FieldValues>;
-  label: string;
+  label?: string;
   labelCol?: { span: number; style?: React.CSSProperties };
   wrapperCol?: { span: number };
   error?: FieldError;
@@ -28,8 +28,8 @@ const FormField: React.FC<FormFieldProps> = ({
   name,
   control,
   label,
-  labelCol = { span: 6 },
-  wrapperCol = { span: 18 },
+  labelCol,
+  wrapperCol,
   error,
   required = false,
   placeholder,
@@ -39,8 +39,11 @@ const FormField: React.FC<FormFieldProps> = ({
   disabled = false,
   autoComplete,
 }) => {
+  // 如果没有 label，自动调整布局
+  const finalLabelCol = label ? (labelCol || { span: 6 }) : { span: 0 };
+  const finalWrapperCol = label ? (wrapperCol || { span: 18 }) : { span: 24 };
   const validationRules: RegisterOptions<FieldValues> = required
-    ? { required: `${label}を入力してください`, ...rules }
+    ? { required: label ? `${label}を入力してください` : 'この項目を入力してください', ...rules }
     : rules || {};
 
   const renderInput = (field: {
@@ -51,7 +54,7 @@ const FormField: React.FC<FormFieldProps> = ({
     ref: React.Ref<unknown>;
   }) => {
     const commonProps = {
-      placeholder: placeholder || `${label}を入力してください`,
+      placeholder: placeholder || (label ? `${label}を入力してください` : '入力してください'),
       prefix,
       disabled,
       autoComplete,
@@ -82,7 +85,7 @@ const FormField: React.FC<FormFieldProps> = ({
         return (
           <Input.TextArea
             rows={4}
-            placeholder={placeholder || `${label}を入力してください`}
+            placeholder={placeholder || (label ? `${label}を入力してください` : '入力してください')}
             disabled={disabled}
             value={field.value as string}
             onChange={(e) => field.onChange(e.target.value)}
@@ -106,8 +109,8 @@ const FormField: React.FC<FormFieldProps> = ({
   return (
     <Form.Item
       label={label}
-      labelCol={labelCol}
-      wrapperCol={wrapperCol}
+      labelCol={finalLabelCol}
+      wrapperCol={finalWrapperCol}
       validateStatus={error ? 'error' : ''}
       help={error?.message}
     >
