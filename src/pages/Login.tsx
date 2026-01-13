@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, message, Spin, Checkbox, Row, Col } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Form, Button, Checkbox, Row, Col, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useForm, Controller } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { loginService } from '../services/auth/authService';
+import { encrypt } from '../utils/crypto';
+import FormField from '../components/forms/FormField';
+import FormContainer from '../components/forms/FormContainer';
 import './Login.css';
 
 interface LoginFormData {
@@ -15,36 +18,84 @@ interface LoginFormData {
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const location = useLocation();
+  const { login, token } = useAuthStore();
   const [loading, setLoading] = useState(false);
-  const { control, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+  
+  const { 
+    control, 
+    handleSubmit, 
+    formState: { errors }
+  } = useForm<LoginFormData>({
     defaultValues: {
       userId: localStorage.getItem('remembered_userId') || '',
       rememberMe: !!localStorage.getItem('remembered_userId'),
     },
   });
 
+  // 既にログインしている場合、直前にアクセスしようとしたページ（またはデフォルト）へ自動遷移
+  useEffect(() => {
+    if (token) {
+      const from = (location.state as any)?.from?.pathname || '/devices';
+      navigate(from, { replace: true });
+    }
+  }, [token, navigate, location]);
+
   const onSubmit = async (data: LoginFormData) => {
     try {
       setLoading(true);
+      
+      // パスワードを暗号化
+      const encryptedPassword = encrypt(data.password);
+      
       const response = await loginService({
         userId: data.userId,
-        password: data.password,
+        password: encryptedPassword, // 暗号化したパスワードを送信
       });
 
-      // 保存记住我选项
+      // 「ログインを記憶する」を保存
       if (data.rememberMe) {
         localStorage.setItem('remembered_userId', data.userId);
       } else {
         localStorage.removeItem('remembered_userId');
       }
 
-      // 保存登录信息
-      login(response.token, response.userInfo);
-      message.success('登录成功');
-      navigate('/devices');
+      // ログイン情報を保存（バックエンドの api 形式：{ code, message, data: { token, userDTO } }）
+      const token = response?.data?.token;
+      const userInfo = response?.data?.userDTO;
+
+      console.log('ログイン応答:', { token, userInfo });
+
+      if (!token) {
+        throw new Error('ログイン応答に token がありません');
+      }
+
+      login(token, userInfo as any);
+      
+      // token が保存されているか確認
+      const savedToken = localStorage.getItem('auth_token');
+      console.log('Token 保存済み:', !!savedToken);
+      
+      message.success('ログインに成功しました');
+      
+      // 直前にアクセスしようとしたページ（またはデフォルト）へ遷移
+      const from = (location.state as any)?.from?.pathname || '/devices';
+      console.log('遷移先:', from);
+      
+      // replace: true で履歴を置換し、戻る操作でログイン画面に戻らないようにする
+      setTimeout(() => {
+        navigate(from, { replace: true });
+        setTimeout(() => {
+          if (window.location.pathname === '/login') {
+            console.warn('navigate が反映されないため強制遷移します');
+            window.location.href = from;
+          }
+        }, 300);
+      }, 100);
     } catch (error: any) {
-      message.error(error.message || '登录失败');
+      console.error('ログイン失敗:', error);
+      const errorMessage = error?.message || error?.error || 'ログインに失敗しました。ユーザーIDとパスワードをご確認ください';
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -52,46 +103,36 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-container">
-      <Card className="login-card" title="设备管理系统登录">
-        <Spin spinning={loading}>
-          <Form layout="vertical" onFinish={() => handleSubmit(onSubmit)()}>
-            <Form.Item
-              label="工号/用户ID"
-              validateStatus={errors.userId ? 'error' : ''}
-              help={errors.userId?.message}
-            >
-              <Controller
-                name="userId"
-                control={control}
-                rules={{ required: '请输入工号' }}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    prefix={<UserOutlined />}
-                    placeholder="请输入工号或用户ID"
-                  />
-                )}
-              />
-            </Form.Item>
+      <FormContainer
+        loading={loading}
+        title="デバイス管理システム ログイン"
+        maxWidth="400px"
+      >
+        {/* ネイティブの form 要素でラップし、Ant Design Form の型衝突を回避 */}
+        <form onSubmit={handleSubmit(onSubmit)}>
+            <FormField
+              name="userId"
+              control={control as any}
+              label="社員番号"
+              type="text"
+              prefix={<UserOutlined />}
+              placeholder="社員番号を入力してください"
+              error={errors.userId}
+              required
+              labelCol={{ span: 6, style: { textAlign: 'right' } }}
+            />
 
-            <Form.Item
-              label="密码"
-              validateStatus={errors.password ? 'error' : ''}
-              help={errors.password?.message}
-            >
-              <Controller
-                name="password"
-                control={control}
-                rules={{ required: '请输入密码' }}
-                render={({ field }) => (
-                  <Input.Password
-                    {...field}
-                    prefix={<LockOutlined />}
-                    placeholder="请输入密码"
-                  />
-                )}
-              />
-            </Form.Item>
+            <FormField
+              name="password"
+              control={control as any}
+              label="パスワード"
+              type="password"
+              prefix={<LockOutlined />}
+              placeholder="パスワードを入力してください"
+              error={errors.password}
+              required
+              labelCol={{ span: 6, style: { textAlign: 'right' } }}
+            />
 
             <Form.Item>
               <Row justify="space-between" align="middle">
@@ -104,7 +145,7 @@ const Login: React.FC = () => {
                         checked={!!field.value}
                         onChange={(e) => field.onChange(e.target.checked)}
                       >
-                        记住我
+                        ログインを記憶する
                       </Checkbox>
                     )}
                   />
@@ -113,18 +154,18 @@ const Login: React.FC = () => {
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" block size="large" loading={loading}>
-                登录
+              <Button 
+                type="primary" 
+                htmlType="submit"
+                block 
+                size="large" 
+                loading={loading}
+              >
+                ログイン
               </Button>
             </Form.Item>
-
-            <div style={{ marginTop: '16px', fontSize: '12px', color: '#999' }}>
-              <p>演示账户: admin / password123</p>
-              <p>使用假数据进行演示</p>
-            </div>
-          </Form>
-        </Spin>
-      </Card>
+        </form>
+      </FormContainer>
     </div>
   );
 };
