@@ -76,23 +76,30 @@ export interface DevicePermission {
   UPDATED_USER: string;
 }
 
-// 安全检查记录
+// 安全检查记录（与后端DTO同步）
 export interface SecurityCheck {
-  CHECK_ID: number;
-  DEVICE_ID: number;
-  USER_ID: string;
-  BOOT_AUTH: string;
-  PASSWORD_SCREEN: string;
-  INSTALLED_SOFTWARE: string;
-  SECURITY_PATCH: string;
-  VIRUS_PROTECTION: string;
-  USB_PORT: string;
-  HANDLING_MEASURES: string;
-  CREATED_DATE: string;
-  CREATED_USER: string;
-  UPDATED_DATE: string;
-  UPDATED_USER: string;
+  samplingId: string;          // 主键
+  reportId: string;            // 报告ID
+  userId: string;              // 用户ID
+  name: string;                // 用户名
+  deviceId: string;            // 设备ID
+
+  updateDate: string;          // 导出日期（LocalDate → string）
+  updateTime: string;          // 更新时间（LocalDateTime → string）
+  createTime: string;          // 创建时间（LocalDateTime → string）
+
+  updater: string;             // 更新人
+  creater: string;             // 创建人
+
+  installedSoftware: boolean;  // 是否安装非法软件
+  disposalMeasures: string;    // 处置措施
+  screenSaverPwd: boolean;     // 屏保密码
+  usbInterface: boolean;       // USB接口
+  securityPatch: boolean;      // 安全补丁
+  antivirusProtection: boolean;// 杀毒软件
+  bootAuthentication: boolean; // 启动认证
 }
+
 
 // 认证状态
 export interface AuthState {
