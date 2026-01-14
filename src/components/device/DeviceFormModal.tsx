@@ -7,21 +7,19 @@ import {
   Select,
   Row,
   Col,
-  InputNumber,
   Button,
   Space,
   message,
   Card,
-  Tag,
   Typography,
   Divider,
 } from 'antd';
 import {
   PlusOutlined,
-  MinusOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
-import type { DeviceFullDTO, MonitorDTO, DeviceIpDTO } from '../types/devices';
+import type { DeviceListItem, Monitor, DeviceIp } from '../../types/device';
+import { isValidIP } from '../../services/device/deviceFormService';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -30,11 +28,11 @@ const { Title, Text } = Typography;
 interface DeviceFormModalProps {
   visible: boolean;
   isEditing: boolean;
-  device: DeviceFullDTO | null;
+  device: DeviceListItem | null;
   dictData: Record<string, any[]>;
   users: any[];
   onCancel: () => void;
-  onSubmit: (values: DeviceFullDTO) => void;
+  onSubmit: (values: DeviceListItem) => void;
 }
 
 const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
@@ -47,13 +45,13 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   onSubmit,
 }) => {
   const [form] = Form.useForm();
-  const [monitors, setMonitors] = useState<MonitorDTO[]>([]);
-  const [ipAddresses, setIpAddresses] = useState<DeviceIpDTO[]>([]);
+  const [monitors, setMonitors] = useState<Monitor[]>([]);
+  const [deviceIps, setDeviceIps] = useState<DeviceIp[]>([]);
 
   useEffect(() => {
     if (visible) {
       if (device) {
-        // 设置表单值
+        // 编辑模式：设置表单值
         form.setFieldsValue({
           deviceId: device.deviceId,
           deviceModel: device.deviceModel,
@@ -68,26 +66,24 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
           memoryId: device.memoryId,
           ssdId: device.ssdId,
           hddId: device.hddId,
-          creater: device.creater,
-          updater: device.updater,
-          name: device.name,
+          userName: device.userName,
           deptId: device.deptId,
         });
         
         setMonitors(device.monitors || []);
-        setIpAddresses(device.ipAddresses || []);
+        setDeviceIps(device.deviceIps || []);
       } else {
         // 新增模式：设置默认值
         form.resetFields();
         setMonitors([{ monitorName: '', deviceId: '' }]);
-        setIpAddresses([{ ipAddress: '', deviceId: '' }]);
+        setDeviceIps([{ ipAddress: '', deviceId: '' }]);
         
         // 设置默认值
         form.setFieldsValue({
           selfConfirmId: 0,
           osId: 1,
-          memoryId: 2,
-          ssdId: 1,
+          memoryId: 16,
+          ssdId: 0,
           hddId: 0,
         });
       }
@@ -99,7 +95,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       const values = await form.validateFields();
       
       // 验证IP地址
-      const invalidIps = ipAddresses.filter(ip => ip.ipAddress && !isValidIP(ip.ipAddress));
+      const invalidIps = deviceIps.filter(ip => ip.ipAddress && !isValidIP(ip.ipAddress));
       if (invalidIps.length > 0) {
         message.error('请检查IP地址格式');
         return;
@@ -112,10 +108,32 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         return;
       }
 
-      const submitData: DeviceFullDTO = {
+      // 获取字典显示名称
+      const osName = dictData.OS_TYPE?.find(item => item.dictId === values.osId)?.dictItemName || '';
+      const memorySize = dictData.MEMORY_SIZE?.find(item => item.dictId === values.memoryId)?.dictItemName || '';
+      const ssdSize = values.ssdId ? (dictData.SSD_SIZE?.find(item => item.dictId === values.ssdId)?.dictItemName || '') : '—';
+      const hddSize = values.hddId ? (dictData.HDD_SIZE?.find(item => item.dictId === values.hddId)?.dictItemName || '') : '—';
+      
+      // 获取选中的用户信息
+      const selectedUser = users.find(user => user.userId === values.userId);
+      
+      const submitData: DeviceListItem = {
         ...values,
         monitors: monitors.filter(m => m.monitorName.trim()),
-        ipAddresses: ipAddresses.filter(ip => ip.ipAddress.trim()),
+        deviceIps: deviceIps.filter(ip => ip.ipAddress.trim()),
+        // 设置字典显示值
+        confirmStatus: values.selfConfirmId === 1 ? '已确认' : '未确认',
+        osName,
+        memorySize,
+        ssdSize,
+        hddSize,
+        // 设置用户信息
+        userName: selectedUser?.name || values.userName,
+        // 设置创建/更新时间
+        updateTime: isEditing ? new Date().toISOString() : undefined,
+        createTime: isEditing ? device?.createTime : new Date().toISOString(),
+        creater: isEditing ? device?.creater : '系统管理员',
+        updater: isEditing ? '系统管理员' : undefined,
       };
 
       onSubmit(submitData);
@@ -125,13 +143,8 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     }
   };
 
-  const isValidIP = (ip: string) => {
-    const ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    return ipPattern.test(ip);
-  };
-
   // 处理显示器变更
-  const handleMonitorChange = (index: number, field: keyof MonitorDTO, value: any) => {
+  const handleMonitorChange = (index: number, field: keyof Monitor, value: any) => {
     const newMonitors = [...monitors];
     newMonitors[index] = { ...newMonitors[index], [field]: value };
     setMonitors(newMonitors);
@@ -150,21 +163,32 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   };
 
   // 处理IP地址变更
-  const handleIpChange = (index: number, field: keyof DeviceIpDTO, value: any) => {
-    const newIps = [...ipAddresses];
+  const handleIpChange = (index: number, field: keyof DeviceIp, value: any) => {
+    const newIps = [...deviceIps];
     newIps[index] = { ...newIps[index], [field]: value };
-    setIpAddresses(newIps);
+    setDeviceIps(newIps);
   };
 
   const addIpAddress = () => {
-    setIpAddresses([...ipAddresses, { ipAddress: '', deviceId: '' }]);
+    setDeviceIps([...deviceIps, { ipAddress: '', deviceId: '' }]);
   };
 
   const removeIpAddress = (index: number) => {
-    if (ipAddresses.length > 1) {
-      const newIps = [...ipAddresses];
+    if (deviceIps.length > 1) {
+      const newIps = [...deviceIps];
       newIps.splice(index, 1);
-      setIpAddresses(newIps);
+      setDeviceIps(newIps);
+    }
+  };
+
+  // 处理用户选择变化
+  const handleUserChange = (userId: string) => {
+    const selectedUser = users.find(user => user.userId === userId);
+    if (selectedUser) {
+      form.setFieldsValue({
+        userName: selectedUser.name,
+        deptId: selectedUser.deptId || '',
+      });
     }
   };
 
@@ -226,13 +250,37 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 label="使用人"
                 rules={[{ required: true, message: '请选择使用人' }]}
               >
-                <Select placeholder="请选择使用人" showSearch>
+                <Select 
+                  placeholder="请选择使用人" 
+                  showSearch
+                  optionFilterProp="children"
+                  onChange={handleUserChange}
+                >
                   {users.map(user => (
                     <Option key={user.userId} value={user.userId}>
                       {user.name} ({user.userId})
                     </Option>
                   ))}
                 </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="userName"
+                label="用户姓名"
+              >
+                <Input placeholder="用户姓名将自动从选择的使用人填充" disabled />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="deptId"
+                label="部门"
+              >
+                <Input placeholder="部门信息" />
               </Form.Item>
             </Col>
           </Row>
@@ -362,7 +410,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
             </Button>
           </Title>
           
-          {ipAddresses.map((ip, index) => (
+          {deviceIps.map((ip, index) => (
             <Card key={index} size="small" style={{ marginBottom: 8 }}>
               <Row gutter={16} align="middle">
                 <Col span={20}>
@@ -380,7 +428,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 </Col>
                 <Col span={4}>
                   <Space>
-                    {ipAddresses.length > 1 && (
+                    {deviceIps.length > 1 && (
                       <Button
                         type="text"
                         danger

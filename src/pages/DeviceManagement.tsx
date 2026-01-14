@@ -1,206 +1,476 @@
+// pages/DeviceManagement.tsx
 import React, { useState, useEffect } from 'react';
-import {
-  Table,
-  Button,
-  Space,
-  Card,
-  Row,
-  Col,
-  Form,
-  Input,
-  Select,
-  Modal,
-  message,
-  Tag,
-  Tooltip,
-  Popconfirm,
-  Statistic,
-  Badge,
-  Empty,
+import { 
+  Table, 
+  Button, 
+  Space, 
+  Tag, 
+  Input, 
+  Select, 
+  Row, 
+  Col, 
+  Modal, 
+  message, 
+  Pagination 
 } from 'antd';
-import {
-  PlusOutlined,
-  EditOutlined,
+import { 
+  SearchOutlined, 
+  PlusOutlined, 
+  EditOutlined, 
   DeleteOutlined,
-  ExportOutlined,
-  ReloadOutlined,
-  SearchOutlined,
-  EyeOutlined,
-  FilterOutlined,
-  DesktopOutlined,
-  MonitorOutlined,
-  CloudOutlined,
-  UserOutlined,
+  RedoOutlined 
 } from '@ant-design/icons';
-import type { TableProps } from 'antd';
 import Layout from '../components/common/Layout';
-import DeviceFormModal from '../components/DeviceFormModal';
-import DeviceDetailModal from '../components/DeviceDetailModal';
-import { deviceApi } from '../services/deviceApi';
-import type { DeviceTableData, DeviceQueryParams, DeviceFullDTO } from '../types/devices';
-import dayjs from 'dayjs';
+import DeviceFormModal from '../components/device/DeviceFormModal';
 
+// 导入类型和API函数
+import type { 
+  DeviceListItem, 
+  DeviceQueryParams,
+  DeviceIp,
+  Monitor
+} from '../types/device';
+import { 
+  getDeviceList, 
+  deleteDevice,
+  getFilterOptions,
+  getDeviceDetail
+} from '../services/device/deviceService';
+import { 
+  fetchDictData, 
+  fetchUsers, 
+  saveDevice as saveDeviceService 
+} from '../services/device/deviceFormService';
+
+const { Search } = Input;
 const { Option } = Select;
 
 const DeviceManagement: React.FC = () => {
+  // 状态管理
+  const [devices, setDevices] = useState<DeviceListItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<DeviceTableData[]>([]);
-  const [pagination, setPagination] = useState({
-    current: 1,
+  const [searchParams, setSearchParams] = useState<DeviceQueryParams>({
+    page: 1,
     pageSize: 10,
-    total: 0,
   });
-  const [searchForm] = Form.useForm();
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const [projectValue, setProjectValue] = useState<string>('all');
+  const [devRoomValue, setDevRoomValue] = useState<string>('all');
+  const [confirmStatusValue, setConfirmStatusValue] = useState<string>('all');
+  
+  const [filterOptions, setFilterOptions] = useState<{
+    projects: string[];
+    devRooms: string[];
+    confirmStatuses: string[];
+  }>({
+    projects: [],
+    devRooms: [],
+    confirmStatuses: []
+  });
+  
+  const [total, setTotal] = useState(0);
+  
+  // 弹窗相关状态
+  const [formVisible, setFormVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentDevice, setCurrentDevice] = useState<DeviceFullDTO | null>(null);
+  const [selectedDevice, setSelectedDevice] = useState<DeviceListItem | null>(null);
+  
+  // 字典和用户数据
   const [dictData, setDictData] = useState<Record<string, any[]>>({});
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<Array<{userId: string, name: string}>>([]);
 
-  // 加载字典数据
-  const loadDictData = async () => {
-    try {
-      const dictTypes = ['OS_TYPE', 'MEMORY_SIZE', 'SSD_SIZE', 'HDD_SIZE', 'CONFIRM_STATUS'];
-      const dicts: Record<string, any[]> = {};
-      
-      for (const type of dictTypes) {
-        const data = await deviceApi.getDictData(type);
-        dicts[type] = data;
-      }
-      
-      setDictData(dicts);
-    } catch (error) {
-      console.error('加载字典数据失败:', error);
-    }
-  };
-
-  // 加载用户数据
-  const loadUsers = async () => {
-    try {
-      const data = await deviceApi.getUsers();
-      setUsers(data);
-    } catch (error) {
-      console.error('加载用户数据失败:', error);
-    }
-  };
-
-  // 加载设备列表
-  const loadDevices = async (params?: DeviceQueryParams) => {
+  // 获取设备列表
+  const fetchDevices = async (params: DeviceQueryParams) => {
     setLoading(true);
     try {
-      const queryParams: DeviceQueryParams = {
-        page: params?.page || pagination.current,
-        size: params?.size || pagination.pageSize,
-        deviceName: params?.deviceName,
-        userId: params?.userId,
-        userName: params?.userName,
-        project: params?.project,
-        devRoom: params?.devRoom,
-      };
-
-      const response = await deviceApi.getDevices(queryParams);
+      const response = await getDeviceList(params);
       
-      setData(response.data);
-      setPagination({
-        ...pagination,
-        current: response.page,
-        pageSize: response.size,
-        total: response.total,
-      });
+      // 处理返回的数据，确保总是能获取到 list 和 total
+      let deviceList: DeviceListItem[] = [];
+      let totalCount = 0;
+      
+      if (response.data) {
+        if ('list' in response.data) {
+          // 数据是分页格式 { list: [], total: number, ... }
+          deviceList = response.data.list || [];
+          totalCount = response.data.total || 0;
+        } else if (Array.isArray(response.data)) {
+          // 数据是数组格式
+          deviceList = response.data;
+          totalCount = response.data.length;
+        }
+      }
+      
+      setDevices(deviceList);
+      setTotal(totalCount);
     } catch (error) {
-      message.error('加载设备列表失败');
-      console.error('加载设备列表失败:', error);
+      message.error('获取设备列表失败');
+      console.error('获取设备列表失败:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 初始加载
-  useEffect(() => {
-    loadDevices();
-    loadDictData();
-    loadUsers();
-  }, []);
+  // 获取筛选选项
+  const fetchFilterOptions = async () => {
+    try {
+      const options = await getFilterOptions();
+      setFilterOptions(options);
+    } catch (error) {
+      console.error('获取筛选选项失败:', error);
+    }
+  };
 
-  // 表格列定义
-  const columns: TableProps<DeviceTableData>['columns'] = [
+  // 获取表单所需数据（字典和用户）
+  const fetchFormData = async () => {
+    try {
+      const [dictDataResult, usersResult] = await Promise.all([
+        fetchDictData(),
+        fetchUsers()
+      ]);
+      setDictData(dictDataResult);
+      setUsers(usersResult);
+    } catch (error) {
+      console.error('获取表单数据失败:', error);
+      message.error('获取表单数据失败');
+    }
+  };
+
+  // 初始化数据
+  useEffect(() => {
+    fetchDevices(searchParams);
+    fetchFilterOptions();
+    fetchFormData();
+  }, [searchParams]);
+
+  // 分页处理函数
+  const handlePageChange = (page: number, pageSize?: number) => {
+    setSearchParams({
+      ...searchParams,
+      page,
+      pageSize: pageSize || searchParams.pageSize,
+    });
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setSearchParams({
+      ...searchParams,
+      page: 1,
+      pageSize: size,
+    });
+  };
+
+  // 编辑设备
+  const handleEditDevice = async (device: DeviceListItem) => {
+    try {
+      const deviceDetail = await getDeviceDetail(device.deviceId);
+      if (deviceDetail) {
+        setSelectedDevice(deviceDetail);
+        setIsEditing(true);
+        setFormVisible(true);
+      } else {
+        message.error('获取设备信息失败');
+      }
+    } catch (error) {
+      message.error('获取设备信息失败');
+      console.error('获取设备信息失败:', error);
+    }
+  };
+
+  // 删除设备
+  const handleDeleteDevice = async (deviceId: string) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除设备 ${deviceId} 吗？`,
+      okText: '确认',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          const success = await deleteDevice(deviceId);
+          if (success) {
+            await fetchDevices(searchParams);
+            message.success(`设备 ${deviceId} 删除成功`);
+          } else {
+            message.error('删除设备失败，设备不存在');
+          }
+        } catch (error) {
+          message.error('删除设备失败');
+          console.error('删除设备失败:', error);
+        }
+      },
+    });
+  };
+
+  // 添加设备
+  const handleAddDevice = () => {
+    setSelectedDevice(null);
+    setIsEditing(false);
+    setFormVisible(true);
+  };
+
+  // 处理搜索
+  const handleSearch = (value: string) => {
+    setSearchValue(value);
+    setSearchParams({
+      ...searchParams,
+      computerName: value,
+      page: 1,
+    });
+  };
+
+  // 处理筛选变化
+  const handleProjectChange = (value: string) => {
+    setProjectValue(value);
+    setSearchParams({
+      ...searchParams,
+      project: value === 'all' ? undefined : value,
+      page: 1,
+    });
+  };
+
+  const handleDevRoomChange = (value: string) => {
+    setDevRoomValue(value);
+    setSearchParams({
+      ...searchParams,
+      devRoom: value === 'all' ? undefined : value,
+      page: 1,
+    });
+  };
+
+  const handleConfirmStatusChange = (value: string) => {
+    setConfirmStatusValue(value);
+    setSearchParams({
+      ...searchParams,
+      confirmStatus: value === 'all' ? undefined : value,
+      page: 1,
+    });
+  };
+
+  // 重置筛选条件
+  const handleReset = () => {
+    setSearchValue('');
+    setProjectValue('all');
+    setDevRoomValue('all');
+    setConfirmStatusValue('all');
+    
+    setSearchParams({
+      page: 1,
+      pageSize: searchParams.pageSize,
+    });
+  };
+
+  // 处理表单提交
+  const handleFormSubmit = async (values: DeviceListItem) => {
+    try {
+      const success = await saveDeviceService(values);
+      
+      if (success) {
+        if (isEditing) {
+          message.success(`设备 ${values.deviceId} 编辑成功`);
+        } else {
+          message.success(`设备 ${values.deviceId} 添加成功`);
+        }
+        
+        // 重新加载设备列表
+        await fetchDevices(searchParams);
+        setFormVisible(false);
+        setIsEditing(false);
+        setSelectedDevice(null);
+      } else {
+        message.error('操作失败');
+      }
+    } catch (error) {
+      message.error('操作失败');
+      console.error('操作失败:', error);
+    }
+  };
+
+  // 单元格样式
+  const cellStyle: React.CSSProperties = {
+    textAlign: 'center',
+    verticalAlign: 'middle',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  };
+
+  // 表格列定义（移除了查看按钮）
+  const columns = [
     {
-      title: '设备编号',
+      title: '主机编号',
       dataIndex: 'deviceId',
       key: 'deviceId',
-      width: 120,
-      fixed: 'left',
-      render: (text) => (
-        <Badge dot={!text.includes('DEV')} color="red">
-          <span style={{ fontWeight: 'bold' }}>{text}</span>
-        </Badge>
-      ),
-    },
-    {
-      title: '电脑名称',
-      dataIndex: 'computerName',
-      key: 'computerName',
-      width: 180,
-    },
-    {
-      title: '使用人',
-      dataIndex: 'userName',
-      key: 'userName',
-      width: 100,
-      render: (text, record) => (
-        <div>
-          <div>{text}</div>
-          <div style={{ fontSize: '12px', color: '#999' }}>{record.userId}</div>
-        </div>
-      ),
-    },
-    {
-      title: '部门',
-      dataIndex: 'deptId',
-      key: 'deptId',
-      width: 100,
-    },
-    {
-      title: '主机型号',
-      dataIndex: 'deviceModel',
-      key: 'deviceModel',
+      align: 'center' as const,
       width: 150,
-    },
-    {
-      title: 'IP地址',
-      dataIndex: 'ipAddresses',
-      key: 'ipAddresses',
-      width: 180,
-      render: (text, record) => (
-        <div>
-          <div style={{ marginBottom: 4 }}>
-            <CloudOutlined style={{ marginRight: 4, color: '#1890ff' }} />
-            {record.ipCount} 个IP
-          </div>
-          <Tooltip title={text}>
-            <div style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {text || '-'}
-            </div>
-          </Tooltip>
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '150px' }} title={text}>
+          {text}
         </div>
       ),
     },
     {
       title: '显示器',
-      dataIndex: 'monitorNames',
-      key: 'monitorNames',
+      dataIndex: 'monitors',
+      key: 'monitors',
+      align: 'center' as const,
+      width: 180,
+      ellipsis: true,
+      render: (monitors: Monitor[] | null | undefined) => {
+        const text = monitors?.map(m => m.monitorName).join('\n') || '';
+        return (
+          <div 
+            style={{ 
+              ...cellStyle, 
+              maxWidth: '180px',
+              whiteSpace: 'pre-line',
+              textAlign: 'center'
+            }} 
+            title={text}
+          >
+            {text}
+          </div>
+        );
+      },
+    },
+    {
+      title: '用户姓名',
+      dataIndex: 'userName',
+      key: 'userName',
+      align: 'center' as const,
+      width: 100,
+      ellipsis: true,
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || ''}>
+          {text || '-'}
+        </div>
+      ),
+    },
+    {
+      title: '用户工号',
+      dataIndex: 'userId',
+      key: 'userId',
+      align: 'center' as const,
+      width: 100,
+      ellipsis: true,
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || ''}>
+          {text || '-'}
+        </div>
+      ),
+    },
+    {
+      title: '主机型号',
+      dataIndex: 'deviceModel',
+      key: 'deviceModel',
+      align: 'center' as const,
+      width: 120,
+      ellipsis: true,
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || ''}>
+          {text || '-'}
+        </div>
+      ),
+    },
+    {
+      title: '电脑名',
+      dataIndex: 'computerName',
+      key: 'computerName',
+      align: 'center' as const,
+      width: 120,
+      ellipsis: true,
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || ''}>
+          {text || '-'}
+        </div>
+      ),
+    },
+    {
+      title: '登录用户名',
+      dataIndex: 'loginUsername',
+      key: 'loginUsername',
+      align: 'center' as const,
+      width: 120,
+      ellipsis: true,
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || ''}>
+          {text || '-'}
+        </div>
+      ),
+    },
+    {
+      title: 'IP地址',
+      dataIndex: 'deviceIps',
+      key: 'deviceIps',
+      align: 'center' as const,
       width: 150,
-      render: (text, record) => (
-        <div>
-          <div style={{ marginBottom: 4 }}>
-            <MonitorOutlined style={{ marginRight: 4, color: '#52c41a' }} />
-            {record.monitorCount} 台
+      ellipsis: true,
+      render: (deviceIps: DeviceIp[] | null | undefined) => {
+        const text = deviceIps?.map(ip => ip.ipAddress).join('\n') || '';
+        return (
+          <div 
+            style={{ 
+              ...cellStyle, 
+              maxWidth: '150px',
+              whiteSpace: 'pre-line',
+              textAlign: 'center'
+            }} 
+            title={text}
+          >
+            {text}
           </div>
-          <div style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {text || '-'}
-          </div>
+        );
+      },
+    },
+    {
+      title: '操作系统',
+      dataIndex: 'osName',
+      key: 'osName',
+      align: 'center' as const,
+      width: 120,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
+          {text}
+        </div>
+      ),
+    },
+    {
+      title: '内存(G)',
+      dataIndex: 'memorySize',
+      key: 'memorySize',
+      align: 'center' as const,
+      width: 80,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '80px' }} title={text}>
+          {text}
+        </div>
+      ),
+    },
+    {
+      title: 'SSD(G)',
+      dataIndex: 'ssdSize',
+      key: 'ssdSize',
+      align: 'center' as const,
+      width: 80,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '80px' }} title={text}>
+          {text}
+        </div>
+      ),
+    },
+    {
+      title: 'HDD(G)',
+      dataIndex: 'hddSize',
+      key: 'hddSize',
+      align: 'center' as const,
+      width: 80,
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '80px' }} title={text}>
+          {text}
         </div>
       ),
     },
@@ -208,434 +478,223 @@ const DeviceManagement: React.FC = () => {
       title: '项目',
       dataIndex: 'project',
       key: 'project',
-      width: 120,
+      align: 'center' as const,
+      width: 100,
+      ellipsis: true,
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || ''}>
+          {text || '-'}
+        </div>
+      ),
     },
     {
       title: '开发室',
       dataIndex: 'devRoom',
       key: 'devRoom',
+      align: 'center' as const,
       width: 100,
-    },
-    {
-      title: '硬件配置',
-      dataIndex: 'hardwareSummary',
-      key: 'hardwareSummary',
-      width: 200,
-      render: (text) => (
-        <Tooltip title={text}>
-          <div style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {text || '-'}
-          </div>
-        </Tooltip>
+      ellipsis: true,
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || ''}>
+          {text || '-'}
+        </div>
       ),
     },
     {
-      title: '本人确认',
-      dataIndex: 'selfConfirmStatus',
-      key: 'selfConfirmStatus',
-      width: 100,
-      render: (status) => (
-        <Tag color={status === '已确认' ? 'green' : 'orange'}>
-          {status}
-        </Tag>
+      title: '备注',
+      dataIndex: 'remark',
+      key: 'remark',
+      align: 'center' as const,
+      width: 150,
+      ellipsis: true,
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '150px' }} title={text || ''}>
+          {text || '-'}
+        </div>
       ),
     },
     {
-      title: '状态',
-      key: 'status',
-      dataIndex: 'status',
-      width: 80,
+      title: '确认状态',
+      key: 'confirmStatus',
+      dataIndex: 'confirmStatus',
+      align: 'center' as const,
+      width: 100,
+      fixed: 'right' as const,
       render: (status: string) => {
-        const color = status === '在线' ? 'green' : status === '离线' ? 'red' : 'default';
-        return <Tag color={color}>{status}</Tag>;
+        const color = status === '已确认' ? 'green' : 'red';
+        return (
+          <div style={cellStyle}>
+            <Tag color={color}>{status}</Tag>
+          </div>
+        );
       },
-    },
-    {
-      title: '标签',
-      key: 'tags',
-      dataIndex: 'tags',
-      width: 120,
-      render: (tags: string[]) => (
-        <Space size={[0, 8]} wrap>
-          {tags?.map((tag) => (
-            <Tag key={tag} color="blue">
-              {tag}
-            </Tag>
-          ))}
-        </Space>
-      ),
-    },
-    {
-      title: '更新时间',
-      dataIndex: 'updateTime',
-      key: 'updateTime',
-      width: 160,
-      render: (text) => text ? dayjs(text).format('MM-DD HH:mm') : '-',
     },
     {
       title: '操作',
       key: 'action',
-      width: 140,
-      fixed: 'right',
-      render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="查看详情">
-            <Button
-              type="text"
-              icon={<EyeOutlined />}
-              onClick={() => handleViewDetail(record.deviceId)}
-            />
-          </Tooltip>
-          <Tooltip title="编辑">
-            <Button
-              type="text"
+      align: 'center' as const,
+      width: 150,
+      fixed: 'right' as const,
+      render: (_: string | undefined, record: DeviceListItem) => (
+        <div style={{ ...cellStyle, padding: '0 4px' }}>
+          <Space size={[4, 0]} wrap>
+            <Button 
+              type="link" 
               icon={<EditOutlined />}
-              onClick={() => handleEdit(record.deviceId)}
-            />
-          </Tooltip>
-          <Tooltip title="删除">
-            <Popconfirm
-              title="确定要删除此设备吗？"
-              onConfirm={() => handleDelete(record.deviceId)}
-              okText="确定"
-              cancelText="取消"
+              size="small"
+              onClick={() => handleEditDevice(record)}
+              style={{ padding: '0 4px' }}
             >
-              <Button type="text" danger icon={<DeleteOutlined />} />
-            </Popconfirm>
-          </Tooltip>
-        </Space>
+              编辑
+            </Button>
+            <Button 
+              type="link" 
+              danger 
+              icon={<DeleteOutlined />}
+              size="small"
+              onClick={() => handleDeleteDevice(record.deviceId)}
+              style={{ padding: '0 4px' }}
+            >
+              删除
+            </Button>
+          </Space>
+        </div>
       ),
     },
   ];
 
-  // 处理查看详情
-  const handleViewDetail = async (deviceId: string) => {
-    try {
-      const detail = await deviceApi.getDeviceDetail(deviceId);
-      setCurrentDevice(detail);
-      setDetailModalVisible(true);
-    } catch (error) {
-      message.error('获取设备详情失败');
-    }
-  };
-
-  // 处理编辑
-  const handleEdit = async (deviceId: string) => {
-    try {
-      const detail = await deviceApi.getDeviceDetail(deviceId);
-      setCurrentDevice(detail);
-      setIsEditing(true);
-      setModalVisible(true);
-    } catch (error) {
-      message.error('获取设备信息失败');
-    }
-  };
-
-  // 处理删除
-  const handleDelete = async (deviceId: string) => {
-    try {
-      const result = await deviceApi.deleteDevice(deviceId);
-      if (result.success) {
-        message.success('删除成功');
-        loadDevices();
-      } else {
-        message.error(result.message);
-      }
-    } catch (error) {
-      message.error('删除失败');
-    }
-  };
-
-  // 处理批量删除
-  const handleBatchDelete = async () => {
-    if (selectedRowKeys.length === 0) {
-      message.warning('请选择要删除的设备');
-      return;
-    }
-
-    Modal.confirm({
-      title: '确认删除',
-      content: `确定要删除选中的 ${selectedRowKeys.length} 台设备吗？`,
-      onOk: async () => {
-        try {
-          const deletePromises = selectedRowKeys.map((key) =>
-            deviceApi.deleteDevice(key as string)
-          );
-          await Promise.all(deletePromises);
-          message.success('批量删除成功');
-          setSelectedRowKeys([]);
-          loadDevices();
-        } catch (error) {
-          message.error('批量删除失败');
-        }
-      },
-    });
-  };
-
-  // 处理导出
-  const handleExport = () => {
-    message.success('导出功能待实现');
-  };
-
-  // 处理表格变化
-  const handleTableChange = (newPagination: any) => {
-    setPagination({
-      ...pagination,
-      current: newPagination.current || 1,
-      pageSize: newPagination.pageSize || 10,
-    });
-    loadDevices({
-      page: newPagination.current,
-      size: newPagination.pageSize,
-      ...searchForm.getFieldsValue(),
-    });
-  };
-
-  // 处理搜索
-  const handleSearch = (values: any) => {
-    loadDevices({
-      page: 1,
-      size: pagination.pageSize,
-      ...values,
-    });
-  };
-
-  // 重置搜索
-  const handleReset = () => {
-    searchForm.resetFields();
-    loadDevices({ page: 1, size: pagination.pageSize });
-  };
-
-  // 处理新增/编辑提交
-  const handleFormSubmit = async (values: DeviceFullDTO) => {
-    try {
-      if (isEditing && currentDevice) {
-        await deviceApi.updateDevice(currentDevice.deviceId, values);
-        message.success('更新成功');
-      } else {
-        await deviceApi.createDevice(values);
-        message.success('新增成功');
-      }
-      setModalVisible(false);
-      setCurrentDevice(null);
-      setIsEditing(false);
-      loadDevices();
-    } catch (error) {
-      message.error(isEditing ? '更新失败' : '创建失败');
-    }
-  };
-
-  // 模拟统计信息
-  const totalDevices = pagination.total;
-  const onlineDevices = data.filter(d => d.status === '在线').length;
-  const unconfirmedDevices = data.filter(d => d.selfConfirmId === 0).length;
-  const serverDevices = data.filter(d => d.deviceModel?.includes('服务器')).length;
-
-  // 表格行选择
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: setSelectedRowKeys,
-  };
-
   return (
     <Layout title="设备管理">
-      <div style={{ padding: 24 }}>
-        {/* 统计卡片 */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="设备总数"
-                value={totalDevices}
-                prefix={<DesktopOutlined style={{ marginRight: 8 }} />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="在线设备"
-                value={onlineDevices}
-                prefix={<div style={{ color: '#52c41a', marginRight: 8 }}>●</div>}
-                valueStyle={{ color: '#52c41a' }}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="待确认设备"
-                value={unconfirmedDevices}
-                prefix={<div style={{ color: '#faad14', marginRight: 8 }}>●</div>}
-                valueStyle={{ color: '#faad14' }}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <Statistic
-                title="服务器设备"
-                value={serverDevices}
-                prefix={<div style={{ color: '#722ed1', marginRight: 8 }}>●</div>}
-                valueStyle={{ color: '#722ed1' }}
-              />
-            </Card>
-          </Col>
-        </Row>
-
-        {/* 搜索栏 */}
-        <Card style={{ marginBottom: 24 }}>
-          <Form
-            form={searchForm}
-            layout="inline"
-            onFinish={handleSearch}
-            style={{ gap: 16 }}
-          >
-            <Form.Item name="deviceName" label="设备名称">
-              <Input 
-                placeholder="请输入设备名称或编号" 
-                style={{ width: 180 }}
-                prefix={<DesktopOutlined />}
-              />
-            </Form.Item>
-            <Form.Item name="userId" label="使用人工号">
-              <Input 
-                placeholder="请输入工号" 
-                style={{ width: 150 }}
-                prefix={<UserOutlined />}
-              />
-            </Form.Item>
-            <Form.Item name="userName" label="使用人姓名">
-              <Input 
-                placeholder="请输入姓名" 
-                style={{ width: 150 }}
-                prefix={<UserOutlined />}
-              />
-            </Form.Item>
-            <Form.Item name="project" label="项目">
-              <Input 
-                placeholder="请输入项目" 
-                style={{ width: 150 }}
-              />
-            </Form.Item>
-            <Form.Item>
+      <div style={{ 
+        height: 'calc(94vh-200px)',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: '#fff',
+        padding: '20px',
+        overflow: 'hidden'
+      }}>
+        
+        {/* 顶部搜索区 */}
+        <div style={{ marginBottom: 20, flexShrink: 0 }}>
+          <Row gutter={16} align="middle" justify="space-between">
+            <Col>
               <Space>
-                <Button type="primary" icon={<SearchOutlined />} htmlType="submit">
-                  搜索
-                </Button>
-                <Button icon={<ReloadOutlined />} onClick={handleReset}>
+                <Search
+                  placeholder="搜索用户姓名、工号或主机编号"
+                  allowClear
+                  enterButton={<SearchOutlined />}
+                  onSearch={handleSearch}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  value={searchValue}
+                  style={{ width: 285 }}
+                />
+                <Select 
+                  placeholder="项目筛选" 
+                  style={{ width: 120 }}
+                  value={projectValue}
+                  onChange={handleProjectChange}
+                >
+                  <Option value="all">全部项目</Option>
+                  {filterOptions.projects.map(project => (
+                    <Option key={project} value={project}>{project}</Option>
+                  ))}
+                </Select>
+                <Select 
+                  placeholder="开发室筛选" 
+                  style={{ width: 120 }}
+                  value={devRoomValue}
+                  onChange={handleDevRoomChange}
+                >
+                  <Option value="all">全部开发室</Option>
+                  {filterOptions.devRooms.map(room => (
+                    <Option key={room} value={room}>{room}</Option>
+                  ))}
+                </Select>
+                <Select 
+                  placeholder="确认状态" 
+                  style={{ width: 120 }}
+                  value={confirmStatusValue}
+                  onChange={handleConfirmStatusChange}
+                >
+                  <Option value="all">全部状态</Option>
+                  {filterOptions.confirmStatuses.map(status => (
+                    <Option key={status} value={status}>{status}</Option>
+                  ))}
+                </Select>
+                <Button 
+                  icon={<RedoOutlined />}
+                  onClick={handleReset}
+                >
                   重置
                 </Button>
-                <Button icon={<FilterOutlined />}>
-                  更多筛选
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        </Card>
-
-        {/* 操作栏 */}
-        <Card style={{ marginBottom: 24 }}>
-          <Row justify="space-between" align="middle">
-            <Col>
-              <Space>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    setCurrentDevice(null);
-                    setIsEditing(false);
-                    setModalVisible(true);
-                  }}
-                >
-                  新增设备
-                </Button>
-                {selectedRowKeys.length > 0 && (
-                  <Popconfirm
-                    title={`确定要删除选中的 ${selectedRowKeys.length} 台设备吗？`}
-                    onConfirm={handleBatchDelete}
-                  >
-                    <Button danger icon={<DeleteOutlined />}>
-                      批量删除
-                    </Button>
-                  </Popconfirm>
-                )}
               </Space>
             </Col>
             <Col>
-              <Space>
-                <Button
-                  icon={<ExportOutlined />}
-                  onClick={handleExport}
-                >
-                  导出Excel
-                </Button>
-                <Button
-                  icon={<ReloadOutlined />}
-                  onClick={() => loadDevices()}
-                >
-                  刷新
-                </Button>
-              </Space>
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />}
+                onClick={handleAddDevice}
+              >
+                添加设备
+              </Button>
             </Col>
           </Row>
-        </Card>
+        </div>
 
-        {/* 设备表格 */}
-        <Card>
-          <Table
-            columns={columns}
-            dataSource={data}
-            rowSelection={rowSelection}
-            loading={loading}
-            pagination={{
-              ...pagination,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) => 
-                `第 ${range[0]}-${range[1]} 条 / 共 ${total} 条`,
-              pageSizeOptions: ['10', '20', '50', '100'],
-            }}
-            onChange={handleTableChange}
-            scroll={{ x: 1500 }}
+        {/* 表格区域 */}
+        <div style={{ 
+          flex: '0 1 auto',
+          overflow: 'hidden' 
+        }}>
+          <Table<DeviceListItem>
             rowKey="deviceId"
-            size="middle"
-            locale={{
-              emptyText: (
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="暂无设备数据"
-                />
-              ),
+            columns={columns}
+            dataSource={devices}
+            loading={loading}
+            scroll={{
+              x: 1950, 
+              y: 'calc(100vh - 280px)', 
             }}
+            pagination={false}
+            size="middle"
+            bordered={false}
+            style={{ margin: 0, padding: 0 }}
           />
-        </Card>
+        </div>
 
-        {/* 设备表单模态框 */}
+        {/* 分页区域 */}
+        <div style={{ 
+          marginTop: 16,
+          flexShrink: 0,
+          textAlign: 'right',
+          paddingRight: 10
+        }}>
+          <Pagination
+            current={searchParams.page}
+            pageSize={searchParams.pageSize}
+            total={total}
+            onChange={handlePageChange}
+            onShowSizeChange={handlePageSizeChange}
+            showQuickJumper
+            showSizeChanger
+            showTotal={(total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`}
+            pageSizeOptions={['10', '15', '20']}
+          />
+        </div>
+
+        {/* 设备表单弹窗 */}
         <DeviceFormModal
-          visible={modalVisible}
+          visible={formVisible}
           isEditing={isEditing}
-          device={currentDevice}
+          device={selectedDevice}
           dictData={dictData}
           users={users}
           onCancel={() => {
-            setModalVisible(false);
-            setCurrentDevice(null);
+            setFormVisible(false);
             setIsEditing(false);
+            setSelectedDevice(null);
           }}
           onSubmit={handleFormSubmit}
-        />
-
-        {/* 设备详情模态框 */}
-        <DeviceDetailModal
-          visible={detailModalVisible}
-          device={currentDevice}
-          dictData={dictData}
-          onCancel={() => {
-            setDetailModalVisible(false);
-            setCurrentDevice(null);
-          }}
         />
       </div>
     </Layout>
