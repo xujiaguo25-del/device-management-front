@@ -6,7 +6,6 @@ import {
   Space, 
   Tag, 
   Input, 
-  Select, 
   Row, 
   Col, 
   Modal, 
@@ -17,8 +16,7 @@ import {
   SearchOutlined, 
   PlusOutlined, 
   EditOutlined, 
-  DeleteOutlined,
-  RedoOutlined 
+  DeleteOutlined
 } from '@ant-design/icons';
 import Layout from '../components/common/Layout';
 import DeviceFormModal from '../components/device/DeviceFormModal';
@@ -33,7 +31,6 @@ import type {
 import { 
   getDeviceList, 
   deleteDevice,
-  getFilterOptions,
   getDeviceDetail
 } from '../services/device/deviceService';
 import { 
@@ -43,7 +40,6 @@ import {
 } from '../services/device/deviceFormService';
 
 const { Search } = Input;
-const { Option } = Select;
 
 const DeviceManagement: React.FC = () => {
   // 状态管理
@@ -53,20 +49,7 @@ const DeviceManagement: React.FC = () => {
     page: 1,
     pageSize: 10,
   });
-  const [searchValue, setSearchValue] = useState('');
-  const [projectValue, setProjectValue] = useState<string>('all');
-  const [devRoomValue, setDevRoomValue] = useState<string>('all');
-  const [confirmStatusValue, setConfirmStatusValue] = useState<string>('all');
-  
-  const [filterOptions, setFilterOptions] = useState<{
-    projects: string[];
-    devRooms: string[];
-    confirmStatuses: string[];
-  }>({
-    projects: [],
-    devRooms: [],
-    confirmStatuses: []
-  });
+  const [userIdSearch, setUserIdSearch] = useState('');
   
   const [total, setTotal] = useState(0);
   
@@ -89,7 +72,6 @@ const DeviceManagement: React.FC = () => {
       
       // 处理返回的数据
       if (response.code === 200 && response.data) {
-        // 确保我们能正确获取list和total
         let deviceList: DeviceListItem[] = [];
         let totalCount = 0;
         
@@ -124,16 +106,6 @@ const DeviceManagement: React.FC = () => {
     }
   };
 
-  // 获取筛选选项
-  const fetchFilterOptions = async () => {
-    try {
-      const options = await getFilterOptions();
-      setFilterOptions(options);
-    } catch (error) {
-      console.error('获取筛选选项失败:', error);
-    }
-  };
-
   // 获取表单所需数据（字典和用户）
   const fetchFormData = async () => {
     try {
@@ -152,7 +124,6 @@ const DeviceManagement: React.FC = () => {
   // 初始化数据
   useEffect(() => {
     fetchDevices(searchParams);
-    fetchFilterOptions();
     fetchFormData();
   }, [searchParams]);
 
@@ -176,6 +147,7 @@ const DeviceManagement: React.FC = () => {
   // 编辑设备
   const handleEditDevice = async (device: DeviceListItem) => {
     try {
+      setLoading(true);
       const deviceDetail = await getDeviceDetail(device.deviceId);
       if (deviceDetail) {
         setSelectedDevice(deviceDetail);
@@ -185,8 +157,15 @@ const DeviceManagement: React.FC = () => {
         message.error('获取设备信息失败');
       }
     } catch (error) {
-      message.error('获取设备信息失败');
       console.error('获取设备信息失败:', error);
+      // 根据后端异常处理，这里可能是404或500错误
+      if (error.message.includes('404') || error.message.includes('找不到')) {
+        message.error('设备不存在或已被删除');
+      } else {
+        message.error('获取设备信息失败，请稍后重试');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -207,8 +186,8 @@ const DeviceManagement: React.FC = () => {
             message.error('删除设备失败，设备不存在');
           }
         } catch (error) {
-          message.error('删除设备失败');
           console.error('删除设备失败:', error);
+          message.error('删除设备失败');
         }
       },
     });
@@ -221,54 +200,13 @@ const DeviceManagement: React.FC = () => {
     setFormVisible(true);
   };
 
-  // 处理搜索
-  const handleSearch = (value: string) => {
-    setSearchValue(value);
+  // 处理用户ID搜索
+  const handleUserIdSearch = (value: string) => {
+    setUserIdSearch(value);
     setSearchParams({
       ...searchParams,
-      computerName: value,
+      userId: value.trim() || undefined,
       page: 1,
-    });
-  };
-
-  // 处理筛选变化
-  const handleProjectChange = (value: string) => {
-    setProjectValue(value);
-    setSearchParams({
-      ...searchParams,
-      project: value === 'all' ? undefined : value,
-      page: 1,
-    });
-  };
-
-  const handleDevRoomChange = (value: string) => {
-    setDevRoomValue(value);
-    setSearchParams({
-      ...searchParams,
-      devRoom: value === 'all' ? undefined : value,
-      page: 1,
-    });
-  };
-
-  const handleConfirmStatusChange = (value: string) => {
-    setConfirmStatusValue(value);
-    setSearchParams({
-      ...searchParams,
-      confirmStatus: value === 'all' ? undefined : value,
-      page: 1,
-    });
-  };
-
-  // 重置筛选条件
-  const handleReset = () => {
-    setSearchValue('');
-    setProjectValue('all');
-    setDevRoomValue('all');
-    setConfirmStatusValue('all');
-    
-    setSearchParams({
-      page: 1,
-      pageSize: searchParams.pageSize,
     });
   };
 
@@ -293,8 +231,8 @@ const DeviceManagement: React.FC = () => {
         message.error('操作失败');
       }
     } catch (error) {
-      message.error('操作失败');
       console.error('操作失败:', error);
+      message.error('操作失败');
     }
   };
 
@@ -589,59 +527,20 @@ const DeviceManagement: React.FC = () => {
         overflow: 'hidden'
       }}>
         
-        {/* 顶部搜索区 */}
+        {/* 顶部搜索区 - 简化版，只保留用户ID搜索 */}
         <div style={{ marginBottom: 20, flexShrink: 0 }}>
           <Row gutter={16} align="middle" justify="space-between">
             <Col>
               <Space>
                 <Search
-                  placeholder="搜索用户姓名、工号或主机编号"
+                  placeholder="输入用户工号进行搜索"
                   allowClear
                   enterButton={<SearchOutlined />}
-                  onSearch={handleSearch}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  value={searchValue}
-                  style={{ width: 285 }}
+                  onSearch={handleUserIdSearch}
+                  onChange={(e) => setUserIdSearch(e.target.value)}
+                  value={userIdSearch}
+                  style={{ width: 300 }}
                 />
-                <Select 
-                  placeholder="项目筛选" 
-                  style={{ width: 120 }}
-                  value={projectValue}
-                  onChange={handleProjectChange}
-                >
-                  <Option value="all">全部项目</Option>
-                  {filterOptions.projects.map(project => (
-                    <Option key={project} value={project}>{project}</Option>
-                  ))}
-                </Select>
-                <Select 
-                  placeholder="开发室筛选" 
-                  style={{ width: 120 }}
-                  value={devRoomValue}
-                  onChange={handleDevRoomChange}
-                >
-                  <Option value="all">全部开发室</Option>
-                  {filterOptions.devRooms.map(room => (
-                    <Option key={room} value={room}>{room}</Option>
-                  ))}
-                </Select>
-                <Select 
-                  placeholder="确认状态" 
-                  style={{ width: 120 }}
-                  value={confirmStatusValue}
-                  onChange={handleConfirmStatusChange}
-                >
-                  <Option value="all">全部状态</Option>
-                  {filterOptions.confirmStatuses.map(status => (
-                    <Option key={status} value={status}>{status}</Option>
-                  ))}
-                </Select>
-                <Button 
-                  icon={<RedoOutlined />}
-                  onClick={handleReset}
-                >
-                  重置
-                </Button>
               </Space>
             </Col>
             <Col>

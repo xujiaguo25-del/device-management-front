@@ -7,8 +7,8 @@ import type {
   DeviceIp 
 } from '../../types/device';
 
-// API基础URL - 根据实际后端地址修改
-const API_BASE_URL = 'http://localhost:8080'; // 完整后端地址
+// API基础URL
+const API_BASE_URL = 'http://localhost:8080/api';
 
 // 辅助函数：将所有空值转换为"-"，确保返回 string 类型
 const formatValue = (value: any): string => {
@@ -21,11 +21,19 @@ const formatValue = (value: any): string => {
 // 转换API返回的数据为前端需要的格式
 const transformDeviceData = (apiData: any): DeviceListItem => {
   // 处理嵌套字典值
-  const confirmStatus = apiData.selfConfirm?.dictItemName;
-  const osName = apiData.os?.dictItemName;
-  const memorySize = apiData.memory?.dictItemName;
-  const ssdSize = apiData.ssd?.dictItemName;
-  const hddSize = apiData.hdd?.dictItemName;
+  const confirmStatus = apiData.selfConfirm?.dictItemName || apiData.selfConfirmDict?.dictItemName;
+  const osName = apiData.os?.dictItemName || apiData.osDict?.dictItemName;
+  const memorySize = apiData.memory?.dictItemName || apiData.memoryDict?.dictItemName;
+  const ssdSize = apiData.ssd?.dictItemName || apiData.ssdDict?.dictItemName;
+  const hddSize = apiData.hdd?.dictItemName || apiData.hddDict?.dictItemName;
+  
+  // 处理用户信息
+  const userName = apiData.name || apiData.userName || apiData.userInfo?.userName;
+  const userId = apiData.userId || apiData.userInfo?.userId;
+  const deptId = apiData.deptId || apiData.userInfo?.deptId;
+  
+  // 处理硬件摘要（如果存在）
+  const hardwareSummary = apiData.hardwareSummary;
   
   return {
     deviceId: apiData.deviceId || '',
@@ -34,7 +42,7 @@ const transformDeviceData = (apiData: any): DeviceListItem => {
     loginUsername: formatValue(apiData.loginUsername),
     project: formatValue(apiData.project),
     devRoom: formatValue(apiData.devRoom),
-    userId: formatValue(apiData.userId),
+    userId: formatValue(userId),
     remark: formatValue(apiData.remark),
     selfConfirmId: apiData.selfConfirmId || null,
     osId: apiData.osId || null,
@@ -45,8 +53,8 @@ const transformDeviceData = (apiData: any): DeviceListItem => {
     creater: formatValue(apiData.creater),
     updateTime: formatValue(apiData.updateTime),
     updater: formatValue(apiData.updater),
-    userName: formatValue(apiData.name), // 用户姓名
-    deptId: apiData.deptId || null,
+    userName: formatValue(userName),
+    deptId: deptId || null,
     
     // 字典值转换 - 使用 formatValue 确保返回 string 类型
     confirmStatus: formatValue(confirmStatus),
@@ -92,18 +100,19 @@ export const getDeviceList = async (
     queryParams.append('page', String(params.page || 1));
     queryParams.append('size', String(params.pageSize || 10));
     
-    // 添加筛选参数
-    if (params.computerName) {
-      // 根据DeviceService.java，后端使用deviceName参数
-      queryParams.append('deviceName', params.computerName);
-    }
-    
+    // 添加筛选参数 - 只支持userId
     if (params.userId) {
       queryParams.append('userId', params.userId);
     }
     
-    // 构建URL - 添加/api前缀
-    const url = `${API_BASE_URL}/api/devices?${queryParams.toString()}`;
+    // 注意：根据DeviceService.java，后端使用的是deviceName参数，但根据需求我们只按userId搜索
+    // 如果有设备名称搜索需求，可以保留这个参数
+    if (params.computerName) {
+      queryParams.append('deviceName', params.computerName);
+    }
+    
+    // 构建URL
+    const url = `${API_BASE_URL}/devices?${queryParams.toString()}`;
     console.log('请求URL:', url);
     
     // 调用API
@@ -113,13 +122,13 @@ export const getDeviceList = async (
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      mode: 'cors', // 允许跨域请求
+      mode: 'cors',
     });
     
     console.log('响应状态:', response.status, response.statusText);
     
     if (!response.ok) {
-      // 尝试获取错误详情
+      // 根据后端异常处理，这里可能是400或500错误
       let errorDetail = '';
       try {
         const errorData = await response.json();
@@ -127,7 +136,15 @@ export const getDeviceList = async (
       } catch (e) {
         errorDetail = response.statusText;
       }
-      throw new Error(`API请求失败: ${response.status} - ${errorDetail}`);
+      
+      // 处理特定状态码
+      if (response.status === 404) {
+        throw new Error(`找不到设备: ${errorDetail}`);
+      } else if (response.status === 400) {
+        throw new Error(`请求参数错误: ${errorDetail}`);
+      } else {
+        throw new Error(`API请求失败: ${response.status} - ${errorDetail}`);
+      }
     }
     
     const result = await response.json();
@@ -162,7 +179,7 @@ export const getDeviceList = async (
       data: {
         list: transformedList,
         total: result.data.totalElements || 0,
-        page: (result.data.number || 0) + 1, // 后端从0开始，前端从1开始
+        page: (result.data.number || 0) + 1,
         pageSize: result.data.size || 10
       }
     };
@@ -185,75 +202,77 @@ export const getDeviceList = async (
   }
 };
 
-// 获取筛选选项
-interface FilterOptions {
-  projects: string[];
-  devRooms: string[];
-  confirmStatuses: string[];
-}
-
-export const getFilterOptions = async (): Promise<FilterOptions> => {
+// 获取设备详情API
+export const getDeviceDetail = async (deviceId: string): Promise<DeviceListItem | null> => {
   try {
-    // 先获取一批数据来提取筛选选项
-    console.log('开始获取筛选选项');
-    const response = await getDeviceList({
-      page: 1,
-      pageSize: 100 // 获取足够多的数据来提取选项
-    });
-    
-    console.log('获取筛选选项的响应:', response);
-    
-    if (response.code !== 200 || !response.data || !('list' in response.data)) {
-      throw new Error('获取筛选选项失败');
+    if (!deviceId?.trim()) {
+      throw new Error('设备ID不能为空');
     }
     
-    const deviceList = response.data.list;
+    console.log('开始获取设备详情，deviceId:', deviceId);
     
-    // 从数据中提取唯一的选项，过滤掉"-"值
-    const projects = Array.from(
-      new Set(deviceList
-        .map(item => item.project)
-        .filter(project => project && project !== '-')
-      )
-    ) as string[];
+    // 构建URL
+    const url = `${API_BASE_URL}/devices/${encodeURIComponent(deviceId.trim())}`;
+    console.log('请求URL:', url);
     
-    const devRooms = Array.from(
-      new Set(deviceList
-        .map(item => item.devRoom)
-        .filter(room => room && room !== '-')
-      )
-    ) as string[];
+    // 调用API
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      mode: 'cors',
+    });
     
-    const confirmStatuses = Array.from(
-      new Set(deviceList
-        .map(item => item.confirmStatus)
-        .filter(status => status && status !== '-')
-      )
-    ) as string[];
+    console.log('响应状态:', response.status, response.statusText);
     
-    console.log('提取的筛选选项:', { projects, devRooms, confirmStatuses });
+    if (!response.ok) {
+      // 处理特定状态码
+      if (response.status === 404) {
+        throw new Error(`设备 ${deviceId} 不存在`);
+      } else if (response.status === 400) {
+        throw new Error('设备ID参数错误');
+      } else {
+        throw new Error(`获取设备详情失败: ${response.status}`);
+      }
+    }
     
-    return {
-      projects,
-      devRooms,
-      confirmStatuses
-    };
+    const result = await response.json();
+    console.log('设备详情响应数据:', result);
+    
+    // 检查API返回的code
+    if (result.code !== 200) {
+      throw new Error(`API错误: ${result.message || '未知错误'}`);
+    }
+    
+    if (!result.data) {
+      throw new Error('设备数据为空');
+    }
+    
+    // 转换数据格式
+    return transformDeviceData(result.data);
+    
   } catch (error) {
-    console.error('获取筛选选项失败:', error);
+    console.error('获取设备详情失败:', error);
+    const errorMessage = error instanceof Error ? error.message : '获取设备详情失败';
     
-    // 返回默认选项
-    return {
-      projects: [],
-      devRooms: [],
-      confirmStatuses: []
-    };
+    // 抛出错误，让调用者处理
+    throw new Error(errorMessage);
   }
 };
 
-// 获取设备详情（暂时返回空）
-export const getDeviceDetail = async (deviceId: string): Promise<DeviceListItem | null> => {
-  console.warn('获取设备详情功能暂未实现，deviceId:', deviceId);
-  return null;
+// 获取筛选选项（已移除，不再需要）
+export const getFilterOptions = async (): Promise<{
+  projects: string[];
+  devRooms: string[];
+  confirmStatuses: string[];
+}> => {
+  return {
+    projects: [],
+    devRooms: [],
+    confirmStatuses: []
+  };
 };
 
 // 删除设备（暂时返回false）
