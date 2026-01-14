@@ -1,33 +1,33 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
-import jaJP from 'antd/locale/ja_JP';
+import zhCN from 'antd/locale/zh_CN';
 import dayjs from 'dayjs';
-import 'dayjs/locale/ja';
+import 'dayjs/locale/zh-cn';
 import './App.css';
 
-// ページコンポーネント
+// 页面组件
 import Login from './pages/Login';
 import PasswordUpdate from './pages/PasswordUpdate';
 import DeviceManagement from './pages/DeviceManagement';
 import DevicePermissions from './pages/DevicePermissions';
-import SecurityChecks from './pages/SecurityChecks';
+import SecurityChecks from './pages/security-checks/SecurityChecks';
 
-// ルート保護コンポーネント
+// 路由保护组件
 import ProtectedRoute from './components/ProtectedRoute';
 
-// dayjs を日本語ロケールに設定
-dayjs.locale('ja');
+// 配置dayjs中文
+dayjs.locale('zh-cn');
 
 const App: React.FC = () => {
   return (
-    <ConfigProvider locale={jaJP}>
+    <ConfigProvider locale={zhCN}>
       <Router>
         <Routes>
-          {/* 公開ルート */}
+          {/* 公开路由 */}
           <Route path="/login" element={<Login />} />
 
-          {/* 保護されたルート */}
+          {/* 受保护的路由 */}
           <Route
             path="/change-password"
             element={<ProtectedRoute component={PasswordUpdate} />}
@@ -45,7 +45,7 @@ const App: React.FC = () => {
             element={<ProtectedRoute component={SecurityChecks} />}
           />
 
-          {/* デフォルトリダイレクト */}
+          {/* 默认重定向 */}
           <Route path="/" element={<Navigate to="/devices" replace />} />
           <Route path="*" element={<Navigate to="/devices" replace />} />
         </Routes>

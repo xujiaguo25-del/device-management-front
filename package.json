@@ -1,5 +1,5 @@
 {
-  "name": "deviceManagement",
+  "name": "testcoplit",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,10 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@types/crypto-js": "^4.2.2",
     "@types/file-saver": "^2.0.7",
     "antd": "^6.1.2",
-    "crypto-js": "^4.2.0",
+    "axios": "^1.13.2",
     "dayjs": "^1.11.19",
     "file-saver": "^2.0.5",
     "react": "^19.2.0",
@@ -25,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/axios": "^0.9.36",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
