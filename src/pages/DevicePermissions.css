@@ -1,0 +1,141 @@
+/* DevicePermissions.css */
+
+/* 表格样式 */
+.custom-table thead > tr > th {
+    background-color: #fafafa;
+    font-weight: 600;
+    color: #434343;
+    padding: 10px 12px;
+}
+
+.custom-table tbody > tr > td {
+    padding: 8px 12px;
+}
+
+.custom-table tbody > tr:hover > td {
+    background-color: #f6ffed !important;
+}
+
+/* 搜索区域样式 */
+.search-area {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #fafafa;
+    border-radius: 6px;
+    border: 1px solid #f0f0f0;
+}
+
+/* 按钮样式 */
+.search-button {
+    border-radius: 6px;
+}
+
+.action-button {
+    min-width: 100px;
+    height: 34px;
+    border-radius: 5px;
+}
+
+.action-column-button {
+    color: #1890ff;
+}
+
+/* 图标颜色 */
+.icon-blue {
+    color: #1890ff;
+}
+
+.icon-green {
+    color: #52c41a;
+}
+
+.icon-orange {
+    color: #faad14;
+}
+
+/* 模态框样式 */
+.device-permission-modal .ant-modal-body {
+    padding: 12px 16px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* 区域标题样式 */
+.section-title {
+    color: #1d39c4;
+    font-size: 13px;
+    margin-bottom: 4px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f0f5ff 0%, #e6f7ff 100%);
+    border-left: 3px solid #1890ff;
+}
+
+/* 区域块样式 */
+.section-block {
+    padding: 10px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+}
+
+/* 卡片样式 */
+.card-head {
+    background: linear-gradient(135deg, #f6ffed 0%, #e6fffb 100%);
+    padding: 8px 12px;
+    border-radius: 6px 6px 0 0;
+    border-bottom: 1px solid #b5f5ec;
+    font-size: 14px;
+    font-weight: 600;
+    color: #08979c;
+}
+
+.card-body {
+    padding: 12px;
+    background: #ffffff;
+    borderRadius: 0 0 6px 6px;
+}
+
+/* 模态框标题样式 */
+.modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #1d39c4;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 6px 0;
+}
+
+/* 表单样式 */
+.card-header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #434343;
+    font-weight: 500;
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+
+.form-value {
+    color: #262626;
+    font-weight: 400;
+    font-size: 13px;
+}
+
+.compact-form-item {
+    margin-bottom: 6px;
+}

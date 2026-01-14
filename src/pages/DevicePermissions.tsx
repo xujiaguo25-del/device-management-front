@@ -21,7 +21,6 @@ import {
     ReloadOutlined,
     IdcardOutlined,
     LaptopOutlined,
-    GlobalOutlined,
     UsbOutlined,
     CalendarOutlined,
     BankOutlined,
@@ -45,63 +44,10 @@ import {
 } from '../services/permission/permissionService';
 import type { DevicePermissionList, DevicePermissionInsert } from '../types';
 
+// 导入CSS文件
+import './DevicePermissions.css';
+
 const { Option } = Select;
-
-// 优化样式常量 - 减小间距
-const SECTION_TITLE_STYLE = {
-    color: '#1d39c4',
-    fontSize: '13px',
-    marginBottom: 4,
-    fontWeight: 600,
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '4px 10px',
-    borderRadius: 6,
-    background: 'linear-gradient(90deg, #f0f5ff 0%, #e6f7ff 100%)',
-    borderLeft: '3px solid #1890ff'
-} as const;
-
-const SECTION_BLOCK_STYLE = {
-    padding: 10,
-    marginBottom: 6,
-    borderRadius: 6,
-    background: '#ffffff',
-    border: '1px solid #f0f0f0',
-    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.02)'
-} as const;
-
-const CARD_HEAD_STYLE = {
-    background: 'linear-gradient(135deg, #f6ffed 0%, #e6fffb 100%)',
-    padding: '8px 12px',
-    borderRadius: '6px 6px 0 0',
-    borderBottom: '1px solid #b5f5ec',
-    fontSize: '14px',
-    fontWeight: 600,
-    color: '#08979c'
-} as const;
-
-const CARD_BODY_STYLE = {
-    padding: '12px',
-    background: '#ffffff',
-    borderRadius: '0 0 6px 6px'
-} as const;
-
-const MODAL_TITLE_STYLE = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    color: '#1d39c4',
-    fontWeight: 600,
-    fontSize: '15px',
-    padding: '6px 0'
-} as const;
-
-const ACTION_BUTTON_STYLE = {
-    minWidth: 100,
-    height: 34,
-    borderRadius: 5
-} as const;
 
 const COMPACT_FORM_ITEM_STYLE = {
     marginBottom: 6,
@@ -442,7 +388,7 @@ const DevicePermissions: React.FC = () => {
                     icon={<EyeOutlined />}
                     size="small"
                     onClick={() => handleEdit(record.permissionId)}
-                    style={{ color: '#1890ff' }}
+                    className="action-column-button"
                 >
                     查看详情
                 </Button>
@@ -454,8 +400,8 @@ const DevicePermissions: React.FC = () => {
         <Layout title="设备权限管理">
             <Card
                 title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <SettingOutlined style={{ color: '#1890ff' }} />
+                    <div className="card-header-title">
+                        <SettingOutlined className="icon-blue" />
                         <span>权限管理</span>
                     </div>
                 }
@@ -463,13 +409,7 @@ const DevicePermissions: React.FC = () => {
                 headStyle={{ borderBottom: '1px solid #f0f0f0', background: '#fafafa' }}
             >
                 {/* 搜索栏 */}
-                <div style={{
-                    marginBottom: 16,
-                    padding: 12,
-                    background: '#fafafa',
-                    borderRadius: 6,
-                    border: '1px solid #f0f0f0'
-                }}>
+                <div className="search-area">
                     <Form layout="inline" onFinish={handleSearchSubmit(onSearch)}>
                         <Row gutter={16} align="middle">
                             <Col>
@@ -512,7 +452,7 @@ const DevicePermissions: React.FC = () => {
                                         type="primary"
                                         icon={<SearchOutlined />}
                                         htmlType="submit"
-                                        style={{ borderRadius: 6 }}
+                                        className="search-button"
                                         size="small"
                                     >
                                         搜索
@@ -520,7 +460,7 @@ const DevicePermissions: React.FC = () => {
                                     <Button
                                         onClick={onResetSearch}
                                         icon={<ReloadOutlined />}
-                                        style={{ borderRadius: 6 }}
+                                        className="search-button"
                                         size="small"
                                     >
                                         重置
@@ -528,7 +468,7 @@ const DevicePermissions: React.FC = () => {
                                     <Button
                                         icon={<ExportOutlined />}
                                         onClick={handleExport}
-                                        style={{ borderRadius: 6 }}
+                                        className="search-button"
                                         size="small"
                                     >
                                         导出Excel
@@ -541,20 +481,6 @@ const DevicePermissions: React.FC = () => {
 
                 {/* 表格 */}
                 <div>
-                    <style>{`
-                        .ant-table-thead > tr > th {
-                            background-color: #fafafa;
-                            font-weight: 600;
-                            color: #434343;
-                            padding: 10px 12px;
-                        }
-                        .ant-table-tbody > tr > td {
-                            padding: 8px 12px;
-                        }
-                        .ant-table-tbody > tr:hover > td {
-                            background-color: #f6ffed !important;
-                        }
-                    `}</style>
                     <Table
                         columns={columns}
                         dataSource={permissions}
@@ -574,6 +500,7 @@ const DevicePermissions: React.FC = () => {
                         }}
                         bordered
                         size="small"
+                        className="custom-table"
                     />
                 </div>
             </Card>
@@ -581,10 +508,9 @@ const DevicePermissions: React.FC = () => {
             {/* 设备权限详情模态框 */}
             <Modal
                 title={
-                    <div style={MODAL_TITLE_STYLE}>
-                        < FileTextOutlined style={{ color: '#1890ff' }} />
+                    <div className="modal-title">
+                        <FileTextOutlined className="icon-blue" />
                         <span>{`设备权限详情 - ${editingPermission?.permissionId || ''}`}</span>
-
                     </div>
                 }
                 open={modalVisible}
@@ -609,15 +535,15 @@ const DevicePermissions: React.FC = () => {
                     {/* 设备基本信息区域 */}
                     <Card
                         title={
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <FolderOpenOutlined style={{ color: '#52c41a' }} />
+                            <div className="card-header-title">
+                                <FolderOpenOutlined className="icon-green" />
                                 <span style={{ color: '#52c41a' }}>设备基本信息</span>
                             </div>
                         }
                         size="small"
                         style={{ marginBottom: 12 }}
-                        headStyle={CARD_HEAD_STYLE}
-                        bodyStyle={CARD_BODY_STYLE}
+                        headStyle={{ background: 'linear-gradient(135deg, #f6ffed 0%, #e6fffb 100%)', padding: '8px 12px', borderRadius: '6px 6px 0 0', borderBottom: '1px solid #b5f5ec', fontSize: '14px', fontWeight: 600, color: '#08979c' }}
+                        bodyStyle={{ padding: '12px', background: '#ffffff', borderRadius: '0 0 6px 6px' }}
                         bordered={false}
                     >
                         <Descriptions
@@ -626,48 +552,48 @@ const DevicePermissions: React.FC = () => {
                             labelStyle={LABEL_STYLE}
                             contentStyle={VALUE_STYLE}
                         >
-                            <Descriptions.Item label={<><IdcardOutlined />设备ID</>} span={2}>
+                            <Descriptions.Item label={<><IdcardOutlined />设备ID</>} >
                                 <strong>{editingPermission?.deviceId || '-'}</strong>
                             </Descriptions.Item>
                             <Descriptions.Item label={<><LaptopOutlined />电脑名</>}>
                                 {editingPermission?.computerName || '-'}
                             </Descriptions.Item>
-                            <Descriptions.Item label={<><GlobalOutlined />IP地址</>}>
-                                {editingPermission?.ipAddress
-                                    ? (Array.isArray(editingPermission.ipAddress)
-                                        ? editingPermission.ipAddress.join(', ')
-                                        : editingPermission.ipAddress)
-                                    : '-'}
-                            </Descriptions.Item>
+                            {/*<Descriptions.Item label={<><GlobalOutlined />IP地址</>}>*/}
+                            {/*    {editingPermission?.ipAddress*/}
+                            {/*        ? (Array.isArray(editingPermission.ipAddress)*/}
+                            {/*            ? editingPermission.ipAddress.join(', ')*/}
+                            {/*            : editingPermission.ipAddress)*/}
+                            {/*        : '-'}*/}
+                            {/*</Descriptions.Item>*/}
                         </Descriptions>
                     </Card>
 
                     {/* 权限配置信息区域 */}
                     <Card
                         title={
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <SettingOutlined style={{ color: '#1890ff' }} />
+                            <div className="card-header-title">
+                                <SettingOutlined className="icon-blue" />
                                 <span style={{ color: '#1890ff' }}>权限配置信息</span>
                             </div>
                         }
                         size="small"
                         style={{ marginBottom: 12 }}
-                        headStyle={CARD_HEAD_STYLE}
-                        bodyStyle={CARD_BODY_STYLE}
+                        headStyle={{ background: 'linear-gradient(135deg, #f6ffed 0%, #e6fffb 100%)', padding: '8px 12px', borderRadius: '6px 6px 0 0', borderBottom: '1px solid #b5f5ec', fontSize: '14px', fontWeight: 600, color: '#08979c' }}
+                        bodyStyle={{ padding: '12px', background: '#ffffff', borderRadius: '0 0 6px 6px' }}
                         bordered={false}
                     >
                         {/* 域配置和SmartIT配置在同一行 */}
-                        <div style={SECTION_BLOCK_STYLE}>
+                        <div className="section-block">
                             <Row gutter={16}>
                                 {/* 域配置 */}
                                 <Col span={12}>
-                                    <div style={SECTION_TITLE_STYLE}>
+                                    <div className="section-title">
                                         <span>域配置</span>
                                     </div>
                                     <Row gutter={8} align="middle">
                                         <Col span={12}>
                                             <Form.Item
-                                                label={<span style={LABEL_STYLE}><BankOutlined />域名</span>}
+                                                label={<span className="form-label"><BankOutlined />域名</span>}
                                                 style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                             >
                                                 <Controller
@@ -703,7 +629,7 @@ const DevicePermissions: React.FC = () => {
                                         {domainNameValue && domainNameValue !== '' && domainNameValue !== '无' && (
                                             <Col span={12}>
                                                 <Form.Item
-                                                    label={<span style={LABEL_STYLE}><TeamOutlined />域内组名</span>}
+                                                    label={<span className="form-label"><TeamOutlined />域内组名</span>}
                                                     validateStatus={errors.domainGroup ? 'error' : undefined}
                                                     help={errors.domainGroup?.message}
                                                     style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -731,7 +657,7 @@ const DevicePermissions: React.FC = () => {
                                         {domainNameValue === '无' && (
                                             <Col span={12}>
                                                 <Form.Item
-                                                    label={<span style={LABEL_STYLE}><ExclamationCircleOutlined style={{ color: '#faad14' }} />不加域理由</span>}
+                                                    label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />不加域理由</span>}
                                                     validateStatus={errors.noDomainReason ? 'error' : undefined}
                                                     help={errors.noDomainReason?.message}
                                                     style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -762,13 +688,13 @@ const DevicePermissions: React.FC = () => {
 
                                 {/* SmartIT配置 */}
                                 <Col span={12}>
-                                    <div style={SECTION_TITLE_STYLE}>
+                                    <div className="section-title">
                                         <span>SmartIT配置</span>
                                     </div>
                                     <Row gutter={8} align="middle">
                                         <Col span={12}>
                                             <Form.Item
-                                                label={<span style={LABEL_STYLE}><SafetyOutlined />状态</span>}
+                                                label={<span className="form-label"><SafetyOutlined />状态</span>}
                                                 style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                             >
                                                 <Controller
@@ -794,7 +720,7 @@ const DevicePermissions: React.FC = () => {
                                         {smartitStatusValue === '未安装' && (
                                             <Col span={12}>
                                                 <Form.Item
-                                                    label={<span style={LABEL_STYLE}><ExclamationCircleOutlined style={{ color: '#faad14' }} />不安装理由</span>}
+                                                    label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />不安装理由</span>}
                                                     validateStatus={errors.noSmartitReason ? 'error' : undefined}
                                                     help={errors.noSmartitReason?.message}
                                                     style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -826,14 +752,14 @@ const DevicePermissions: React.FC = () => {
                         </div>
 
                         {/* USB配置 */}
-                        <div style={SECTION_BLOCK_STYLE}>
-                            <div style={SECTION_TITLE_STYLE}>
+                        <div className="section-block">
+                            <div className="section-title">
                                 <span>USB配置</span>
                             </div>
                             <Row gutter={8} align="middle">
                                 <Col span={8}>
                                     <Form.Item
-                                        label={<span style={LABEL_STYLE}><UsbOutlined />USB状态</span>}
+                                        label={<span className="form-label"><UsbOutlined />USB状态</span>}
                                         style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                     >
                                         <Controller
@@ -860,7 +786,7 @@ const DevicePermissions: React.FC = () => {
                                     <>
                                         <Col span={8}>
                                             <Form.Item
-                                                label={<span style={LABEL_STYLE}><ExclamationCircleOutlined style={{ color: '#faad14' }} />开通理由</span>}
+                                                label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />开通理由</span>}
                                                 validateStatus={errors.usbReason ? 'error' : undefined}
                                                 help={errors.usbReason?.message}
                                                 style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -887,7 +813,7 @@ const DevicePermissions: React.FC = () => {
                                         </Col>
                                         <Col span={8}>
                                             <Form.Item
-                                                label={<span style={LABEL_STYLE}><CalendarOutlined />使用截止日期</span>}
+                                                label={<span className="form-label"><CalendarOutlined />使用截止日期</span>}
                                                 validateStatus={errors.useEndDate ? 'error' : undefined}
                                                 help={errors.useEndDate?.message}
                                                 style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -917,14 +843,14 @@ const DevicePermissions: React.FC = () => {
                         </div>
 
                         {/* 防病毒配置 */}
-                        <div style={SECTION_BLOCK_STYLE}>
-                            <div style={SECTION_TITLE_STYLE}>
+                        <div className="section-block">
+                            <div className="section-title">
                                 <span>防病毒配置</span>
                             </div>
                             <Row gutter={8} align="middle">
                                 <Col span={8}>
                                     <Form.Item
-                                        label={<span style={LABEL_STYLE}><SafetyOutlined />连接状态</span>}
+                                        label={<span className="form-label"><SafetyOutlined />连接状态</span>}
                                         style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                     >
                                         <Controller
@@ -950,7 +876,7 @@ const DevicePermissions: React.FC = () => {
                                 {connectionStatusValue === '无连接' && (
                                     <Col span={8}>
                                         <Form.Item
-                                            label={<span style={LABEL_STYLE}><ExclamationCircleOutlined style={{ color: '#faad14' }} />无Symantec理由</span>}
+                                            label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />无Symantec理由</span>}
                                             validateStatus={errors.noSymantecReason ? 'error' : undefined}
                                             help={errors.noSymantecReason?.message}
                                             style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -980,9 +906,9 @@ const DevicePermissions: React.FC = () => {
                         </div>
 
                         {/* 备注信息 */}
-                        <div style={SECTION_BLOCK_STYLE}>
-                            <div style={SECTION_TITLE_STYLE}>
-                                <ExclamationCircleOutlined />
+                        <div className="section-block">
+                            <div className="section-title">
+                                <ExclamationCircleOutlined className="icon-orange" />
                                 <span>备注</span>
                             </div>
                             <Row gutter={8}>
@@ -1026,7 +952,7 @@ const DevicePermissions: React.FC = () => {
                                 htmlType="submit"
                                 loading={loading}
                                 size="middle"
-                                style={{ ...ACTION_BUTTON_STYLE }}
+                                className="action-button"
                             >
                                 更新
                             </Button>
@@ -1037,7 +963,7 @@ const DevicePermissions: React.FC = () => {
                                     setEditingPermission(null);
                                 }}
                                 size="middle"
-                                style={ACTION_BUTTON_STYLE}
+                                className="action-button"
                             >
                                 取消
                             </Button>
