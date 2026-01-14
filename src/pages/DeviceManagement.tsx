@@ -17,30 +17,30 @@ import {
   SearchOutlined, 
   PlusOutlined, 
   EditOutlined, 
-  DeleteOutlined, 
-  EyeOutlined,
+  DeleteOutlined,
   RedoOutlined 
 } from '@ant-design/icons';
 import Layout from '../components/common/Layout';
-import DeviceDetailModal from '../components/device/DeviceDetailModal';
 import DeviceFormModal from '../components/device/DeviceFormModal';
 
 // 导入类型和API函数
 import type { 
   DeviceListItem, 
-  DeviceQueryParams, 
-  DeviceFullDTO,
-  DictItem 
+  DeviceQueryParams,
+  DeviceIp,
+  Monitor
 } from '../types/device';
 import { 
   getDeviceList, 
   deleteDevice,
   getFilterOptions,
-  getDeviceDetail,
-  saveDevice,
-  getDictData,
-  getUserList 
+  getDeviceDetail
 } from '../services/device/deviceService';
+import { 
+  fetchDictData, 
+  fetchUsers, 
+  saveDevice as saveDeviceService 
+} from '../services/device/deviceFormService';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -71,13 +71,12 @@ const DeviceManagement: React.FC = () => {
   const [total, setTotal] = useState(0);
   
   // 弹窗相关状态
-  const [detailVisible, setDetailVisible] = useState(false);
   const [formVisible, setFormVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState<DeviceFullDTO | null>(null);
+  const [selectedDevice, setSelectedDevice] = useState<DeviceListItem | null>(null);
   
   // 字典和用户数据
-  const [dictData, setDictData] = useState<Record<string, DictItem[]>>({});
+  const [dictData, setDictData] = useState<Record<string, any[]>>({});
   const [users, setUsers] = useState<Array<{userId: string, name: string}>>([]);
 
   // 获取设备列表
@@ -85,8 +84,25 @@ const DeviceManagement: React.FC = () => {
     setLoading(true);
     try {
       const response = await getDeviceList(params);
-      setDevices(response.data.list);
-      setTotal(response.data.total);
+      
+      // 处理返回的数据，确保总是能获取到 list 和 total
+      let deviceList: DeviceListItem[] = [];
+      let totalCount = 0;
+      
+      if (response.data) {
+        if ('list' in response.data) {
+          // 数据是分页格式 { list: [], total: number, ... }
+          deviceList = response.data.list || [];
+          totalCount = response.data.total || 0;
+        } else if (Array.isArray(response.data)) {
+          // 数据是数组格式
+          deviceList = response.data;
+          totalCount = response.data.length;
+        }
+      }
+      
+      setDevices(deviceList);
+      setTotal(totalCount);
     } catch (error) {
       message.error('获取设备列表失败');
       console.error('获取设备列表失败:', error);
@@ -105,23 +121,18 @@ const DeviceManagement: React.FC = () => {
     }
   };
 
-  // 获取字典数据
-  const fetchDictData = async () => {
+  // 获取表单所需数据（字典和用户）
+  const fetchFormData = async () => {
     try {
-      const data = await getDictData();
-      setDictData(data);
+      const [dictDataResult, usersResult] = await Promise.all([
+        fetchDictData(),
+        fetchUsers()
+      ]);
+      setDictData(dictDataResult);
+      setUsers(usersResult);
     } catch (error) {
-      console.error('获取字典数据失败:', error);
-    }
-  };
-
-  // 获取用户列表
-  const fetchUsers = async () => {
-    try {
-      const userList = await getUserList();
-      setUsers(userList);
-    } catch (error) {
-      console.error('获取用户列表失败:', error);
+      console.error('获取表单数据失败:', error);
+      message.error('获取表单数据失败');
     }
   };
 
@@ -129,8 +140,7 @@ const DeviceManagement: React.FC = () => {
   useEffect(() => {
     fetchDevices(searchParams);
     fetchFilterOptions();
-    fetchDictData();
-    fetchUsers();
+    fetchFormData();
   }, [searchParams]);
 
   // 分页处理函数
@@ -148,22 +158,6 @@ const DeviceManagement: React.FC = () => {
       page: 1,
       pageSize: size,
     });
-  };
-
-  // 查看设备详情
-  const handleViewDevice = async (device: DeviceListItem) => {
-    try {
-      const deviceDetail = await getDeviceDetail(device.deviceId);
-      if (deviceDetail) {
-        setSelectedDevice(deviceDetail);
-        setDetailVisible(true);
-      } else {
-        message.error('获取设备详情失败');
-      }
-    } catch (error) {
-      message.error('获取设备详情失败');
-      console.error('获取设备详情失败:', error);
-    }
   };
 
   // 编辑设备
@@ -266,9 +260,9 @@ const DeviceManagement: React.FC = () => {
   };
 
   // 处理表单提交
-  const handleFormSubmit = async (values: DeviceFullDTO) => {
+  const handleFormSubmit = async (values: DeviceListItem) => {
     try {
-      const success = await saveDevice(values);
+      const success = await saveDeviceService(values);
       
       if (success) {
         if (isEditing) {
@@ -300,7 +294,7 @@ const DeviceManagement: React.FC = () => {
     textOverflow: 'ellipsis',
   };
 
-  // 表格列定义
+  // 表格列定义（移除了查看按钮）
   const columns = [
     {
       title: '主机编号',
@@ -316,14 +310,14 @@ const DeviceManagement: React.FC = () => {
       ),
     },
     {
-      title: '显示器编号',
+      title: '显示器',
       dataIndex: 'monitors',
       key: 'monitors',
       align: 'center' as const,
       width: 180,
       ellipsis: true,
-      render: (monitors: string[]) => {
-        const text = monitors?.join('\n') || '';
+      render: (monitors: Monitor[] | null | undefined) => {
+        const text = monitors?.map(m => m.monitorName).join('\n') || '';
         return (
           <div 
             style={{ 
@@ -346,9 +340,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || ''}>
+          {text || '-'}
         </div>
       ),
     },
@@ -359,9 +353,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || ''}>
+          {text || '-'}
         </div>
       ),
     },
@@ -372,9 +366,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 120,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || ''}>
+          {text || '-'}
         </div>
       ),
     },
@@ -385,9 +379,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 120,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || ''}>
+          {text || '-'}
         </div>
       ),
     },
@@ -398,21 +392,21 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 120,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || ''}>
+          {text || '-'}
         </div>
       ),
     },
     {
       title: 'IP地址',
-      dataIndex: 'ipAddresses',
-      key: 'ipAddresses',
+      dataIndex: 'deviceIps',
+      key: 'deviceIps',
       align: 'center' as const,
       width: 150,
       ellipsis: true,
-      render: (ipAddresses: string[]) => {
-        const text = ipAddresses?.join('\n') || '';
+      render: (deviceIps: DeviceIp[] | null | undefined) => {
+        const text = deviceIps?.map(ip => ip.ipAddress).join('\n') || '';
         return (
           <div 
             style={{ 
@@ -487,9 +481,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || ''}>
+          {text || '-'}
         </div>
       ),
     },
@@ -500,9 +494,22 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || ''}>
+          {text || '-'}
+        </div>
+      ),
+    },
+    {
+      title: '备注',
+      dataIndex: 'remark',
+      key: 'remark',
+      align: 'center' as const,
+      width: 150,
+      ellipsis: true,
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '150px' }} title={text || ''}>
+          {text || '-'}
         </div>
       ),
     },
@@ -526,20 +533,11 @@ const DeviceManagement: React.FC = () => {
       title: '操作',
       key: 'action',
       align: 'center' as const,
-      width: 220,
+      width: 150,
       fixed: 'right' as const,
       render: (_: string | undefined, record: DeviceListItem) => (
         <div style={{ ...cellStyle, padding: '0 4px' }}>
           <Space size={[4, 0]} wrap>
-            <Button 
-              type="link" 
-              icon={<EyeOutlined />}
-              size="small"
-              onClick={() => handleViewDevice(record)}
-              style={{ padding: '0 4px' }}
-            >
-              查看
-            </Button>
             <Button 
               type="link" 
               icon={<EditOutlined />}
@@ -582,7 +580,7 @@ const DeviceManagement: React.FC = () => {
             <Col>
               <Space>
                 <Search
-                  placeholder="搜索用户姓名、工号或设备编号"
+                  placeholder="搜索用户姓名、工号或主机编号"
                   allowClear
                   enterButton={<SearchOutlined />}
                   onSearch={handleSearch}
@@ -654,7 +652,7 @@ const DeviceManagement: React.FC = () => {
             dataSource={devices}
             loading={loading}
             scroll={{
-              x: 2100, 
+              x: 1950, 
               y: 'calc(100vh - 280px)', 
             }}
             pagination={false}
@@ -683,14 +681,6 @@ const DeviceManagement: React.FC = () => {
             pageSizeOptions={['10', '15', '20']}
           />
         </div>
-
-        {/* 设备详情弹窗 */}
-        <DeviceDetailModal
-          visible={detailVisible}
-          device={selectedDevice}
-          dictData={dictData}
-          onCancel={() => setDetailVisible(false)}
-        />
 
         {/* 设备表单弹窗 */}
         <DeviceFormModal
