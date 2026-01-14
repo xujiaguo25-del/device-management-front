@@ -129,6 +129,7 @@ const PasswordUpdate: React.FC = () => {
       });
 
       // 自分のパスワードを変更した場合、再ログインが必要であることを示す
+      // 管理者が他のユーザーのパスワードを変更した場合は、再ログイン不要
       if (targetUserId === userInfo?.USER_ID) {
         // 成功メッセージ（再ログインが必要な場合）
         message.success('パスワードが更新されました。再度ログインしてください。', 3);
@@ -137,8 +138,8 @@ const PasswordUpdate: React.FC = () => {
           navigate('/login');
         }, 2000);
       } else {
-        // 成功メッセージ（他のユーザーのパスワードを変更した場合）
-        message.success(response?.message || 'パスワードが正常に変更されました');
+        // 成功メッセージ（管理者が他のユーザーのパスワードを変更した場合）
+        message.success('パスワードが正常に変更されました');
       }
     } catch (error: any) {
       console.error('パスワード変更失敗:', error);
@@ -195,15 +196,6 @@ const PasswordUpdate: React.FC = () => {
             />
           )}
 
-          {/* 管理者が他のユーザーのパスワードを変更する場合のヒント */}
-          {isAdmin && watch('userId') && watch('userId') !== userInfo?.USER_ID && (
-            <Alert
-              title="管理者として他のユーザーのパスワードを変更する場合、現在のパスワードは不要です"
-              type="info"
-              showIcon
-              style={{ marginBottom: '16px' }}
-            />
-          )}
 
           <FormField
             name="newPassword"
@@ -220,7 +212,11 @@ const PasswordUpdate: React.FC = () => {
                 'パスワードは8文字以上で、英字、数字、特殊文字（@$!%*?）を含む必要があります',
             }}
           />
-          {newPassword && <PasswordStrengthIndicator password={newPassword} />}
+          {newPassword && (
+            <div style={{ marginTop: '-28px', marginBottom: '8px' }}>
+              <PasswordStrengthIndicator password={newPassword} />
+            </div>
+          )}
 
           <FormField
             name="confirmPassword"

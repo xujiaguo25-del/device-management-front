@@ -66,25 +66,23 @@ const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps> = ({
   }
 
   return (
-    <div style={{ marginTop: '8px' }}>
+    <div style={{ marginTop: '0px', marginBottom: '4px' }}>
       {showProgress && (
         <Progress
           percent={strength}
           strokeColor={color}
           showInfo={false}
-          size="small"
+          strokeWidth={2}
+          style={{ lineHeight: '2px', width: '100%' }}
         />
       )}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-        <Text type={isValid ? 'success' : 'secondary'} style={{ fontSize: '12px' }}>
-          強度: <Text strong style={{ color }}>{text}</Text>
-        </Text>
-        {!isValid && (
+      {!isValid && (
+        <div style={{ marginTop: '2px' }}>
           <Text type="danger" style={{ fontSize: '12px' }}>
             8文字以上で、英字、数字、特殊文字（@$!%*?）を含む必要があります
           </Text>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
