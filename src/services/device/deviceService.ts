@@ -2,380 +2,187 @@
 import type { 
   DeviceListItem, 
   DeviceQueryParams, 
-  DeviceApiResponse, 
+  DeviceApiResponse,
   Monitor,
   DeviceIp 
 } from '../../types/device';
 
-// 模拟数据 - 作为应用的数据源
-const mockDeviceData: DeviceListItem[] = [
-  {
-    deviceId: 'HYRON-1 PC-DC-01',
-    monitors: [{ monitorName: 'HYRON-1 Minibor-01', deviceId: 'HYRON-1 PC-DC-01' }],
-    deviceIps: [{ ipAddress: '192.168.0.1', deviceId: 'HYRON-1 PC-DC-01' }],
-    userId: 'JS0010',
-    userName: '小娟',
-    deviceModel: 'dell-S000',
-    computerName: 'DA04-PC-1',
-    loginUsername: 'xming',
-    osName: 'Windows11',
-    memorySize: '16',
-    ssdSize: '512',
-    hddSize: '—',
-    project: '项目A',
-    devRoom: '开发室A',
-    confirmStatus: '已确认',
-    remark: '备注',
-    selfConfirmId: 1,
-    osId: 1,
-    memoryId: 16,
-    ssdId: 512,
-    hddId: 0,
-  },
-  {
-    deviceId: 'HYRON-1 PC-DC-02',
-    monitors: [{ monitorName: 'HYRON-1 Minibor-02', deviceId: 'HYRON-1 PC-DC-02' }],
-    deviceIps: [
-      { ipAddress: '192.168.0.2', deviceId: 'HYRON-1 PC-DC-02' },
-      { ipAddress: '192.168.0.11', deviceId: 'HYRON-1 PC-DC-02' }
-    ],
-    userId: 'JS0011',
-    userName: '张三',
-    deviceModel: 'dell-S010',
-    computerName: 'DA04-PC-2',
-    loginUsername: 'zhban',
-    osName: 'Windows11',
-    memorySize: '16',
-    ssdSize: '512',
-    hddSize: '—',
-    project: '项目C',
-    devRoom: '开发室C',
-    confirmStatus: '已确认',
-    remark: '备注',
-    selfConfirmId: 1,
-    osId: 1,
-    memoryId: 16,
-    ssdId: 512,
-    hddId: 0,
-  },
-  {
-    deviceId: 'HYRON-1 PC-DC-03',
-    monitors: [{ monitorName: 'HYRON-1 Minibor-03', deviceId: 'HYRON-1 PC-DC-03' }],
-    deviceIps: [{ ipAddress: '192.168.0.3', deviceId: 'HYRON-1 PC-DC-03' }],
-    userId: 'JS0012',
-    userName: '李四',
-    deviceModel: 'dell-S020',
-    computerName: 'DA04-PC-3',
-    loginUsername: 'lisi',
-    osName: 'Windows11',
-    memorySize: '32',
-    ssdSize: '512',
-    hddSize: '512',
-    project: '项目A',
-    devRoom: '开发室A',
-    confirmStatus: '已确认',
-    remark: '备注',
-    selfConfirmId: 1,
-    osId: 1,
-    memoryId: 32,
-    ssdId: 512,
-    hddId: 512,
-  },
-  {
-    deviceId: 'HYRON-1 PC-DC-04',
-    monitors: [
-      { monitorName: 'HYRON-1 Minibor-04', deviceId: 'HYRON-1 PC-DC-04' },
-      { monitorName: 'HYRON-1 Minibor-11', deviceId: 'HYRON-1 PC-DC-04' }
-    ],
-    deviceIps: [{ ipAddress: '192.168.0.4', deviceId: 'HYRON-1 PC-DC-04' }],
-    userId: 'JS0013',
-    userName: '王五',
-    deviceModel: 'dell-S030',
-    computerName: 'DA04-PC-4',
-    loginUsername: 'vangpuu',
-    osName: 'Windows10',
-    memorySize: '16',
-    ssdSize: '512',
-    hddSize: '—',
-    project: '项目B',
-    devRoom: '开发室B',
-    confirmStatus: '未确认',
-    remark: '备注',
-    selfConfirmId: 0,
-    osId: 2,
-    memoryId: 16,
-    ssdId: 512,
-    hddId: 0,
-  },
-  {
-    deviceId: 'HYRON-1 PC-DC-05',
-    monitors: [{ monitorName: 'HYRON-1 Minibor-05', deviceId: 'HYRON-1 PC-DC-05' }],
-    deviceIps: [{ ipAddress: '192.168.0.5', deviceId: 'HYRON-1 PC-DC-05' }],
-    userId: 'JS0014',
-    userName: '李松',
-    deviceModel: 'dell-S040',
-    computerName: 'DA04-PC-5',
-    loginUsername: 'nuke',
-    osName: 'Windows11',
-    memorySize: '16',
-    ssdSize: '512',
-    hddSize: '—',
-    project: '项目D',
-    devRoom: '开发室D',
-    confirmStatus: '已确认',
-    remark: '备注',
-    selfConfirmId: 1,
-    osId: 1,
-    memoryId: 16,
-    ssdId: 512,
-    hddId: 0,
-  },
-  {
-    deviceId: 'HYRON-1 PC-DC-06',
-    monitors: [{ monitorName: 'HYRON-1 Minibor-06', deviceId: 'HYRON-1 PC-DC-06' }],
-    deviceIps: [
-      { ipAddress: '192.168.0.6', deviceId: 'HYRON-1 PC-DC-06' },
-      { ipAddress: '192.168.0.12', deviceId: 'HYRON-1 PC-DC-06' },
-      { ipAddress: '192.168.0.13', deviceId: 'HYRON-1 PC-DC-06' }
-    ],
-    userId: 'JS0015',
-    userName: '李雪',
-    deviceModel: 'Mac mini',
-    computerName: 'DA04-PC-6',
-    loginUsername: 'auxc',
-    osName: 'Mac OS',
-    memorySize: '16',
-    ssdSize: '512',
-    hddSize: '—',
-    project: '项目C',
-    devRoom: '开发室C',
-    confirmStatus: '未确认',
-    remark: '备注',
-    selfConfirmId: 0,
-    osId: 3,
-    memoryId: 16,
-    ssdId: 512,
-    hddId: 0,
-  },
-  {
-    deviceId: 'HYRON-1 PC-DC-07',
-    monitors: [{ monitorName: 'HYRON-1 Minibor-07', deviceId: 'HYRON-1 PC-DC-07' }],
-    deviceIps: [{ ipAddress: '192.168.0.7', deviceId: 'HYRON-1 PC-DC-07' }],
-    userId: 'JS0016',
-    userName: '韩海峰',
-    deviceModel: 'dell-S050',
-    computerName: 'DA04-PC-7',
-    loginUsername: 'jahr',
-    osName: 'Windows11',
-    memorySize: '16',
-    ssdSize: '512',
-    hddSize: '1024',
-    project: '项目A',
-    devRoom: '开发室A',
-    confirmStatus: '已确认',
-    remark: '备注',
-    selfConfirmId: 1,
-    osId: 1,
-    memoryId: 16,
-    ssdId: 512,
-    hddId: 1024,
-  },
-  {
-    deviceId: 'HYRON-1 PC-DC-08',
-    monitors: [{ monitorName: 'HYRON-1 Minibor-08', deviceId: 'HYRON-1 PC-DC-08' }],
-    deviceIps: [{ ipAddress: '192.168.0.8', deviceId: 'HYRON-1 PC-DC-08' }],
-    userId: 'JS0017',
-    userName: '小红',
-    deviceModel: 'dell-S060',
-    computerName: 'DA04-PC-8',
-    loginUsername: 'heyh',
-    osName: 'Windows10',
-    memorySize: '32',
-    ssdSize: '1024',
-    hddSize: '—',
-    project: '项目B',
-    devRoom: '开发室B',
-    confirmStatus: '已确认',
-    remark: '备注',
-    selfConfirmId: 1,
-    osId: 2,
-    memoryId: 32,
-    ssdId: 1024,
-    hddId: 0,
-  },
-  {
-    deviceId: 'HYRON-1 PC-DC-09',
-    monitors: [{ monitorName: 'HYRON-1 Minibor-09', deviceId: 'HYRON-1 PC-DC-09' }],
-    deviceIps: [{ ipAddress: '192.168.0.9', deviceId: 'HYRON-1 PC-DC-09' }],
-    userId: 'JS0018',
-    userName: '小芳',
-    deviceModel: 'dell-S070',
-    computerName: 'DA04-PC-9',
-    loginUsername: 'li',
-    osName: 'Windows11',
-    memorySize: '16',
-    ssdSize: '512',
-    hddSize: '—',
-    project: '项目D',
-    devRoom: '开发室D',
-    confirmStatus: '已确认',
-    remark: '备注',
-    selfConfirmId: 1,
-    osId: 1,
-    memoryId: 16,
-    ssdId: 512,
-    hddId: 0,
-  },
-  {
-    deviceId: 'HYRON-1 PC-DC-10',
-    monitors: [{ monitorName: 'HYRON-1 Minibor-10', deviceId: 'HYRON-1 PC-DC-10' }],
-    deviceIps: [{ ipAddress: '192.168.0.10', deviceId: 'HYRON-1 PC-DC-10' }],
-    userId: 'JS0019',
-    userName: '小李',
-    deviceModel: 'dell-S080',
-    computerName: 'DA04-PC-10',
-    loginUsername: 'zhub',
-    osName: 'Windows11',
-    memorySize: '16',
-    ssdSize: '512',
-    hddSize: '—',
-    project: '项目A',
-    devRoom: '开发室A',
-    confirmStatus: '已确认',
-    remark: '备注',
-    selfConfirmId: 1,
-    osId: 1,
-    memoryId: 16,
-    ssdId: 512,
-    hddId: 0,
-  },
-  {
-    deviceId: 'HYRON-1 PC-DC-11',
-    monitors: [{ monitorName: 'HYRON-1 Minibor-11', deviceId: 'HYRON-1 PC-DC-11' }],
-    deviceIps: [{ ipAddress: '192.168.0.13', deviceId: 'HYRON-1 PC-DC-11' }],
-    userId: 'JS0020',
-    userName: '老丁',
-    deviceModel: 'dell-S090',
-    computerName: 'DA04-PC-11',
-    loginUsername: 'zhub',
-    osName: 'Windows11',
-    memorySize: '16',
-    ssdSize: '512',
-    hddSize: '—',
-    project: '项目A',
-    devRoom: '开发室A',
-    confirmStatus: '已确认',
-    remark: '备注',
-    selfConfirmId: 1,
-    osId: 1,
-    memoryId: 16,
-    ssdId: 512,
-    hddId: 0,
-  },
-  {
-    deviceId: 'HYRON-1 PC-DC-12',
-    monitors: [{ monitorName: 'HYRON-1 Minibor-12', deviceId: 'HYRON-1 PC-DC-12' }],
-    deviceIps: [{ ipAddress: '192.168.0.14', deviceId: 'HYRON-1 PC-DC-12' }],
-    userId: 'JS0021',
-    userName: '老张',
-    deviceModel: 'dell-S100',
-    computerName: 'DA04-PC-12',
-    loginUsername: 'zhub',
-    osName: 'Windows11',
-    memorySize: '16',
-    ssdSize: '512',
-    hddSize: '—',
-    project: '项目A',
-    devRoom: '开发室A',
-    confirmStatus: '已确认',
-    remark: '备注',
-    selfConfirmId: 1,
-    osId: 1,
-    memoryId: 16,
-    ssdId: 512,
-    hddId: 0,
-  },
-  {
-    deviceId: 'HYRON-1 PC-DC-13',
-    monitors: [{ monitorName: 'HYRON-1 Minibor-13', deviceId: 'HYRON-1 PC-DC-13' }],
-    deviceIps: [{ ipAddress: '192.168.0.15', deviceId: 'HYRON-1 PC-DC-13' }],
-    userId: 'JS0022',
-    userName: '老刘',
-    deviceModel: 'dell-S110',
-    computerName: 'DA04-PC-13',
-    loginUsername: 'zhub',
-    osName: 'Windows11',
-    memorySize: '16',
-    ssdSize: '512',
-    hddSize: '—',
-    project: '项目C',
-    devRoom: '开发室B',
-    confirmStatus: '已确认',
-    remark: '备注',
-    selfConfirmId: 1,
-    osId: 1,
-    memoryId: 16,
-    ssdId: 512,
-    hddId: 0,
-  },
-];
+// API基础URL - 根据实际后端地址修改
+const API_BASE_URL = 'http://localhost:8080'; // 完整后端地址
 
-// 模拟 API 获取设备列表
+// 辅助函数：将所有空值转换为"-"，确保返回 string 类型
+const formatValue = (value: any): string => {
+  if (value === null || value === undefined || value === '') {
+    return '-';
+  }
+  return String(value);
+};
+
+// 转换API返回的数据为前端需要的格式
+const transformDeviceData = (apiData: any): DeviceListItem => {
+  // 处理嵌套字典值
+  const confirmStatus = apiData.selfConfirm?.dictItemName;
+  const osName = apiData.os?.dictItemName;
+  const memorySize = apiData.memory?.dictItemName;
+  const ssdSize = apiData.ssd?.dictItemName;
+  const hddSize = apiData.hdd?.dictItemName;
+  
+  return {
+    deviceId: apiData.deviceId || '',
+    deviceModel: formatValue(apiData.deviceModel),
+    computerName: formatValue(apiData.computerName),
+    loginUsername: formatValue(apiData.loginUsername),
+    project: formatValue(apiData.project),
+    devRoom: formatValue(apiData.devRoom),
+    userId: formatValue(apiData.userId),
+    remark: formatValue(apiData.remark),
+    selfConfirmId: apiData.selfConfirmId || null,
+    osId: apiData.osId || null,
+    memoryId: apiData.memoryId || null,
+    ssdId: apiData.ssdId || null,
+    hddId: apiData.hddId || null,
+    createTime: formatValue(apiData.createTime),
+    creater: formatValue(apiData.creater),
+    updateTime: formatValue(apiData.updateTime),
+    updater: formatValue(apiData.updater),
+    userName: formatValue(apiData.name), // 用户姓名
+    deptId: apiData.deptId || null,
+    
+    // 字典值转换 - 使用 formatValue 确保返回 string 类型
+    confirmStatus: formatValue(confirmStatus),
+    osName: formatValue(osName),
+    memorySize: formatValue(memorySize),
+    ssdSize: formatValue(ssdSize),
+    hddSize: formatValue(hddSize),
+    
+    // 数组字段转换
+    monitors: (apiData.monitors || []).map((monitor: any) => ({
+      monitorId: monitor.monitorId || 0,
+      monitorName: formatValue(monitor.monitorName),
+      deviceId: apiData.deviceId,
+      createTime: formatValue(monitor.createTime),
+      creater: formatValue(monitor.creater),
+      updateTime: formatValue(monitor.updateTime),
+      updater: formatValue(monitor.updater)
+    })),
+    
+    deviceIps: (apiData.deviceIps || []).map((ip: any) => ({
+      ipId: ip.ipId || 0,
+      ipAddress: formatValue(ip.ipAddress),
+      deviceId: apiData.deviceId,
+      createTime: formatValue(ip.createTime),
+      creater: formatValue(ip.creater),
+      updateTime: formatValue(ip.updateTime),
+      updater: formatValue(ip.updater)
+    }))
+  };
+};
+
+// 获取设备列表API
 export const getDeviceList = async (
   params: DeviceQueryParams
 ): Promise<DeviceApiResponse<DeviceListItem>> => {
-  // 模拟网络延迟
-  //await new Promise(resolve => setTimeout(resolve, 300));
-  
-  const {
-    page = 1,
-    pageSize = 10,
-    computerName,
-    project,
-    devRoom,
-    confirmStatus
-  } = params;
-  
-  // 过滤数据
-  let filteredData = [...mockDeviceData];
-  
-  if (computerName) {
-    filteredData = filteredData.filter(item => 
-      item.computerName?.toLowerCase().includes(computerName.toLowerCase()) ||
-      item.deviceId?.toLowerCase().includes(computerName.toLowerCase()) ||
-      item.userName?.toLowerCase().includes(computerName.toLowerCase()) ||
-      item.userId?.toLowerCase().includes(computerName.toLowerCase())
-    );
-  }
-  
-  if (project && project !== 'all') {
-    filteredData = filteredData.filter(item => item.project === project);
-  }
-  
-  if (devRoom && devRoom !== 'all') {
-    filteredData = filteredData.filter(item => item.devRoom === devRoom);
-  }
-  
-  if (confirmStatus && confirmStatus !== 'all') {
-    filteredData = filteredData.filter(item => item.confirmStatus === confirmStatus);
-  }
-  
-  // 分页处理
-  const startIndex = (page - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedData = filteredData.slice(startIndex, endIndex);
-  
-  // 明确返回分页格式的数据
-  return {
-    code: 200,
-    message: 'success',
-    data: {
-      list: paginatedData,
-      total: filteredData.length,
-      page,
-      pageSize
+  try {
+    console.log('开始获取设备列表，参数:', params);
+    
+    // 构建查询参数
+    const queryParams = new URLSearchParams();
+    
+    // 添加分页参数
+    queryParams.append('page', String(params.page || 1));
+    queryParams.append('size', String(params.pageSize || 10));
+    
+    // 添加筛选参数
+    if (params.computerName) {
+      // 根据DeviceService.java，后端使用deviceName参数
+      queryParams.append('deviceName', params.computerName);
     }
-  };
+    
+    if (params.userId) {
+      queryParams.append('userId', params.userId);
+    }
+    
+    // 构建URL - 添加/api前缀
+    const url = `${API_BASE_URL}/api/devices?${queryParams.toString()}`;
+    console.log('请求URL:', url);
+    
+    // 调用API
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      mode: 'cors', // 允许跨域请求
+    });
+    
+    console.log('响应状态:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      // 尝试获取错误详情
+      let errorDetail = '';
+      try {
+        const errorData = await response.json();
+        errorDetail = errorData.message || JSON.stringify(errorData);
+      } catch (e) {
+        errorDetail = response.statusText;
+      }
+      throw new Error(`API请求失败: ${response.status} - ${errorDetail}`);
+    }
+    
+    const result = await response.json();
+    console.log('API响应数据:', result);
+    
+    // 检查API返回的code
+    if (result.code !== 200) {
+      throw new Error(`API错误: ${result.message || '未知错误'}`);
+    }
+    
+    // 确保data.content存在
+    if (!result.data || !result.data.content) {
+      console.warn('API返回的数据结构异常:', result);
+      return {
+        code: 200,
+        message: 'success',
+        data: {
+          list: [],
+          total: 0,
+          page: params.page || 1,
+          pageSize: params.pageSize || 10
+        }
+      };
+    }
+    
+    // 转换数据格式
+    const transformedList = result.data.content.map(transformDeviceData);
+    
+    return {
+      code: 200,
+      message: 'success',
+      data: {
+        list: transformedList,
+        total: result.data.totalElements || 0,
+        page: (result.data.number || 0) + 1, // 后端从0开始，前端从1开始
+        pageSize: result.data.size || 10
+      }
+    };
+  } catch (error) {
+    console.error('获取设备列表失败:', error);
+    
+    // 处理异常，返回错误信息
+    const errorMessage = error instanceof Error ? error.message : '网络请求失败';
+    
+    return {
+      code: 500,
+      message: errorMessage,
+      data: {
+        list: [],
+        total: 0,
+        page: params.page || 1,
+        pageSize: params.pageSize || 10
+      }
+    };
+  }
 };
 
 // 获取筛选选项
@@ -386,43 +193,71 @@ interface FilterOptions {
 }
 
 export const getFilterOptions = async (): Promise<FilterOptions> => {
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
-  // 从数据中提取唯一的选项
-  const projects = Array.from(new Set(mockDeviceData.map(item => item.project).filter(Boolean))) as string[];
-  const devRooms = Array.from(new Set(mockDeviceData.map(item => item.devRoom).filter(Boolean))) as string[];
-  const confirmStatuses = Array.from(new Set(mockDeviceData.map(item => item.confirmStatus).filter(Boolean))) as string[];
-  
-  return {
-    projects,
-    devRooms,
-    confirmStatuses
-  };
+  try {
+    // 先获取一批数据来提取筛选选项
+    console.log('开始获取筛选选项');
+    const response = await getDeviceList({
+      page: 1,
+      pageSize: 100 // 获取足够多的数据来提取选项
+    });
+    
+    console.log('获取筛选选项的响应:', response);
+    
+    if (response.code !== 200 || !response.data || !('list' in response.data)) {
+      throw new Error('获取筛选选项失败');
+    }
+    
+    const deviceList = response.data.list;
+    
+    // 从数据中提取唯一的选项，过滤掉"-"值
+    const projects = Array.from(
+      new Set(deviceList
+        .map(item => item.project)
+        .filter(project => project && project !== '-')
+      )
+    ) as string[];
+    
+    const devRooms = Array.from(
+      new Set(deviceList
+        .map(item => item.devRoom)
+        .filter(room => room && room !== '-')
+      )
+    ) as string[];
+    
+    const confirmStatuses = Array.from(
+      new Set(deviceList
+        .map(item => item.confirmStatus)
+        .filter(status => status && status !== '-')
+      )
+    ) as string[];
+    
+    console.log('提取的筛选选项:', { projects, devRooms, confirmStatuses });
+    
+    return {
+      projects,
+      devRooms,
+      confirmStatuses
+    };
+  } catch (error) {
+    console.error('获取筛选选项失败:', error);
+    
+    // 返回默认选项
+    return {
+      projects: [],
+      devRooms: [],
+      confirmStatuses: []
+    };
+  }
 };
 
-// 获取设备详情
+// 获取设备详情（暂时返回空）
 export const getDeviceDetail = async (deviceId: string): Promise<DeviceListItem | null> => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  const device = mockDeviceData.find(item => item.deviceId === deviceId);
-  
-  if (!device) {
-    return null;
-  }
-  
-  return device;
+  console.warn('获取设备详情功能暂未实现，deviceId:', deviceId);
+  return null;
 };
 
-// 模拟 API 删除设备
+// 删除设备（暂时返回false）
 export const deleteDevice = async (deviceId: string): Promise<boolean> => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  // 在实际项目中，这里会调用真正的 API
-  // 模拟删除：在 mock 数据中移除指定 deviceId
-  const index = mockDeviceData.findIndex(item => item.deviceId === deviceId);
-  if (index !== -1) {
-    mockDeviceData.splice(index, 1);
-    return true;
-  }
+  console.warn('删除设备功能暂未实现，deviceId:', deviceId);
   return false;
 };
