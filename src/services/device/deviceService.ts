@@ -211,8 +211,9 @@ export const getDeviceDetail = async (deviceId: string): Promise<DeviceListItem 
     
     console.log('开始获取设备详情，deviceId:', deviceId);
     
-    // 构建URL
-    const url = `${API_BASE_URL}/devices/${encodeURIComponent(deviceId.trim())}`;
+    // 构建URL - 对设备ID进行URL编码，因为可能包含空格
+    const encodedDeviceId = encodeURIComponent(deviceId.trim());
+    const url = `${API_BASE_URL}/devices/${encodedDeviceId}`;
     console.log('请求URL:', url);
     
     // 调用API
@@ -262,6 +263,74 @@ export const getDeviceDetail = async (deviceId: string): Promise<DeviceListItem 
   }
 };
 
+// 删除设备API
+export const deleteDevice = async (deviceId: string): Promise<boolean> => {
+  try {
+    if (!deviceId?.trim()) {
+      throw new Error('设备ID不能为空');
+    }
+    
+    console.log('开始删除设备，deviceId:', deviceId);
+    
+    // 构建URL - 对设备ID进行URL编码
+    const encodedDeviceId = encodeURIComponent(deviceId.trim());
+    const url = `${API_BASE_URL}/devices/${encodedDeviceId}`;
+    console.log('请求URL:', url);
+    
+    // 调用API - 使用DELETE方法
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      mode: 'cors',
+    });
+    
+    console.log('删除响应状态:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      // 处理特定状态码
+      let errorDetail = '';
+      try {
+        const errorData = await response.json();
+        errorDetail = errorData.message || JSON.stringify(errorData);
+      } catch (e) {
+        errorDetail = response.statusText;
+      }
+      
+      if (response.status === 404) {
+        throw new Error(`设备 ${deviceId} 不存在`);
+      } else if (response.status === 400) {
+        throw new Error(`请求参数错误: ${errorDetail}`);
+      } else if (response.status === 500) {
+        throw new Error(`服务器错误: ${errorDetail}`);
+      } else {
+        throw new Error(`删除设备失败: ${response.status} - ${errorDetail}`);
+      }
+    }
+    
+    const result = await response.json();
+    console.log('删除响应数据:', result);
+    
+    // 检查API返回的code
+    if (result.code === 200) {
+      console.log(`设备 ${deviceId} 删除成功`);
+      return true;
+    } else {
+      console.error('删除设备失败，API返回错误:', result.message);
+      throw new Error(`删除失败: ${result.message || '未知错误'}`);
+    }
+    
+  } catch (error) {
+    console.error('删除设备失败:', error);
+    const errorMessage = error instanceof Error ? error.message : '删除设备失败';
+    
+    // 抛出错误，让调用者处理
+    throw new Error(errorMessage);
+  }
+};
+
 // 获取筛选选项（已移除，不再需要）
 export const getFilterOptions = async (): Promise<{
   projects: string[];
@@ -273,10 +342,4 @@ export const getFilterOptions = async (): Promise<{
     devRooms: [],
     confirmStatuses: []
   };
-};
-
-// 删除设备（暂时返回false）
-export const deleteDevice = async (deviceId: string): Promise<boolean> => {
-  console.warn('删除设备功能暂未实现，deviceId:', deviceId);
-  return false;
 };
