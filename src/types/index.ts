@@ -54,26 +54,71 @@ export interface Device {
   UPDATED_USER: string;
 }
 
-// 设备使用权限
-export interface DevicePermission {
-  ID: number;
-  DEVICE_ID: number;
-  USER_ID: string;
-  SMARTIT_STATUS: string;
-  NO_SMARTIT_REASON: string;
-  USB_STATUS: string;
-  USB_OPEN_REASON: string;
-  USB_OPEN_ENDDATE: string;
-  CONNECTION_STATUS: string;
-  NO_SYMENTEC_REASON: string;
-  DOMAIN_NAME: string;
-  DOMAIN_GROUP: string;
-  NO_DOMAIN_REASON: string;
-  COMMET: string;
-  CREATED_DATE: string;
-  CREATED_USER: string;
-  UPDATED_DATE: string;
-  UPDATED_USER: string;
+// 设备使用权限列表DTO（匹配后端PermissionsListDTO）
+export interface DevicePermissionList {
+  permissionId: string;
+  deviceId: string;
+  monitorNames: string[];
+  computerName: string;
+  ipAddress: string[];
+  userId: string;
+  name: string;
+  deptId: string;
+  loginUsername: string;
+  domainStatusId: number;
+  domainStatusName?: string;
+  domainGroup: string;
+  noDomainReason: string;
+  smartitStatusId: number;
+  smartitStatusName?: string; // 存储文本值：本地、远程、未安装
+  noSmartitReason: string;
+  usbStatusId: number;
+  usbStatusName?: string; // 存储文本值：关闭、数据、3G网卡
+  usbReason: string;
+  usbExpireDate: string | null;
+  antivirusStatusId: number;
+  antivirusStatusName?: string; // 存储文本值：自动、手动
+  noSymantecReason: string;
+  remark: string;
+  createTime: string;
+  creater: string;
+  updateTime: string;
+  updater: string;
+}
+
+// 设备使用权限插入DTO（匹配后端PermissionInsertDTO）
+export interface DevicePermissionInsert {
+  permissionId?: string;
+  deviceId: string;
+  domainStatusId?: number | null;
+  domainStatusName?: string;
+  domainGroup?: string;
+  noDomainReason?: string;
+  smartitStatusId?: number | null;
+  smartitStatusName?: string; // 存储文本值：本地、远程、未安装
+  noSmartitReason?: string;
+  usbStatusId?: number | null;
+  usbStatusName?: string; // 存储文本值：关闭、数据、3G网卡
+  usbReason?: string;
+  usbExpireDate?: string | null;
+  antivirusStatusId?: number | null;
+  antivirusStatusName?: string; // 存储文本值：自动、手动
+  noSymantecReason?: string;
+  remark?: string;
+  createTime?: string;
+  creater?: string;
+  updateTime?: string;
+  updater?: string;
+}
+
+// API响应结构（匹配后端ApiResponse）
+export interface ApiResponse<T> {
+  code: number;
+  message: string;
+  data?: T;
+  total?: number;
+  page?: number;
+  size?: number;
 }
 
 // 安全检查记录
