@@ -1,4 +1,4 @@
-/* Layout 样式 */
+/* Layout スタイル */
 
 .layout-sider {
   background: #001529;
@@ -33,7 +33,7 @@
   display: none;
 }
 
-/* 响应式设计 */
+/* レスポンシブ */
 @media (max-width: 768px) {
   .layout-sider {
     display: none;

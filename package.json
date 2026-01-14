@@ -1,5 +1,5 @@
 {
-  "name": "testcoplit",
+  "name": "deviceManagement",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/crypto-js": "^4.2.2",
     "@types/file-saver": "^2.0.7",
     "antd": "^6.1.2",
+    "crypto-js": "^4.2.0",
     "dayjs": "^1.11.19",
     "file-saver": "^2.0.5",
     "react": "^19.2.0",
