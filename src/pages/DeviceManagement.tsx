@@ -22,13 +22,24 @@ import {
   RedoOutlined 
 } from '@ant-design/icons';
 import Layout from '../components/common/Layout';
+import DeviceDetailModal from '../components/device/DeviceDetailModal';
+import DeviceFormModal from '../components/device/DeviceFormModal';
 
 // 导入类型和API函数
-import type { DeviceListItem, DeviceQueryParams } from '../types/index';
+import type { 
+  DeviceListItem, 
+  DeviceQueryParams, 
+  DeviceFullDTO,
+  DictItem 
+} from '../types/index';
 import { 
   getDeviceList, 
   deleteDevice,
-  getFilterOptions 
+  getFilterOptions,
+  getDeviceDetail,
+  saveDevice,
+  getDictData,
+  getUserList 
 } from '../services/device/deviceService';
 
 const { Search } = Input;
@@ -58,8 +69,16 @@ const DeviceManagement: React.FC = () => {
   });
   
   const [total, setTotal] = useState(0);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState<DeviceListItem | null>(null);
+  
+  // 弹窗相关状态
+  const [detailVisible, setDetailVisible] = useState(false);
+  const [formVisible, setFormVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState<DeviceFullDTO | null>(null);
+  
+  // 字典和用户数据
+  const [dictData, setDictData] = useState<Record<string, DictItem[]>>({});
+  const [users, setUsers] = useState<Array<{userId: string, name: string}>>([]);
 
   // 获取设备列表
   const fetchDevices = async (params: DeviceQueryParams) => {
@@ -86,10 +105,32 @@ const DeviceManagement: React.FC = () => {
     }
   };
 
+  // 获取字典数据
+  const fetchDictData = async () => {
+    try {
+      const data = await getDictData();
+      setDictData(data);
+    } catch (error) {
+      console.error('获取字典数据失败:', error);
+    }
+  };
+
+  // 获取用户列表
+  const fetchUsers = async () => {
+    try {
+      const userList = await getUserList();
+      setUsers(userList);
+    } catch (error) {
+      console.error('获取用户列表失败:', error);
+    }
+  };
+
   // 初始化数据
   useEffect(() => {
     fetchDevices(searchParams);
     fetchFilterOptions();
+    fetchDictData();
+    fetchUsers();
   }, [searchParams]);
 
   // 分页处理函数
@@ -107,6 +148,147 @@ const DeviceManagement: React.FC = () => {
       page: 1,
       pageSize: size,
     });
+  };
+
+  // 查看设备详情
+  const handleViewDevice = async (device: DeviceListItem) => {
+    try {
+      const deviceDetail = await getDeviceDetail(device.deviceId);
+      if (deviceDetail) {
+        setSelectedDevice(deviceDetail);
+        setDetailVisible(true);
+      } else {
+        message.error('获取设备详情失败');
+      }
+    } catch (error) {
+      message.error('获取设备详情失败');
+      console.error('获取设备详情失败:', error);
+    }
+  };
+
+  // 编辑设备
+  const handleEditDevice = async (device: DeviceListItem) => {
+    try {
+      const deviceDetail = await getDeviceDetail(device.deviceId);
+      if (deviceDetail) {
+        setSelectedDevice(deviceDetail);
+        setIsEditing(true);
+        setFormVisible(true);
+      } else {
+        message.error('获取设备信息失败');
+      }
+    } catch (error) {
+      message.error('获取设备信息失败');
+      console.error('获取设备信息失败:', error);
+    }
+  };
+
+  // 删除设备
+  const handleDeleteDevice = async (deviceId: string) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除设备 ${deviceId} 吗？`,
+      okText: '确认',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          const success = await deleteDevice(deviceId);
+          if (success) {
+            await fetchDevices(searchParams);
+            message.success(`设备 ${deviceId} 删除成功`);
+          } else {
+            message.error('删除设备失败，设备不存在');
+          }
+        } catch (error) {
+          message.error('删除设备失败');
+          console.error('删除设备失败:', error);
+        }
+      },
+    });
+  };
+
+  // 添加设备
+  const handleAddDevice = () => {
+    setSelectedDevice(null);
+    setIsEditing(false);
+    setFormVisible(true);
+  };
+
+  // 处理搜索
+  const handleSearch = (value: string) => {
+    setSearchValue(value);
+    setSearchParams({
+      ...searchParams,
+      computerName: value,
+      page: 1,
+    });
+  };
+
+  // 处理筛选变化
+  const handleProjectChange = (value: string) => {
+    setProjectValue(value);
+    setSearchParams({
+      ...searchParams,
+      project: value === 'all' ? undefined : value,
+      page: 1,
+    });
+  };
+
+  const handleDevRoomChange = (value: string) => {
+    setDevRoomValue(value);
+    setSearchParams({
+      ...searchParams,
+      devRoom: value === 'all' ? undefined : value,
+      page: 1,
+    });
+  };
+
+  const handleConfirmStatusChange = (value: string) => {
+    setConfirmStatusValue(value);
+    setSearchParams({
+      ...searchParams,
+      confirmStatus: value === 'all' ? undefined : value,
+      page: 1,
+    });
+  };
+
+  // 重置筛选条件
+  const handleReset = () => {
+    setSearchValue('');
+    setProjectValue('all');
+    setDevRoomValue('all');
+    setConfirmStatusValue('all');
+    
+    setSearchParams({
+      page: 1,
+      pageSize: searchParams.pageSize,
+    });
+  };
+
+  // 处理表单提交
+  const handleFormSubmit = async (values: DeviceFullDTO) => {
+    try {
+      const success = await saveDevice(values);
+      
+      if (success) {
+        if (isEditing) {
+          message.success(`设备 ${values.deviceId} 编辑成功`);
+        } else {
+          message.success(`设备 ${values.deviceId} 添加成功`);
+        }
+        
+        // 重新加载设备列表
+        await fetchDevices(searchParams);
+        setFormVisible(false);
+        setIsEditing(false);
+        setSelectedDevice(null);
+      } else {
+        message.error('操作失败');
+      }
+    } catch (error) {
+      message.error('操作失败');
+      console.error('操作失败:', error);
+    }
   };
 
   // 单元格样式
@@ -383,101 +565,6 @@ const DeviceManagement: React.FC = () => {
     },
   ];
 
-  // 查看设备详情
-  const handleViewDevice = (device: DeviceListItem) => {
-    setSelectedDevice(device);
-    setIsModalVisible(true);
-  };
-
-  // 编辑设备
-  const handleEditDevice = (device: DeviceListItem) => {
-    message.info(`编辑设备: ${device.deviceId}`);
-    // 实际项目中应跳转到编辑页面
-    // history.push(`/device/edit/${device.deviceId}`);
-  };
-
-  // 删除设备
-  const handleDeleteDevice = async (deviceId: string) => {
-    Modal.confirm({
-      title: '确认删除',
-      content: `确定要删除设备 ${deviceId} 吗？`,
-      okText: '确认',
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          const success = await deleteDevice(deviceId);
-          if (success) {
-            await fetchDevices(searchParams);
-            message.success(`设备 ${deviceId} 删除成功`);
-          } else {
-            message.error('删除设备失败，设备不存在');
-          }
-        } catch (error) {
-          message.error('删除设备失败');
-          console.error('删除设备失败:', error);
-        }
-      },
-    });
-  };
-
-  // 处理搜索
-  const handleSearch = (value: string) => {
-    setSearchValue(value);
-    setSearchParams({
-      ...searchParams,
-      computerName: value,
-      page: 1,
-    });
-  };
-
-  // 处理筛选变化
-  const handleProjectChange = (value: string) => {
-    setProjectValue(value);
-    setSearchParams({
-      ...searchParams,
-      project: value === 'all' ? undefined : value,
-      page: 1,
-    });
-  };
-
-  const handleDevRoomChange = (value: string) => {
-    setDevRoomValue(value);
-    setSearchParams({
-      ...searchParams,
-      devRoom: value === 'all' ? undefined : value,
-      page: 1,
-    });
-  };
-
-  const handleConfirmStatusChange = (value: string) => {
-    setConfirmStatusValue(value);
-    setSearchParams({
-      ...searchParams,
-      confirmStatus: value === 'all' ? undefined : value,
-      page: 1,
-    });
-  };
-
-  // 重置筛选条件
-  const handleReset = () => {
-    setSearchValue('');
-    setProjectValue('all');
-    setDevRoomValue('all');
-    setConfirmStatusValue('all');
-    
-    setSearchParams({
-      page: 1,
-      pageSize: searchParams.pageSize,
-    });
-  };
-
-  // 添加设备
-  const handleAddDevice = () => {
-    message.info('添加设备功能');
-    // 实际项目中应跳转到添加页面
-    // history.push('/device/add');
-  };
-
   return (
     <Layout title="设备管理">
       <div style={{ 
@@ -598,72 +685,27 @@ const DeviceManagement: React.FC = () => {
         </div>
 
         {/* 设备详情弹窗 */}
-        <Modal
-          title="设备详情"
-          open={isModalVisible}
-          onCancel={() => setIsModalVisible(false)}
-          footer={null}
-          width={800}
-        >
-          {selectedDevice && (
-            <div>
-              <Row gutter={24}>
-                <Col span={12}>
-                  <p><strong>设备ID：</strong>{selectedDevice.deviceId}</p>
-                  <p><strong>计算机名：</strong>{selectedDevice.computerName}</p>
-                  <p><strong>设备型号：</strong>{selectedDevice.deviceModel}</p>
-                  <p><strong>登录用户：</strong>{selectedDevice.loginUsername}</p>
-                  <p><strong>使用人：</strong>{selectedDevice.userName}</p>
-                  <p><strong>所属项目：</strong>{selectedDevice.project}</p>
-                </Col>
-                <Col span={12}>
-                  <p><strong>开发室：</strong>{selectedDevice.devRoom}</p>
-                  <p><strong>操作系统：</strong>{selectedDevice.osName}</p>
-                  <p><strong>内存：</strong>{selectedDevice.memorySize} G</p>
-                  <p><strong>SSD：</strong>{selectedDevice.ssdSize} G</p>
-                  <p><strong>HDD：</strong>{selectedDevice.hddSize} G</p>
-                  <p><strong>本人确认：</strong>
-                    <Tag color={selectedDevice.confirmStatus === '已确认' ? 'green' : 'red'}>
-                      {selectedDevice.confirmStatus}
-                    </Tag>
-                  </p>
-                </Col>
-              </Row>
-              <Row style={{ marginTop: 16 }}>
-                <Col span={24}>
-                  <p><strong>IP地址：</strong></p>
-                  <div style={{ 
-                    padding: '8px', 
-                    backgroundColor: '#f5f5f5', 
-                    borderRadius: '4px',
-                    whiteSpace: 'pre-line' 
-                  }}>
-                    {selectedDevice.ipAddresses?.join('\n')}
-                  </div>
-                  
-                  <p style={{ marginTop: 16 }}><strong>显示器：</strong></p>
-                  <div style={{ 
-                    padding: '8px', 
-                    backgroundColor: '#f5f5f5', 
-                    borderRadius: '4px',
-                    whiteSpace: 'pre-line' 
-                  }}>
-                    {selectedDevice.monitors?.join('\n')}
-                  </div>
-                  
-                  <p style={{ marginTop: 16 }}><strong>备注：</strong></p>
-                  <div style={{ 
-                    padding: '8px', 
-                    backgroundColor: '#f5f5f5', 
-                    borderRadius: '4px'
-                  }}>
-                    {selectedDevice.remark || '无备注'}
-                  </div>
-                </Col>
-              </Row>
-            </div>
-          )}
-        </Modal>
+        <DeviceDetailModal
+          visible={detailVisible}
+          device={selectedDevice}
+          dictData={dictData}
+          onCancel={() => setDetailVisible(false)}
+        />
+
+        {/* 设备表单弹窗 */}
+        <DeviceFormModal
+          visible={formVisible}
+          isEditing={isEditing}
+          device={selectedDevice}
+          dictData={dictData}
+          users={users}
+          onCancel={() => {
+            setFormVisible(false);
+            setIsEditing(false);
+            setSelectedDevice(null);
+          }}
+          onSubmit={handleFormSubmit}
+        />
       </div>
     </Layout>
   );

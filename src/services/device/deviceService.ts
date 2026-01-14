@@ -1,8 +1,16 @@
 // services/device/deviceService.ts
-import type { DeviceListItem, DeviceQueryParams, DeviceApiResponse } from '../../types/index';
+import type { 
+  DeviceListItem, 
+  DeviceQueryParams, 
+  DeviceApiResponse, 
+  DeviceFullDTO,
+  FilterOptions,
+  MonitorDTO,
+  DeviceIpDTO 
+} from '../types/index';
 
-// 模拟数据
-export const mockDeviceData: DeviceListItem[] = [
+// 模拟数据 - 作为应用的数据源
+const mockDeviceData: DeviceListItem[] = [
   {
     deviceId: 'HYRON-1 PC-DC-01',
     monitors: ['HYRON-1 Minibor-01'],
@@ -244,7 +252,7 @@ export const getDeviceList = async (
   params: DeviceQueryParams
 ): Promise<DeviceApiResponse<DeviceListItem>> => {
   // 模拟网络延迟
-  //await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 300));
   
   const {
     page = 1,
@@ -256,7 +264,7 @@ export const getDeviceList = async (
   } = params;
   
   // 过滤数据
-  let filteredData = mockDeviceData;
+  let filteredData = [...mockDeviceData];
   
   if (computerName) {
     filteredData = filteredData.filter(item => 
@@ -296,8 +304,10 @@ export const getDeviceList = async (
   };
 };
 
-//获取筛选选项
-export const getFilterOptions = async () => {
+// 获取筛选选项
+export const getFilterOptions = async (): Promise<FilterOptions> => {
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
   // 从数据中提取唯一的选项
   const projects = Array.from(new Set(mockDeviceData.map(item => item.project).filter(Boolean))) as string[];
   const devRooms = Array.from(new Set(mockDeviceData.map(item => item.devRoom).filter(Boolean))) as string[];
@@ -310,12 +320,51 @@ export const getFilterOptions = async () => {
   };
 };
 
-// 模拟 API 获取设备详情
-export const getDeviceDetail = async (deviceId: string): Promise<DeviceListItem | null> => {
+// 获取设备详情（转换为 DeviceFullDTO 格式）
+export const getDeviceDetail = async (deviceId: string): Promise<DeviceFullDTO | null> => {
   await new Promise(resolve => setTimeout(resolve, 300));
   
   const device = mockDeviceData.find(item => item.deviceId === deviceId);
-  return device || null;
+  
+  if (!device) {
+    return null;
+  }
+  
+  // 将 DeviceListItem 转换为 DeviceFullDTO
+  return {
+    deviceId: device.deviceId,
+    deviceModel: device.deviceModel,
+    computerName: device.computerName,
+    loginUsername: device.loginUsername,
+    project: device.project,
+    devRoom: device.devRoom,
+    userId: device.userId,
+    name: device.userName,
+    remark: device.remark,
+    selfConfirmId: device.confirmStatus === '已确认' ? 1 : 0,
+    osId: getOsId(device.osName),
+    memoryId: parseInt(device.memorySize) || 0,
+    ssdId: device.ssdSize !== '—' ? parseInt(device.ssdSize) || 0 : 0,
+    hddId: device.hddSize !== '—' ? parseInt(device.hddSize) || 0 : 0,
+    monitors: device.monitors.map(monitor => ({ 
+      monitorName: monitor, 
+      deviceId: device.deviceId 
+    })),
+    ipAddresses: device.ipAddresses.map(ip => ({ 
+      ipAddress: ip, 
+      deviceId: device.deviceId 
+    }))
+  };
+};
+
+// 辅助函数：根据操作系统名称获取ID
+const getOsId = (osName: string): number => {
+  switch (osName) {
+    case 'Windows11': return 1;
+    case 'Windows10': return 2;
+    case 'Mac OS': return 3;
+    default: return 1;
+  }
 };
 
 // 模拟 API 删除设备
@@ -330,4 +379,111 @@ export const deleteDevice = async (deviceId: string): Promise<boolean> => {
     return true;
   }
   return false;
+};
+
+// 模拟 API 添加或更新设备
+export const saveDevice = async (deviceData: DeviceFullDTO): Promise<boolean> => {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const index = mockDeviceData.findIndex(item => item.deviceId === deviceData.deviceId);
+  
+  // 转换回 DeviceListItem 格式
+  const deviceListItem: DeviceListItem = {
+    deviceId: deviceData.deviceId,
+    deviceModel: deviceData.deviceModel || '',
+    computerName: deviceData.computerName || '',
+    loginUsername: deviceData.loginUsername || '',
+    project: deviceData.project || '',
+    devRoom: deviceData.devRoom || '',
+    userId: deviceData.userId || '',
+    userName: deviceData.name || '',
+    remark: deviceData.remark || '',
+    confirmStatus: deviceData.selfConfirmId === 1 ? '已确认' : '未确认',
+    osName: getOsName(deviceData.osId),
+    memorySize: deviceData.memoryId?.toString() || '0',
+    ssdSize: deviceData.ssdId ? deviceData.ssdId.toString() : '—',
+    hddSize: deviceData.hddId ? deviceData.hddId.toString() : '—',
+    ipAddresses: Array.isArray(deviceData.ipAddresses) 
+      ? deviceData.ipAddresses.map((ip: any) => ip.ipAddress || ip)
+      : [],
+    monitors: deviceData.monitors?.map(monitor => monitor.monitorName) || []
+  };
+  
+  if (index !== -1) {
+    // 更新设备
+    mockDeviceData[index] = deviceListItem;
+  } else {
+    // 添加设备
+    mockDeviceData.push(deviceListItem);
+  }
+  
+  return true;
+};
+
+// 辅助函数：根据ID获取操作系统名称
+const getOsName = (osId?: number | null): string => {
+  switch (osId) {
+    case 1: return 'Windows11';
+    case 2: return 'Windows10';
+    case 3: return 'Mac OS';
+    default: return 'Windows11';
+  }
+};
+
+// 获取字典数据（用于模态框）
+export const getDictData = async () => {
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  return {
+    CONFIRM_STATUS: [
+      { dictId: 1, dictItemName: '已确认' },
+      { dictId: 0, dictItemName: '未确认' }
+    ],
+    OS_TYPE: [
+      { dictId: 1, dictItemName: 'Windows 11' },
+      { dictId: 2, dictItemName: 'Windows 10' },
+      { dictId: 3, dictItemName: 'Mac OS' },
+      { dictId: 4, dictItemName: 'Linux' }
+    ],
+    MEMORY_SIZE: [
+      { dictId: 8, dictItemName: '8G' },
+      { dictId: 16, dictItemName: '16G' },
+      { dictId: 32, dictItemName: '32G' },
+      { dictId: 64, dictItemName: '64G' }
+    ],
+    SSD_SIZE: [
+      { dictId: 256, dictItemName: '256G' },
+      { dictId: 512, dictItemName: '512G' },
+      { dictId: 1024, dictItemName: '1T' },
+      { dictId: 2048, dictItemName: '2T' }
+    ],
+    HDD_SIZE: [
+      { dictId: 512, dictItemName: '512G' },
+      { dictId: 1024, dictItemName: '1T' },
+      { dictId: 2048, dictItemName: '2T' },
+      { dictId: 4096, dictItemName: '4T' }
+    ]
+  };
+};
+
+// 获取用户列表（用于表单选择）
+export const getUserList = async () => {
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  // 从设备数据中提取用户
+  const uniqueUsers = Array.from(
+    new Map(mockDeviceData.map(item => [item.userId, item])).values()
+  ).map(item => ({
+    userId: item.userId,
+    name: item.userName
+  }));
+  
+  // 添加一些额外用户
+  const additionalUsers = [
+    { userId: 'JS0023', name: '新用户1' },
+    { userId: 'JS0024', name: '新用户2' },
+    { userId: 'JS0025', name: '新用户3' }
+  ];
+  
+  return [...uniqueUsers, ...additionalUsers];
 };
