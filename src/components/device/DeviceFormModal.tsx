@@ -21,7 +21,7 @@ import {
   MinusOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
-import type { DeviceFullDTO, MonitorDTO, DeviceIpDTO } from '../types/devices';
+import type { DeviceFullDTO, MonitorDTO, DeviceIpDTO } from '../../types/device';
 
 const { Option } = Select;
 const { TextArea } = Input;

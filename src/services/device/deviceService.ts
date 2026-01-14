@@ -7,11 +7,7 @@ import type {
   FilterOptions,
   MonitorDTO,
   DeviceIpDTO 
-<<<<<<< HEAD
-} from '../types/index';
-=======
 } from '../../types/device';
->>>>>>> 1a85f3a000b25bebaf770cedbcfbf552fcb53df6
 
 // 模拟数据 - 作为应用的数据源
 const mockDeviceData: DeviceListItem[] = [

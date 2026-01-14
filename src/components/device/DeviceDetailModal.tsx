@@ -22,7 +22,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
-import type { DeviceFullDTO } from '../types/devices';
+import type { DeviceFullDTO } from '../../types/device';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
