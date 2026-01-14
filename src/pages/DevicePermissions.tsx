@@ -44,7 +44,6 @@ import {
 } from '../services/permission/permissionService';
 import type { DevicePermissionList, DevicePermissionInsert } from '../types';
 
-// 导入CSS文件
 import './DevicePermissions.css';
 
 const { Option } = Select;
