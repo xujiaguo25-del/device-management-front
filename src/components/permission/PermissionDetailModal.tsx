@@ -56,12 +56,21 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
             setValue('domainName', editingPermission.domainName || '');
             setValue('domainGroup', editingPermission.domainGroup || '');
             setValue('noDomainReason', editingPermission.noDomainReason || '');
-            setValue('smartitStatus', editingPermission.smartitStatus === 1 ? '本地' : editingPermission.smartitStatus === 0 ? '未安装' : '');
+            // 优先使用 smartitStatusText，如果没有则根据 smartitStatus 转换
+            const smartitStatusValue = editingPermission.smartitStatusText || 
+                (editingPermission.smartitStatus === 1 ? '本地' : editingPermission.smartitStatus === 0 ? '未安装' : '');
+            setValue('smartitStatus', smartitStatusValue);
             setValue('noSmartitReason', editingPermission.noSmartitReason || '');
-            setValue('usbStatus', editingPermission.usbStatus === 1 ? '数据' : editingPermission.usbStatus === 0 ? '关闭' : '');
+            // 优先使用 usbStatusText，如果没有则根据 usbStatus 转换
+            const usbStatusValue = editingPermission.usbStatusText || 
+                (editingPermission.usbStatus === 1 ? '数据' : editingPermission.usbStatus === 0 ? '关闭' : '');
+            setValue('usbStatus', usbStatusValue);
             setValue('usbReason', editingPermission.usbReason || '');
             setValue('useEndDate', editingPermission.usbExpireDate ? dayjs(editingPermission.usbExpireDate) : null);
-            setValue('connectionStatus', editingPermission.antivirusStatus === 1 ? '自动' : editingPermission.antivirusStatus === 0 ? '手动' : '');
+            // 优先使用 antivirusStatusText，如果没有则根据 antivirusStatus 转换
+            const antivirusStatusValue = editingPermission.antivirusStatusText || 
+                (editingPermission.antivirusStatus === 1 ? '自动' : editingPermission.antivirusStatus === 0 ? '手动' : '');
+            setValue('connectionStatus', antivirusStatusValue);
             setValue('noSymantecReason', editingPermission.noSymantecReason || '');
             setValue('remarks', editingPermission.remark || '');
         }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Row, message } from 'antd';
+import { Button, Card, Space, message } from 'antd';
 import { ExportOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import Layout from '../components/common/Layout';
@@ -171,29 +171,33 @@ const DevicePermissions: React.FC = () => {
 
     return (
         <Layout title="权限管理">
-            <Card>
-                {/* 搜索栏 */}
-                <PermissionSearchForm onSearch={onSearch} onReset={onResetSearch} />
-
-                {/* 表格 */}
-                <div>
-                    {/* 导出按钮 - 放在表格右上角（操作列上方） */}
-                    <Row justify="end" style={{ marginBottom: 8 }}>
-                        <Button icon={<ExportOutlined />} onClick={handleExport}>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                {/* 权限列表卡片 */}
+                <Card
+                    title="权限列表"
+                    extra={
+                        <Button icon={<ExportOutlined />} onClick={handleExport} loading={loading}>
                             导出Excel
                         </Button>
-                    </Row>
-                    <PermissionTable
-                        data={permissions}
-                        loading={loading}
-                        pagination={pagination}
-                        onPageChange={(page, pageSize) => {
-                            loadPermissions(page, pageSize);
-                        }}
-                        onEdit={handleEdit}
-                    />
-                </div>
-            </Card>
+                    }
+                >
+                    {/* 搜索栏 */}
+                    <PermissionSearchForm onSearch={onSearch} onReset={onResetSearch} />
+
+                    {/* 表格 */}
+                    <div style={{ marginTop: 16 }}>
+                        <PermissionTable
+                            data={permissions}
+                            loading={loading}
+                            pagination={pagination}
+                            onPageChange={(page, pageSize) => {
+                                loadPermissions(page, pageSize);
+                            }}
+                            onEdit={handleEdit}
+                        />
+                    </div>
+                </Card>
+            </Space>
 
             {/* 查看详情对话框 */}
             <PermissionDetailModal

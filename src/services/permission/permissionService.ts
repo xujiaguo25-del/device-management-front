@@ -17,9 +17,9 @@ const mockPermissions: DevicePermissionList[] = [
         computerName: '开发机-001',
         ipAddress: ['192.168.1.100', '192.168.1.101'],
         userId: 'U001',
-        name: '张三',
+        name: '用户001',
         deptId: 'DEPT001',
-        loginUsername: 'zhangsan',
+        loginUsername: 'user001',
         domainStatus: 1,
         domainName: 'D1',
         domainGroup: 'IT组',
@@ -47,9 +47,9 @@ const mockPermissions: DevicePermissionList[] = [
         computerName: '测试机-002',
         ipAddress: ['192.168.1.102'],
         userId: 'U002',
-        name: '李四',
+        name: '用户002',
         deptId: 'DEPT002',
-        loginUsername: 'lisi',
+        loginUsername: 'user002',
         domainStatus: 1,
         domainName: 'D2',
         domainGroup: '测试组',
@@ -77,9 +77,9 @@ const mockPermissions: DevicePermissionList[] = [
         computerName: '设计机-003',
         ipAddress: ['192.168.1.103', '192.168.1.104'],
         userId: 'U003',
-        name: '王五',
+        name: '用户003',
         deptId: 'DEPT003',
-        loginUsername: 'wangwu',
+        loginUsername: 'user003',
         domainStatus: 0,
         domainName: '',
         domainGroup: '',
@@ -107,9 +107,9 @@ const mockPermissions: DevicePermissionList[] = [
         computerName: '办公机-004',
         ipAddress: ['192.168.1.105'],
         userId: 'U004',
-        name: '赵六',
+        name: '用户004',
         deptId: 'DEPT001',
-        loginUsername: 'zhaoliu',
+        loginUsername: 'user004',
         domainStatus: 1,
         domainName: 'D3',
         domainGroup: 'IT组',
@@ -137,9 +137,9 @@ const mockPermissions: DevicePermissionList[] = [
         computerName: '服务器-005',
         ipAddress: ['192.168.1.106'],
         userId: 'U005',
-        name: '孙七',
+        name: '用户005',
         deptId: 'DEPT004',
-        loginUsername: 'sunqi',
+        loginUsername: 'user005',
         domainStatus: 1,
         domainName: 'D4',
         domainGroup: '运维组',
@@ -160,6 +160,66 @@ const mockPermissions: DevicePermissionList[] = [
         updateTime: dayjs().subtract(7, 'day').format('YYYY-MM-DD HH:mm:ss'),
         updater: 'admin',
     },
+    // 添加更多测试数据用于分页测试
+    ...Array.from({ length: 45 }, (_, i) => {
+        const num = i + 6;
+        const statusVariants = [
+            { smartit: '本地', usb: '数据', antivirus: '自动', domain: 1 },
+            { smartit: '远程', usb: '3G网卡', antivirus: '自动', domain: 1 },
+            { smartit: '未安装', usb: '关闭', antivirus: '手动', domain: 0 },
+            { smartit: '本地', usb: '关闭', antivirus: '自动', domain: 1 },
+            { smartit: '远程', usb: '数据', antivirus: '自动', domain: 1 },
+        ];
+        const variant = statusVariants[i % statusVariants.length];
+        const deptIds = ['DEPT001', 'DEPT002', 'DEPT003', 'DEPT004', 'DEPT005'];
+        const deptNames = ['IT组', '测试组', '设计组', '运维组', '产品组'];
+        const deptIndex = i % deptIds.length;
+        
+        // 生成有效的IP地址（确保不超过255）
+        const ipLastOctet = 100 + (num % 155); // 100-254范围
+        const ipAddress = num % 4 === 0 
+            ? [`192.168.1.${ipLastOctet}`, `192.168.1.${ipLastOctet + 1}`]
+            : [`192.168.1.${ipLastOctet}`];
+        
+        // 生成显示器列表
+        const monitorCount = num % 3 === 0 ? 2 : (num % 5 === 0 ? 3 : 1);
+        const monitorNames = Array.from({ length: monitorCount }, (_, idx) => `显示器${idx + 1}`);
+        
+        // 详情框中的域名选项列表（详情框中原有的选项）
+        const domainOptions = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'EU', 'MG', 'EQU', 'NRI-01', 'MS'];
+        const selectedDomain = variant.domain === 1 ? domainOptions[num % domainOptions.length] : '';
+        
+        return {
+            permissionId: `PERM${String(num).padStart(3, '0')}`,
+            deviceId: `DEV${String(num).padStart(3, '0')}`,
+            monitorNames: monitorNames,
+            computerName: `${deptNames[deptIndex]}-${String(num).padStart(3, '0')}`,
+            ipAddress: ipAddress,
+            userId: `U${String(num).padStart(3, '0')}`,
+            name: `用户${String(num).padStart(3, '0')}`,
+            deptId: deptIds[deptIndex],
+            loginUsername: `user${String(num).padStart(3, '0')}`,
+            domainStatus: variant.domain,
+            domainName: selectedDomain,
+            domainGroup: variant.domain === 1 ? `${deptNames[deptIndex]}域组` : '',
+            noDomainReason: variant.domain === 0 ? '新设备，尚未加入域' : '',
+            smartitStatus: variant.smartit === '未安装' ? 0 : 1,
+            smartitStatusText: variant.smartit,
+            noSmartitReason: variant.smartit === '未安装' ? '设备型号不支持SmartIT' : '',
+            usbStatus: variant.usb === '关闭' ? 0 : 1,
+            usbStatusText: variant.usb,
+            usbReason: variant.usb === '关闭' ? '' : (variant.usb === '3G网卡' ? '需要移动网络访问' : '工作需要数据传输'),
+            usbExpireDate: variant.usb === '关闭' ? null : dayjs().add(30 + (i % 60), 'day').format('YYYY-MM-DD'),
+            antivirusStatus: variant.antivirus === '自动' ? 1 : 0,
+            antivirusStatusText: variant.antivirus,
+            noSymantecReason: variant.antivirus === '手动' ? '正在配置自动更新规则' : '',
+            remark: `${deptNames[deptIndex]} - 用户${String(num).padStart(3, '0')}使用的设备，${variant.smartit}安装SmartIT`,
+            createTime: dayjs().subtract(20 + (i % 30), 'day').subtract(i % 24, 'hour').format('YYYY-MM-DD HH:mm:ss'),
+            creater: 'admin',
+            updateTime: dayjs().subtract(5 + (i % 10), 'day').subtract(i % 12, 'hour').format('YYYY-MM-DD HH:mm:ss'),
+            updater: 'admin',
+        } as DevicePermissionList;
+    }),
 ];
 
 /**
