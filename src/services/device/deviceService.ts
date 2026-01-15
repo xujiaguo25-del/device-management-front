@@ -340,4 +340,76 @@ export const deleteDevice = async (deviceId: string): Promise<boolean> => {
   }
 };
 
-// 不再需要getFilterOptions函数，因为我们现在从设备列表中动态提取选项
+// 获取所有项目选项API
+export const getProjectOptions = async (): Promise<string[]> => {
+  try {
+    const url = `${API_BASE_URL}/devices/project`;
+    console.log('请求项目选项URL:', url);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      mode: 'cors',
+    });
+    
+    console.log('项目选项响应状态:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      throw new Error(`获取项目选项失败: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    console.log('项目选项响应数据:', result);
+    
+    if (result.code === 200 && result.data) {
+      // 过滤掉空值和"-"
+      return result.data.filter((item: string) => item && item !== '-');
+    } else {
+      console.warn('获取项目选项API返回异常:', result.message);
+      return [];
+    }
+  } catch (error) {
+    console.error('获取项目选项失败:', error);
+    return [];
+  }
+};
+
+// 获取所有开发室选项API
+export const getDevRoomOptions = async (): Promise<string[]> => {
+  try {
+    const url = `${API_BASE_URL}/devices/devroom`;
+    console.log('请求开发室选项URL:', url);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      mode: 'cors',
+    });
+    
+    console.log('开发室选项响应状态:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      throw new Error(`获取开发室选项失败: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    console.log('开发室选项响应数据:', result);
+    
+    if (result.code === 200 && result.data) {
+      // 过滤掉空值和"-"
+      return result.data.filter((item: string) => item && item !== '-');
+    } else {
+      console.warn('获取开发室选项API返回异常:', result.message);
+      return [];
+    }
+  } catch (error) {
+    console.error('获取开发室选项失败:', error);
+    return [];
+  }
+};

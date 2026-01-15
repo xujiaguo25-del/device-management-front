@@ -33,7 +33,9 @@ import type {
 import { 
   getDeviceList, 
   deleteDevice,
-  getDeviceDetail
+  getDeviceDetail,
+  getProjectOptions,
+  getDevRoomOptions
 } from '../services/device/deviceService';
 import { 
   fetchDictData, 
@@ -68,22 +70,10 @@ const DeviceManagement: React.FC = () => {
   const [dictData, setDictData] = useState<Record<string, any[]>>({});
   const [users, setUsers] = useState<Array<{userId: string, name: string}>>([]);
   
-  // 获取项目选项（从当前设备列表中提取去重值）
-  const projectOptions = React.useMemo(() => {
-    const projects = devices
-      .map(device => device.project)
-      .filter(project => project && project !== '-');
-    return [...new Set(projects)];
-  }, [devices]);
+  // 筛选选项状态
+  const [projectOptions, setProjectOptions] = useState<string[]>([]);
+  const [devRoomOptions, setDevRoomOptions] = useState<string[]>([]);
   
-  // 获取开发室选项（从当前设备列表中提取去重值）
-  const devRoomOptions = React.useMemo(() => {
-    const devRooms = devices
-      .map(device => device.devRoom)
-      .filter(devRoom => devRoom && devRoom !== '-');
-    return [...new Set(devRooms)];
-  }, [devices]);
-
   // 获取设备列表
   const fetchDevices = async (params: DeviceQueryParams) => {
     setLoading(true);
@@ -128,6 +118,37 @@ const DeviceManagement: React.FC = () => {
     }
   };
 
+  // 获取筛选选项数据
+  const fetchFilterOptions = async () => {
+    try {
+      const [projects, devRooms] = await Promise.all([
+        getProjectOptions(),
+        getDevRoomOptions()
+      ]);
+      setProjectOptions(projects);
+      setDevRoomOptions(devRooms);
+      console.log('获取到项目选项:', projects);
+      console.log('获取到开发室选项:', devRooms);
+    } catch (error) {
+      console.error('获取筛选选项失败:', error);
+      message.warning('获取筛选选项失败，将使用本地选项');
+      // 失败时可以尝试从现有设备中提取作为后备
+      const localProjects = devices
+        .map(device => device.project)
+        .filter((project): project is string => 
+          project !== null && project !== undefined && project !== '-'
+        );
+      const localDevRooms = devices
+        .map(device => device.devRoom)
+        .filter((devRoom): devRoom is string => 
+          devRoom !== null && devRoom !== undefined && devRoom !== '-'
+        );
+      
+      setProjectOptions([...new Set(localProjects)]);
+      setDevRoomOptions([...new Set(localDevRooms)]);
+    }
+  };
+
   // 获取表单所需数据（字典和用户）
   const fetchFormData = async () => {
     try {
@@ -147,6 +168,7 @@ const DeviceManagement: React.FC = () => {
   useEffect(() => {
     fetchDevices(searchParams);
     fetchFormData();
+    fetchFilterOptions();
   }, [searchParams]);
 
   // 分页处理函数
@@ -325,7 +347,7 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 180,
       ellipsis: true,
-      render: (monitors: Monitor[]) => {
+      render: (monitors: Monitor[] | null | undefined) => {
         const monitorNames = monitors?.map(m => m.monitorName).filter(Boolean) || [];
         const text = monitorNames.length > 0 ? monitorNames.join('\n') : '-';
         return (
@@ -350,9 +372,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -363,9 +385,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -376,9 +398,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 120,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -389,9 +411,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 120,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -402,9 +424,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 120,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -415,7 +437,7 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 150,
       ellipsis: true,
-      render: (deviceIps: DeviceIp[]) => {
+      render: (deviceIps: DeviceIp[] | null | undefined) => {
         const ipAddresses = deviceIps?.map(ip => ip.ipAddress).filter(Boolean) || [];
         const text = ipAddresses.length > 0 ? ipAddresses.join('\n') : '-';
         return (
@@ -492,9 +514,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -505,9 +527,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -518,9 +540,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 150,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '150px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '150px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
