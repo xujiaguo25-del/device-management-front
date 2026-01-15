@@ -62,7 +62,7 @@ export interface DeviceListItem {
 
 // 设备 IP 实体
 export interface DeviceIp {
-  ipId?: number;
+  // ipId?: number;
   ipAddress: string;
   deviceId?: string;
   createTime?: string | null;
@@ -73,7 +73,7 @@ export interface DeviceIp {
 
 // 显示器实体
 export interface Monitor {
-  monitorId?: number;
+  // monitorId?: number;
   monitorName: string;
   deviceId?: string;
   createTime?: string | null;
