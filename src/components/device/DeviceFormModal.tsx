@@ -80,13 +80,13 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         setDeviceIps([{ ipAddress: '', deviceId: '' }]);
 
         // 设置默认值
-        form.setFieldsValue({
-          selfConfirmId: 0,
-          osId: 1,
-          memoryId: 16,
-          ssdId: 0,
-          hddId: 0,
-        });
+        // form.setFieldsValue({
+        //   selfConfirmId: 0,
+        //   osId: 1,
+        //   memoryId: 16,
+        //   ssdId: 0,
+        //   hddId: 0,
+        // });
       }
     }
   }, [visible, device, form]);
