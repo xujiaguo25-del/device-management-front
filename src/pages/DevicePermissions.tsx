@@ -402,9 +402,12 @@ const DevicePermissions: React.FC = () => {
             render: (value: string, record: DevicePermissionList) => {
                 // 优先使用 smartitStatus（dictId）
                 let dictId = record.smartitStatus;
-                
-                const label = getLabel(smartitStatusOptions, dictId);
-                
+                let label = value;
+
+                if (!label && dictId != null) {
+                    label = getLabel(smartitStatusOptions, dictId);
+                }
+
                 if (label !== '-') {
                     const color = 
                         label === 'インストール済み' ? 'green' :
