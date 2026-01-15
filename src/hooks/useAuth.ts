@@ -1,5 +1,5 @@
 /**
- * 自定义 hooks
+ * カスタム hooks
  */
 
 import { useEffect, useState } from 'react';
@@ -7,8 +7,8 @@ import { useAuthStore } from '../stores/authStore';
 import { useNavigate } from 'react-router-dom';
 
 /**
- * 认证检查 hook
- * 检查用户是否已登录，未登录则重定向到登录页
+ * 認証チェック hook
+ * ログイン状態を確認し、未ログインの場合はログイン画面へリダイレクト
  */
 export const useAuth = () => {
   const { token, userInfo } = useAuthStore();
@@ -25,7 +25,7 @@ export const useAuth = () => {
 };
 
 /**
- * 防抖 hook
+ * デバウンス hook
  */
 export const useDebounce = <T>(value: T, delay: number): T => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
