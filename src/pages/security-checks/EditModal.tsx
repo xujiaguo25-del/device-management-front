@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Input, Switch, Button, message, Tooltip } from 'antd';
+import { Modal, Input, Switch, Button, message, Tooltip,} from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import type { SecurityCheck } from '../../types';
-
+import ReadonlySelect from './ReadonlySelect';
 const { TextArea } = Input;
 
 interface EditModalProps {
@@ -11,6 +11,7 @@ interface EditModalProps {
   record: SecurityCheck | null;
   onCancel: () => void;
   onOk: (updated: SecurityCheck) => Promise<void> | void;
+  monitorOptions?: { label: string; value: string }[];
 }
 
 const labelStyle: React.CSSProperties = { marginBottom: 8, color: 'rgba(0,0,0,0.85)' };
@@ -112,12 +113,18 @@ const EditModal: React.FC<EditModalProps> = ({
 
             <div style={twoColRowStyle}>
               <div style={fieldBoxStyle}>
-                <div style={labelStyle}>设备ID*</div>
+                <div style={labelStyle}>设备编号*</div>
                 <Input value={draft.deviceId} disabled />
               </div>
               <div style={fieldBoxStyle}>
-                <div style={labelStyle}>报告ID*</div>
-                <Input value={draft.reportId} disabled />
+                <div style={labelStyle}>显示器编号*</div>
+                <ReadonlySelect
+                  value={draft.monitorId}
+                  options={draft.monitorIds.map((id) => ({
+                  label: id,
+                  value: id,
+             }))}
+               />
               </div>
             </div>
           </div>

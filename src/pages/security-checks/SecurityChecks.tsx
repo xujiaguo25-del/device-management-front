@@ -16,7 +16,14 @@ const SecurityChecks: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [userId, setUserId] = useState('');
   const [editVisible, setEditVisible] = useState(false);
+  const [currentRecord, setCurrentRecord] = useState< SecurityCheck | null>(null);
+  const [searchTrigger, setSearchTrigger] = useState(0); // 用于触发搜索
   const [currentRecord, setCurrentRecord] = useState<SecurityCheck | null>(null);
+
+  const monitorOptions = useMemo(() => {
+    const unique = Array.from(new Set(testData.map((x) => x.monitorId)));
+    return unique.map((id) => ({ label: id, value: id }));
+  }, []);
 
   // 加载数据
   const fetchData = async () => {
@@ -41,15 +48,21 @@ const SecurityChecks: React.FC = () => {
     }
   };
 
-
   useEffect(() => {
     fetchData();
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, searchTrigger]);
 
   // 处理搜索
   const handleSearch = () => {
-    fetchData();
     setCurrentPage(1);
+    setSearchTrigger(prev => prev + 1);
+  };
+
+  // 重置搜索
+  const handleReset = () => {
+    setUserId('');
+    setCurrentPage(1);
+    setSearchTrigger(prev => prev + 1);
   };
 
   // 处理编辑
@@ -61,22 +74,55 @@ const SecurityChecks: React.FC = () => {
   // 处理更新
   const handleUpdate = async (updated: SecurityCheck) => {
     try {
-      // 更新本地数据
-      setData(prevData => 
-        prevData.map(item => 
-          item.samplingId === updated.samplingId 
-            ? { ...item, ...updated } 
-            : item
-        )
+      setLoading(true);
+      
+      // 调用后端API更新数据
+      const response = await securityCheckApi.updateSecurityCheck(
+        updated.samplingId,
+        {
+          // 只传递需要更新的字段
+          bootAuthentication: updated.bootAuthentication,
+          securityPatch: updated.securityPatch,
+          screenSaverPwd: updated.screenSaverPwd,
+          antivirusProtection: updated.antivirusProtection,
+          installedSoftware: updated.installedSoftware,
+          usbInterface: updated.usbInterface,
+          disposalMeasures: updated.disposalMeasures,
+        }
       );
       
-      message.success('更新成功');
-      setEditVisible(false);
+      if (response && response.success) {
+        // 使用后端返回的数据更新本地状态
+        const updatedData = response.data || updated;
+        setData(prevData => 
+          prevData.map(item => 
+            item.samplingId === updated.samplingId 
+              ? { ...item, ...updatedData }
+              : item
+          )
+        );
+        
+        message.success('更新成功');
+        setEditVisible(false);
+        
+        // 可选：重新获取数据以确保数据一致性
+        // fetchData();
+      } else {
+        throw new Error(response?.message || '更新失败');
+      }
 
     } catch (error: any) {
       console.error('更新失败:', error);
-      throw error;
+      message.error(error.message || '更新失败，请重试');
+      throw error; // 抛出错误让EditModal处理
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // 刷新数据
+  const handleRefresh = () => {
+    fetchData();
   };
 
   // 创建表格列
@@ -106,6 +152,16 @@ const SecurityChecks: React.FC = () => {
                   loading={loading}
                 >
                   查询
+                </Button>
+                <Button
+                  icon={<SyncOutlined />}
+                  onClick={handleRefresh}
+                  loading={loading}
+                >
+                  刷新
+                </Button>
+                <Button onClick={handleReset}>
+                  重置
                 </Button>
               </Space>
             </Col>
@@ -141,6 +197,7 @@ const SecurityChecks: React.FC = () => {
           record={currentRecord}
           onCancel={() => setEditVisible(false)}
           onOk={handleUpdate}
+          monitorOptions={monitorOptions}
         />
       </Card>
     </Layout>
