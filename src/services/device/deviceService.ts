@@ -100,13 +100,22 @@ export const getDeviceList = async (
     queryParams.append('page', String(params.page || 1));
     queryParams.append('size', String(params.pageSize || 10));
     
-    // 添加筛选参数 - 只支持userId
+    // 添加筛选参数 - 支持多种筛选条件
     if (params.userId) {
       queryParams.append('userId', params.userId);
     }
     
-    // 注意：根据DeviceService.java，后端使用的是deviceName参数，但根据需求我们只按userId搜索
-    // 如果有设备名称搜索需求，可以保留这个参数
+    // 添加项目筛选参数
+    if (params.project) {
+      queryParams.append('project', params.project);
+    }
+    
+    // 添加开发室筛选参数
+    if (params.devRoom) {
+      queryParams.append('devRoom', params.devRoom);
+    }
+    
+    // 注意：根据DeviceService.java，后端使用的是deviceName参数
     if (params.computerName) {
       queryParams.append('deviceName', params.computerName);
     }
@@ -331,15 +340,4 @@ export const deleteDevice = async (deviceId: string): Promise<boolean> => {
   }
 };
 
-// 获取筛选选项（已移除，不再需要）
-export const getFilterOptions = async (): Promise<{
-  projects: string[];
-  devRooms: string[];
-  confirmStatuses: string[];
-}> => {
-  return {
-    projects: [],
-    devRooms: [],
-    confirmStatuses: []
-  };
-};
+// 不再需要getFilterOptions函数，因为我们现在从设备列表中动态提取选项

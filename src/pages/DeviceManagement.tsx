@@ -33,7 +33,6 @@ import type {
 import { 
   getDeviceList, 
   deleteDevice,
-  getFilterOptions,
   getDeviceDetail
 } from '../services/device/deviceService';
 import { 
@@ -54,20 +53,9 @@ const DeviceManagement: React.FC = () => {
     page: 1,
     pageSize: 10,
   });
-  const [searchValue, setSearchValue] = useState('');
-  const [projectValue, setProjectValue] = useState<string>('all');
-  const [devRoomValue, setDevRoomValue] = useState<string>('all');
-  const [confirmStatusValue, setConfirmStatusValue] = useState<string>('all');
-  
-  const [filterOptions, setFilterOptions] = useState<{
-    projects: string[];
-    devRooms: string[];
-    confirmStatuses: string[];
-  }>({
-    projects: [],
-    devRooms: [],
-    confirmStatuses: []
-  });
+  const [userIdSearch, setUserIdSearch] = useState('');
+  const [projectFilter, setProjectFilter] = useState<string>('all');
+  const [devRoomFilter, setDevRoomFilter] = useState<string>('all');
   
   const [total, setTotal] = useState(0);
   
@@ -79,6 +67,22 @@ const DeviceManagement: React.FC = () => {
   // 字典和用户数据
   const [dictData, setDictData] = useState<Record<string, any[]>>({});
   const [users, setUsers] = useState<Array<{userId: string, name: string}>>([]);
+  
+  // 获取项目选项（从当前设备列表中提取去重值）
+  const projectOptions = React.useMemo(() => {
+    const projects = devices
+      .map(device => device.project)
+      .filter(project => project && project !== '-');
+    return [...new Set(projects)];
+  }, [devices]);
+  
+  // 获取开发室选项（从当前设备列表中提取去重值）
+  const devRoomOptions = React.useMemo(() => {
+    const devRooms = devices
+      .map(device => device.devRoom)
+      .filter(devRoom => devRoom && devRoom !== '-');
+    return [...new Set(devRooms)];
+  }, [devices]);
 
   // 获取设备列表
   const fetchDevices = async (params: DeviceQueryParams) => {
@@ -90,7 +94,6 @@ const DeviceManagement: React.FC = () => {
       
       // 处理返回的数据
       if (response.code === 200 && response.data) {
-        // 确保我们能正确获取list和total
         let deviceList: DeviceListItem[] = [];
         let totalCount = 0;
         
@@ -125,16 +128,6 @@ const DeviceManagement: React.FC = () => {
     }
   };
 
-  // 获取筛选选项
-  const fetchFilterOptions = async () => {
-    try {
-      const options = await getFilterOptions();
-      setFilterOptions(options);
-    } catch (error) {
-      console.error('获取筛选选项失败:', error);
-    }
-  };
-
   // 获取表单所需数据（字典和用户）
   const fetchFormData = async () => {
     try {
@@ -153,7 +146,6 @@ const DeviceManagement: React.FC = () => {
   // 初始化数据
   useEffect(() => {
     fetchDevices(searchParams);
-    fetchFilterOptions();
     fetchFormData();
   }, [searchParams]);
 
@@ -222,19 +214,19 @@ const DeviceManagement: React.FC = () => {
     setFormVisible(true);
   };
 
-  // 处理搜索
-  const handleSearch = (value: string) => {
-    setSearchValue(value);
+  // 处理用户ID搜索
+  const handleUserIdSearch = (value: string) => {
+    setUserIdSearch(value);
     setSearchParams({
       ...searchParams,
-      computerName: value,
+      userId: value.trim() || undefined,
       page: 1,
     });
   };
 
-  // 处理筛选变化
+  // 处理项目筛选变化
   const handleProjectChange = (value: string) => {
-    setProjectValue(value);
+    setProjectFilter(value);
     setSearchParams({
       ...searchParams,
       project: value === 'all' ? undefined : value,
@@ -242,8 +234,9 @@ const DeviceManagement: React.FC = () => {
     });
   };
 
+  // 处理开发室筛选变化
   const handleDevRoomChange = (value: string) => {
-    setDevRoomValue(value);
+    setDevRoomFilter(value);
     setSearchParams({
       ...searchParams,
       devRoom: value === 'all' ? undefined : value,
@@ -251,34 +244,26 @@ const DeviceManagement: React.FC = () => {
     });
   };
 
-  const handleConfirmStatusChange = (value: string) => {
-    setConfirmStatusValue(value);
-    setSearchParams({
-      ...searchParams,
-      confirmStatus: value === 'all' ? undefined : value,
-      page: 1,
-    });
-  };
-
   // 重置筛选条件
   const handleReset = () => {
-    setSearchValue('');
-    setProjectValue('all');
-    setDevRoomValue('all');
-    setConfirmStatusValue('all');
+    setUserIdSearch('');
+    setProjectFilter('all');
+    setDevRoomFilter('all');
     
     setSearchParams({
       page: 1,
       pageSize: searchParams.pageSize,
+      // 清空所有筛选参数
+      userId: undefined,
+      project: undefined,
+      devRoom: undefined,
+      computerName: undefined,
     });
   };
 
   // 处理表单提交
   const handleFormSubmit = async (values: DeviceListItem) => {
     try {
-      // const success = await saveDeviceService(values);
-
-      /////修改
       let success;
       if (isEditing) {
         // 编辑模式下调用 updateDevice
@@ -287,8 +272,6 @@ const DeviceManagement: React.FC = () => {
         // 新增模式下调用 saveDevice
         success = await saveDeviceService(values);
       }
-      /////修改
-
       
       if (success) {
         if (isEditing) {
@@ -608,45 +591,34 @@ const DeviceManagement: React.FC = () => {
             <Col>
               <Space>
                 <Search
-                  placeholder="搜索用户姓名、工号或主机编号"
+                  placeholder="输入用户工号进行搜索"
                   allowClear
                   enterButton={<SearchOutlined />}
-                  onSearch={handleSearch}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  value={searchValue}
-                  style={{ width: 285 }}
+                  onSearch={handleUserIdSearch}
+                  onChange={(e) => setUserIdSearch(e.target.value)}
+                  value={userIdSearch}
+                  style={{ width: 240 }}
                 />
                 <Select 
                   placeholder="项目筛选" 
                   style={{ width: 120 }}
-                  value={projectValue}
+                  value={projectFilter}
                   onChange={handleProjectChange}
                 >
                   <Option value="all">全部项目</Option>
-                  {filterOptions.projects.map(project => (
+                  {projectOptions.map(project => (
                     <Option key={project} value={project}>{project}</Option>
                   ))}
                 </Select>
                 <Select 
                   placeholder="开发室筛选" 
                   style={{ width: 120 }}
-                  value={devRoomValue}
+                  value={devRoomFilter}
                   onChange={handleDevRoomChange}
                 >
                   <Option value="all">全部开发室</Option>
-                  {filterOptions.devRooms.map(room => (
+                  {devRoomOptions.map(room => (
                     <Option key={room} value={room}>{room}</Option>
-                  ))}
-                </Select>
-                <Select 
-                  placeholder="确认状态" 
-                  style={{ width: 120 }}
-                  value={confirmStatusValue}
-                  onChange={handleConfirmStatusChange}
-                >
-                  <Option value="all">全部状态</Option>
-                  {filterOptions.confirmStatuses.map(status => (
-                    <Option key={status} value={status}>{status}</Option>
                   ))}
                 </Select>
                 <Button 
