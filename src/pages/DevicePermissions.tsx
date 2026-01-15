@@ -3,8 +3,8 @@ import Layout from '../components/common/Layout';
 
 const DevicePermissions: React.FC = () => {
   return (
-    <Layout title="権限管理">
-      ここは権限管理ページです
+    <Layout title="权限管理">
+      我是权限管理页面
     </Layout>
   );
 };

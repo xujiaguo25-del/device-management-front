@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { Layout as AntLayout, Menu, Dropdown, Button, Avatar, Drawer, message } from 'antd';
+import React, { useState } from 'react';
+import { Layout as AntLayout, Menu, Dropdown, Button, Avatar, Drawer } from 'antd';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -12,7 +12,6 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
-import { logoutService } from '../../services/auth/authService';
 import './Layout.css';
 
 const { Header, Sider, Content } = AntLayout;
@@ -22,82 +21,63 @@ interface LayoutProps {
   title?: string;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, title = 'デバイス管理システム' }) => {
+const Layout: React.FC<LayoutProps> = ({ children, title = '设备管理系统' }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerVisible, setMobileDrawerVisible] = useState(false);
   const navigate = useNavigate();
   const { userInfo, logout } = useAuthStore();
 
-  const handleMenuClick = useCallback(
-    (path: string) => {
-      navigate(path);
-      setMobileDrawerVisible(false);
+  const menuItems = [
+    {
+      key: '/devices',
+      icon: <DesktopOutlined />,
+      label: '设备管理',
+      onClick: () => {
+        navigate('/devices');
+        setMobileDrawerVisible(false);
+      },
     },
-    [navigate]
-  );
+    {
+      key: '/permissions',
+      icon: <KeyOutlined />,
+      label: '权限管理',
+      onClick: () => {
+        navigate('/permissions');
+        setMobileDrawerVisible(false);
+      },
+    },
+    {
+      key: '/security-checks',
+      icon: <SecurityScanOutlined />,
+      label: '安全检查',
+      onClick: () => {
+        navigate('/security-checks');
+        setMobileDrawerVisible(false);
+      },
+    },
+  ];
 
-  const menuItems = useMemo(
-    () => [
-      {
-        key: '/devices',
-        icon: <DesktopOutlined />,
-        label: 'デバイス管理',
-        onClick: () => handleMenuClick('/devices'),
+  const userMenuItems = [
+    {
+      key: 'change-password',
+      icon: <LockOutlined />,
+      label: '修改密码',
+      onClick: () => navigate('/change-password'),
+    },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: '登出',
+      onClick: () => {
+        logout();
+        navigate('/login');
       },
-      {
-        key: '/permissions',
-        icon: <KeyOutlined />,
-        label: '権限管理',
-        onClick: () => handleMenuClick('/permissions'),
-      },
-      {
-        key: '/security-checks',
-        icon: <SecurityScanOutlined />,
-        label: 'セキュリティチェック',
-        onClick: () => handleMenuClick('/security-checks'),
-      },
-    ],
-    [handleMenuClick]
-  );
-
-  const handleLogout = useCallback(async () => {
-    try {
-      // バックエンドのログアウト API を呼び出す
-      await logoutService();
-      message.success('ログアウトしました');
-    } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('ログアウト失敗:', error);
-      }
-      // バックエンドのログアウトが失敗してもローカル状態はクリアする
-    } finally {
-      // ローカル状態をクリアし、ログイン画面へ遷移
-      logout();
-      navigate('/login');
-    }
-  }, [logout, navigate]);
-
-  const userMenuItems = useMemo(
-    () => [
-      {
-        key: 'change-password',
-        icon: <LockOutlined />,
-        label: 'パスワード変更',
-        onClick: () => navigate('/change-password'),
-      },
-      {
-        key: 'logout',
-        icon: <LogoutOutlined />,
-        label: 'ログアウト',
-        onClick: handleLogout,
-      },
-    ],
-    [navigate, handleLogout]
-  );
+    },
+  ];
 
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
-      {/* デスクトップ用サイドバー */}
+      {/* 桌面端侧边栏 */}
       <Sider
         trigger={null}
         collapsible
@@ -105,7 +85,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title = 'デバイス管理�
         className="layout-sider"
       >
         <div className="logo" style={{ padding: '16px', textAlign: 'center', color: 'white', fontSize: '18px', fontWeight: 'bold' }}>
-          {!collapsed && 'デバイス管理'}
+          {!collapsed && '设备管理'}
         </div>
         <Menu
           theme="dark"
@@ -115,9 +95,9 @@ const Layout: React.FC<LayoutProps> = ({ children, title = 'デバイス管理�
         />
       </Sider>
 
-      {/* モバイル用ドロワーメニュー */}
+      {/* 移动端抽屉菜单 */}
       <Drawer
-        title="メニュー"
+        title="菜单"
         placement="left"
         onClose={() => setMobileDrawerVisible(false)}
         open={mobileDrawerVisible}
@@ -154,7 +134,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title = 'デバイス管理�
             <Button type="text">
               <Avatar icon={<UserOutlined />} />
               <span style={{ marginLeft: '8px' }}>
-                {userInfo?.NAME || 'ユーザー'}
+                {userInfo?.USER_NAME || '用户'}
               </span>
             </Button>
           </Dropdown>

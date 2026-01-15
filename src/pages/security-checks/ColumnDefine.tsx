@@ -9,11 +9,10 @@ import ReadonlySelect from './ReadonlySelect';
  * @param pageSize 每页条数
  * @param onEdit 编辑回调函数
  */
-
 export const createColumns = (
   currentPage: number,
   pageSize: number,
-  onEdit: (record: SecurityCheck) => void,
+  onEdit: (record: SecurityCheck) => void
 ): ColumnType<SecurityCheck>[] => [
   {
     title: '序号',

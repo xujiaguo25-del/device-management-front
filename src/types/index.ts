@@ -1,38 +1,36 @@
 /**
- * 型定義
+ * 类型定义
  */
 
-// ユーザー情報
+// 用户信息
 export interface UserInfo {
   USER_ID: string;
-  DEPT_ID: string;
-  NAME: string;
-  USER_TYPE_NAME: string;
+  USER_NAME: string;
+  DEPARTMENT_CODE: string;
+  USER_LEVEL: string;
+  CREATED_DATE: string;
+  UPDATED_DATE: string;
 }
 
-// ログイン（リクエスト/レスポンス）
+// 登录请求/响应
 export interface LoginRequest {
   userId: string;
   password: string;
 }
 
 export interface LoginResponse {
-  code: number;
-  message: string;
-  data: {
-    token: string;
-    userDTO: UserInfo;
-  };
+  token: string;
+  userInfo: UserInfo;
 }
 
-// パスワード変更リクエスト
+// 密码更改请求
 export interface ChangePasswordRequest {
   userId: string;
-  currentPassword?: string; // 管理者が他のユーザーのパスワードを変更する場合は不要
+  currentPassword: string;
   newPassword: string;
 }
 
-// デバイス情報
+// 设备信息
 export interface Device {
   DEVICE_ID: number;
   USER_ID: string;
@@ -56,7 +54,7 @@ export interface Device {
   UPDATED_USER: string;
 }
 
-// デバイス利用権限
+// 设备使用权限
 export interface DevicePermission {
   ID: number;
   DEVICE_ID: number;
@@ -78,25 +76,32 @@ export interface DevicePermission {
   UPDATED_USER: string;
 }
 
-// セキュリティチェック記録
+// 安全检查记录（与后端DTO同步）
 export interface SecurityCheck {
-  CHECK_ID: number;
-  DEVICE_ID: number;
-  USER_ID: string;
-  BOOT_AUTH: string;
-  PASSWORD_SCREEN: string;
-  INSTALLED_SOFTWARE: string;
-  SECURITY_PATCH: string;
-  VIRUS_PROTECTION: string;
-  USB_PORT: string;
-  HANDLING_MEASURES: string;
-  CREATED_DATE: string;
-  CREATED_USER: string;
-  UPDATED_DATE: string;
-  UPDATED_USER: string;
+  samplingId: string;          // 主键
+  reportId: string;            // 报告ID
+  userId: string;              // 用户ID
+  name: string;                // 用户名
+  deviceId: string;            // 设备ID
+
+  updateDate: string;          // 导出日期（LocalDate → string）
+  updateTime: string;          // 更新时间（LocalDateTime → string）
+  createTime: string;          // 创建时间（LocalDateTime → string）
+
+  updater: string;             // 更新人
+  creater: string;             // 创建人
+
+  installedSoftware: boolean;  // 是否安装非法软件
+  disposalMeasures: string;    // 处置措施
+  screenSaverPwd: boolean;     // 屏保密码
+  usbInterface: boolean;       // USB接口
+  securityPatch: boolean;      // 安全补丁
+  antivirusProtection: boolean;// 杀毒软件
+  bootAuthentication: boolean; // 启动认证
 }
 
-// 認証状態
+
+// 认证状态
 export interface AuthState {
   token: string | null;
   userInfo: UserInfo | null;
@@ -104,38 +109,17 @@ export interface AuthState {
   error: string | null;
 }
 
-// ページングパラメータ
+// 分页参数
 export interface PaginationParams {
   page: number;
   size: number;
   [key: string]: any;
 }
 
-// リストレスポンス
+// 列表响应
 export interface ListResponse<T> {
   data: T[];
   total: number;
   page: number;
   size: number;
-}
-
-// Dict types 
-export interface DictItem {
-  dictId: number;
-  dictItemName: string;
-  sort: number;
-}
-
-export interface DictTypeGroup {
-  typeCode: string;
-  items: DictItem[];
-}
-
-export interface DictSuccessResponse {
-  code: number;
-  message: string;
-  data: DictTypeGroup[];
-  total: number | null;
-  page: number | null;
-  size: number | null;
 }
