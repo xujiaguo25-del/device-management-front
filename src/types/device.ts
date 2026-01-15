@@ -81,3 +81,25 @@ export interface Monitor {
   updateTime?: string | null;
   updater?: string | null;
 }
+
+// 定义 API 响应类型
+export interface ApiResponse<T = any> {
+  code: number;
+  message?: string;
+  data: T;
+}
+
+export interface DictResponseData {
+  [key: string]: Array<{
+    dictId: number;
+    dictItemName: string;
+    [key: string]: any;
+  }>;
+}
+
+export interface DeviceListResponseData {
+  list: DeviceListItem[];
+  total?: number;
+  page?: number;
+  pageSize?: number;
+}
