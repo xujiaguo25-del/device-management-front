@@ -674,8 +674,7 @@ const DeviceManagement: React.FC = () => {
             dataSource={devices}
             loading={loading}
             scroll={{
-              x: 1950, 
-              y: 'calc(100vh - 280px)', 
+              x: 1950,
             }}
             pagination={false}
             size="middle"
