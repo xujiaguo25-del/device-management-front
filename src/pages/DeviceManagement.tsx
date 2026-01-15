@@ -1,5 +1,5 @@
 // pages/DeviceManagement.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { 
   Table, 
   Button, 
@@ -9,8 +9,6 @@ import {
   Select, 
   Row, 
   Col, 
-  Modal, 
-  message, 
   Pagination 
 } from 'antd';
 import { 
@@ -22,299 +20,52 @@ import {
 } from '@ant-design/icons';
 import Layout from '../components/common/Layout';
 import DeviceFormModal from '../components/device/DeviceFormModal';
+import { useDeviceStore } from '../stores/deviceStore';
 
-// 导入类型和API函数
-import type { 
-  DeviceListItem, 
-  DeviceQueryParams,
+import type {
+  DeviceListItem,
   DeviceIp,
   Monitor
 } from '../types/device';
-import { 
-  getDeviceList, 
-  deleteDevice,
-  getDeviceDetail,
-  getProjectOptions,
-  getDevRoomOptions
-} from '../services/device/deviceService';
-import { 
-  fetchDictData, 
-  fetchUsers, 
-  saveDevice as saveDeviceService,
-  updateDevice as updateDeviceService
-} from '../services/device/deviceFormService';
 
 const { Search } = Input;
 const { Option } = Select;
 
 const DeviceManagement: React.FC = () => {
-  // 状态管理
-  const [devices, setDevices] = useState<DeviceListItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searchParams, setSearchParams] = useState<DeviceQueryParams>({
-    page: 1,
-    pageSize: 10,
-  });
-  const [userIdSearch, setUserIdSearch] = useState('');
-  const [projectFilter, setProjectFilter] = useState<string>('all');
-  const [devRoomFilter, setDevRoomFilter] = useState<string>('all');
-  
-  const [total, setTotal] = useState(0);
-  
-  // 弹窗相关状态
-  const [formVisible, setFormVisible] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState<DeviceListItem | null>(null);
-  
-  // 字典和用户数据
-  const [dictData, setDictData] = useState<Record<string, any[]>>({});
-  const [users, setUsers] = useState<Array<{userId: string, name: string}>>([]);
-  
-  // 筛选选项状态
-  const [projectOptions, setProjectOptions] = useState<string[]>([]);
-  const [devRoomOptions, setDevRoomOptions] = useState<string[]>([]);
-  
-  // 获取设备列表
-  const fetchDevices = async (params: DeviceQueryParams) => {
-    setLoading(true);
-    try {
-      console.log('开始获取设备列表，参数:', params);
-      const response = await getDeviceList(params);
-      console.log('获取到的设备列表响应:', response);
-      
-      // 处理返回的数据
-      if (response.code === 200 && response.data) {
-        let deviceList: DeviceListItem[] = [];
-        let totalCount = 0;
-        
-        if ('list' in response.data) {
-          // 数据是分页格式 { list: [], total: number, ... }
-          deviceList = response.data.list || [];
-          totalCount = response.data.total || 0;
-          console.log(`获取到设备列表: ${deviceList.length} 条，总计: ${totalCount}`);
-        } else if (Array.isArray(response.data)) {
-          // 数据是数组格式
-          deviceList = response.data;
-          totalCount = response.data.length;
-        } else {
-          console.warn('未知的数据格式:', response.data);
-        }
-        
-        setDevices(deviceList);
-        setTotal(totalCount);
-      } else {
-        console.error('获取设备列表失败:', response.message);
-        message.error(`获取设备列表失败: ${response.message}`);
-        setDevices([]);
-        setTotal(0);
-      }
-    } catch (error) {
-      console.error('获取设备列表失败:', error);
-      message.error('获取设备列表失败');
-      setDevices([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 获取筛选选项数据
-  const fetchFilterOptions = async () => {
-    try {
-      const [projects, devRooms] = await Promise.all([
-        getProjectOptions(),
-        getDevRoomOptions()
-      ]);
-      setProjectOptions(projects);
-      setDevRoomOptions(devRooms);
-      console.log('获取到项目选项:', projects);
-      console.log('获取到开发室选项:', devRooms);
-    } catch (error) {
-      console.error('获取筛选选项失败:', error);
-      message.warning('获取筛选选项失败，将使用本地选项');
-      // 失败时可以尝试从现有设备中提取作为后备
-      const localProjects = devices
-        .map(device => device.project)
-        .filter((project): project is string => 
-          project !== null && project !== undefined && project !== '-'
-        );
-      const localDevRooms = devices
-        .map(device => device.devRoom)
-        .filter((devRoom): devRoom is string => 
-          devRoom !== null && devRoom !== undefined && devRoom !== '-'
-        );
-      
-      setProjectOptions([...new Set(localProjects)]);
-      setDevRoomOptions([...new Set(localDevRooms)]);
-    }
-  };
-
-  // 获取表单所需数据（字典和用户）
-  const fetchFormData = async () => {
-    try {
-      const [dictDataResult, usersResult] = await Promise.all([
-        fetchDictData(),
-        fetchUsers()
-      ]);
-      setDictData(dictDataResult);
-      setUsers(usersResult);
-    } catch (error) {
-      console.error('获取表单数据失败:', error);
-      message.error('获取表单数据失败');
-    }
-  };
+  // 使用 Zustand store
+  const {
+    devices,
+    loading,
+    searchParams,
+    total,
+    formVisible,
+    isEditing,
+    selectedDevice,
+    dictData,
+    users,
+    projectOptions,
+    devRoomOptions,
+    userIdSearch,
+    projectFilter,
+    devRoomFilter,
+    fetchDevices,
+    handlePageChange,
+    handlePageSizeChange,
+    handleEditDevice,
+    handleDeleteDevice,
+    handleAddDevice,
+    handleUserIdSearch,
+    handleProjectChange,
+    handleDevRoomChange,
+    handleReset,
+    handleFormSubmit,
+    initialize
+  } = useDeviceStore();
 
   // 初始化数据
   useEffect(() => {
-    fetchDevices(searchParams);
-    fetchFormData();
-    fetchFilterOptions();
-  }, [searchParams]);
-
-  // 分页处理函数
-  const handlePageChange = (page: number, pageSize?: number) => {
-    setSearchParams({
-      ...searchParams,
-      page,
-      pageSize: pageSize || searchParams.pageSize,
-    });
-  };
-
-  const handlePageSizeChange = (size: number) => {
-    setSearchParams({
-      ...searchParams,
-      page: 1,
-      pageSize: size,
-    });
-  };
-
-  // 编辑设备
-  const handleEditDevice = async (device: DeviceListItem) => {
-    try {
-      const deviceDetail = await getDeviceDetail(device.deviceId);
-      if (deviceDetail) {
-        setSelectedDevice(deviceDetail);
-        setIsEditing(true);
-        setFormVisible(true);
-      } else {
-        message.error('获取设备信息失败');
-      }
-    } catch (error) {
-      message.error('获取设备信息失败');
-      console.error('获取设备信息失败:', error);
-    }
-  };
-
-  // 删除设备
-  const handleDeleteDevice = async (deviceId: string) => {
-    Modal.confirm({
-      title: '确认删除',
-      content: `确定要删除设备 ${deviceId} 吗？`,
-      okText: '确认',
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          const success = await deleteDevice(deviceId);
-          if (success) {
-            await fetchDevices(searchParams);
-            message.success(`设备 ${deviceId} 删除成功`);
-          } else {
-            message.error('删除设备失败，设备不存在');
-          }
-        } catch (error) {
-          message.error('删除设备失败');
-          console.error('删除设备失败:', error);
-        }
-      },
-    });
-  };
-
-  // 添加设备
-  const handleAddDevice = () => {
-    setSelectedDevice(null);
-    setIsEditing(false);
-    setFormVisible(true);
-  };
-
-  // 处理用户ID搜索
-  const handleUserIdSearch = (value: string) => {
-    setUserIdSearch(value);
-    setSearchParams({
-      ...searchParams,
-      userId: value.trim() || undefined,
-      page: 1,
-    });
-  };
-
-  // 处理项目筛选变化
-  const handleProjectChange = (value: string) => {
-    setProjectFilter(value);
-    setSearchParams({
-      ...searchParams,
-      project: value === 'all' ? undefined : value,
-      page: 1,
-    });
-  };
-
-  // 处理开发室筛选变化
-  const handleDevRoomChange = (value: string) => {
-    setDevRoomFilter(value);
-    setSearchParams({
-      ...searchParams,
-      devRoom: value === 'all' ? undefined : value,
-      page: 1,
-    });
-  };
-
-  // 重置筛选条件
-  const handleReset = () => {
-    setUserIdSearch('');
-    setProjectFilter('all');
-    setDevRoomFilter('all');
-    
-    setSearchParams({
-      page: 1,
-      pageSize: searchParams.pageSize,
-      // 清空所有筛选参数
-      userId: undefined,
-      project: undefined,
-      devRoom: undefined,
-      computerName: undefined,
-    });
-  };
-
-  // 处理表单提交
-  const handleFormSubmit = async (values: DeviceListItem) => {
-    try {
-      let success;
-      if (isEditing) {
-        // 编辑模式下调用 updateDevice
-        success = await updateDeviceService(values);  
-      } else {
-        // 新增模式下调用 saveDevice
-        success = await saveDeviceService(values);
-      }
-      
-      if (success) {
-        if (isEditing) {
-          message.success(`设备 ${values.deviceId} 编辑成功`);
-        } else {
-          message.success(`设备 ${values.deviceId} 添加成功`);
-        }
-        
-        // 重新加载设备列表
-        await fetchDevices(searchParams);
-        setFormVisible(false);
-        setIsEditing(false);
-        setSelectedDevice(null);
-      } else {
-        message.error('操作失败');
-      }
-    } catch (error) {
-      message.error('操作失败');
-      console.error('操作失败:', error);
-    }
-  };
+    initialize();
+  }, []);
 
   // 单元格样式
   const cellStyle: React.CSSProperties = {
@@ -617,7 +368,7 @@ const DeviceManagement: React.FC = () => {
                   allowClear
                   enterButton={<SearchOutlined />}
                   onSearch={handleUserIdSearch}
-                  onChange={(e) => setUserIdSearch(e.target.value)}
+                  onChange={(e) => handleUserIdSearch(e.target.value)}
                   value={userIdSearch}
                   style={{ width: 240 }}
                 />
@@ -711,9 +462,10 @@ const DeviceManagement: React.FC = () => {
           dictData={dictData}
           users={users}
           onCancel={() => {
-            setFormVisible(false);
-            setIsEditing(false);
-            setSelectedDevice(null);
+            // 关闭弹窗
+            useDeviceStore.getState().setFormVisible(false);
+            useDeviceStore.getState().setIsEditing(false);
+            useDeviceStore.getState().setSelectedDevice(null);
           }}
           onSubmit={handleFormSubmit}
         />
