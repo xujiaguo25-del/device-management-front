@@ -1,13 +1,36 @@
 // services/device/deviceFormService.ts
 import type { DeviceListItem } from '../../types/device';
 import { get, post, put } from '../api';
+import type { ApiResponse, DictResponseData, DeviceListResponseData } from '../../types/device';
+
+// // 定义 API 响应类型
+// interface ApiResponse<T = any> {
+//   code: number;
+//   message?: string;
+//   data: T;
+// }
+
+// interface DictResponseData {
+//   [key: string]: Array<{
+//     dictId: number;
+//     dictItemName: string;
+//     [key: string]: any;
+//   }>;
+// }
+
+// interface DeviceListResponseData {
+//   list: DeviceListItem[];
+//   total?: number;
+//   page?: number;
+//   pageSize?: number;
+// }
+
 
 // 获取字典数据
-export const fetchDictData = async (): Promise<Record<string, any[]>> => {
+export const fetchDictData = async (): Promise<DictResponseData> => {
   try {
-    // 这里可以调用后端获取字典数据的接口
-    // 暂时先用模拟数据，你需要根据后端实际接口修改
-    const response = await get('/dict/data'); // 假设有这样一个接口
+    // 使用泛型指定返回类型
+    const response = await get<ApiResponse<DictResponseData>>('/dict/data');
 
     if (response.code === 200) {
       return response.data;
@@ -17,7 +40,7 @@ export const fetchDictData = async (): Promise<Record<string, any[]>> => {
   } catch (error) {
     console.error('获取字典数据失败:', error);
 
-    // 如果API调用失败，返回模拟数据作为fallback
+    // 返回模拟数据
     return {
       CONFIRM_STATUS: [
         { dictId: 13, dictItemName: '已确认' },
@@ -27,52 +50,45 @@ export const fetchDictData = async (): Promise<Record<string, any[]>> => {
         { dictId: 1, dictItemName: 'Windows 11' },
         { dictId: 2, dictItemName: 'Windows 10' },
         { dictId: 3, dictItemName: 'Mac OS' },
-        //{ dictId: 4, dictItemName: 'Linux' }
       ],
       MEMORY_SIZE: [
         { dictId: 4, dictItemName: '8G' },
         { dictId: 5, dictItemName: '16G' },
         { dictId: 6, dictItemName: '32G' },
-        //{ dictId: 64, dictItemName: '64G' }
       ],
       SSD_SIZE: [
         { dictId: 7, dictItemName: '256G' },
         { dictId: 8, dictItemName: '512G' },
         { dictId: 9, dictItemName: '1T' },
-        //{ dictId: 2048, dictItemName: '2T' }
       ],
       HDD_SIZE: [
-        //{ dictId: 512, dictItemName: '512G' },
         { dictId: 10, dictItemName: '1T' },
         { dictId: 11, dictItemName: '2T' },
-        //{ dictId: 4096, dictItemName: '4T' }
       ]
     };
   }
 };
 
-// 获取用户列表 - 从设备数据中提取
+// 获取用户列表
 export const fetchUsers = async (): Promise<Array<{userId: string, name: string, deptId?: string}>> => {
   try {
-    // 从设备列表中提取用户信息
-    // 首先获取设备列表，然后从中提取唯一的用户
     const queryString = new URLSearchParams({
       page: '1',
       pageSize: '1000'
     }).toString();
 
-    const response = await get(`/devices/list?${queryString}`);
+    // 使用泛型指定返回类型
+    const response = await get<ApiResponse<DeviceListResponseData>>(`/devices/list?${queryString}`);
 
     if (response.code === 200) {
       // 从设备列表中提取用户
-      const deviceList = response.data?.list || response.data || [];
+      const deviceList = response.data?.list || [];
 
-      // 创建用户映射，确保用户ID唯一
+      // 创建用户映射
       const userMap = new Map<string, {userId: string, name: string, deptId?: string}>();
 
-      deviceList.forEach((device: any) => {
+      deviceList.forEach((device: DeviceListItem) => {
         if (device.userId && device.userName) {
-          // 如果用户ID还不存在，添加到映射中
           if (!userMap.has(device.userId)) {
             userMap.set(device.userId, {
               userId: device.userId,
@@ -86,9 +102,8 @@ export const fetchUsers = async (): Promise<Array<{userId: string, name: string,
       // 将映射转换为数组
       const users = Array.from(userMap.values());
 
-      // 如果从设备数据中提取的用户太少，可以添加一些默认用户
+      // 如果用户太少，添加默认用户
       if (users.length < 5) {
-        // 添加一些常用用户作为备选
         const defaultUsers = [
           { userId: 'JS0010', name: '小娟', deptId: 'IT' },
           { userId: 'JS0011', name: '张三', deptId: '研发部' },
@@ -113,8 +128,8 @@ export const fetchUsers = async (): Promise<Array<{userId: string, name: string,
   } catch (error) {
     console.error('获取用户列表失败:', error);
 
-    // 如果API调用失败，返回模拟数据作为fallback
-    const users = [
+    // 返回模拟数据
+    return [
       { userId: 'JS0010', name: '小娟', deptId: 'IT' },
       { userId: 'JS0011', name: '张三', deptId: '研发部' },
       { userId: 'JS0012', name: '李四', deptId: '测试部' },
@@ -132,8 +147,6 @@ export const fetchUsers = async (): Promise<Array<{userId: string, name: string,
       { userId: 'JS0024', name: '新用户2', deptId: '测试部' },
       { userId: 'JS0025', name: '新用户3', deptId: '研发部' }
     ];
-
-    return users;
   }
 };
 
@@ -197,7 +210,8 @@ export const saveDevice = async (deviceData: DeviceListItem): Promise<boolean> =
     console.log('发送给后端的数据:', JSON.stringify(deviceFullDTO, null, 2));
 
     // 调用后端insertDevice接口
-    const response = await post('/devices/insertDevice', deviceFullDTO);
+    // 使用泛型指定返回类型
+    const response = await post<ApiResponse>('/devices/insertDevice', deviceFullDTO);
 
     if (response.code === 200) {
       console.log('设备保存成功:', response.data);
@@ -222,8 +236,9 @@ export const updateDevice = async (deviceData: DeviceListItem): Promise<boolean>
 
     console.log('发送给后端的数据:', JSON.stringify(deviceFullDTO, null, 2));
 
-    // 调用后端updateDevice接口
-    const response = await put(`/devices/updateDevice/${deviceData.deviceId}`, deviceFullDTO);
+    // 调用后端updateDevice接口 
+    // 使用泛型指定返回类型
+    const response = await put<ApiResponse>(`/devices/updateDevice/${deviceData.deviceId}`, deviceFullDTO);
 
     if (response.code === 200) {
       console.log('设备更新成功:', response.data);
@@ -247,32 +262,33 @@ export const isValidIP = (ip: string): boolean => {
   return ipPattern.test(ip);
 };
 
+// 无调用
 // 获取默认设备数据（用于新增设备）
-export const getDefaultDeviceData = (): DeviceListItem => {
-  return {
-    deviceId: '',
-    deviceModel: '',
-    computerName: '',
-    loginUsername: '',
-    project: '',
-    devRoom: '',
-    userId: '',
-    userName: '',
-    remark: '',
-    selfConfirmId: 0,
-    osId: 1,
-    memoryId: 16,
-    ssdId: 0,
-    hddId: 0,
-    confirmStatus: '未确认',
-    osName: 'Windows 11',
-    memorySize: '16G',
-    ssdSize: '—',
-    hddSize: '—',
-    monitors: [],
-    deviceIps: [],
-  };
-};
+// export const getDefaultDeviceData = (): DeviceListItem => {
+//   return {
+//     deviceId: '',
+//     deviceModel: '',
+//     computerName: '',
+//     loginUsername: '',
+//     project: '',
+//     devRoom: '',
+//     userId: '',
+//     userName: '',
+//     remark: '',
+//     selfConfirmId: 0,
+//     osId: 1,
+//     memoryId: 16,
+//     ssdId: 0,
+//     hddId: 0,
+//     confirmStatus: '未确认',
+//     osName: 'Windows 11',
+//     memorySize: '16G',
+//     ssdSize: '—',
+//     hddSize: '—',
+//     monitors: [],
+//     deviceIps: [],
+//   };
+// };
 
 
 // 无调用
