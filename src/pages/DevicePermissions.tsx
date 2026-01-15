@@ -19,7 +19,18 @@ import {
     ExportOutlined,
     SearchOutlined,
     ReloadOutlined,
+    IdcardOutlined,
+    LaptopOutlined,
+    UsbOutlined,
+    CalendarOutlined,
+    BankOutlined,
+    TeamOutlined,
+    SafetyOutlined,
+    ExclamationCircleOutlined,
+    SettingOutlined,
     EyeOutlined,
+    FileTextOutlined,
+    FolderOpenOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useForm, Controller, useWatch } from 'react-hook-form';
@@ -33,12 +44,30 @@ import {
 } from '../services/permission/permissionService';
 import type { DevicePermissionList, DevicePermissionInsert } from '../types';
 
+// 导入CSS文件
+import './DevicePermissions.css';
+
 const { Option } = Select;
 
-//页面美化
-const SECTION_TITLE_STYLE = { color: '#1890ff', fontSize: '13px', marginBottom: 0, fontWeight: 600 } as const;
-const SECTION_BLOCK_STYLE = { paddingTop: 6, borderTop: '1px solid #f0f0f0', marginBottom: 6 } as const;
-const ACTION_BUTTON_STYLE = { minWidth: 96 } as const;
+const COMPACT_FORM_ITEM_STYLE = {
+    marginBottom: 6,
+} as const;
+
+const LABEL_STYLE = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    color: '#434343',
+    fontWeight: 500,
+    fontSize: '13px',
+    marginBottom: 2
+} as const;
+
+const VALUE_STYLE = {
+    color: '#262626',
+    fontWeight: 400,
+    fontSize: '13px'
+} as const;
 
 interface PermissionFormData {
     deviceId: string;
@@ -187,21 +216,40 @@ const DevicePermissions: React.FC = () => {
             // 转换表单数据为后端需要的格式
             const permissionData: DevicePermissionInsert = {
                 deviceId: data.deviceId,
-                domainStatusId: data.domainName && data.domainName !== '无' ? 1 : 10, // 仅在选择具体域名时视为有域
+                domainStatusId: data.domainName ?
+                (data.domainName === '无' ? 50 :
+                    data.domainName === 'D1' ? 51 :
+                        data.domainName === 'D2' ? 52 :
+                            data.domainName === 'D3' ? 53 :
+                                data.domainName === 'D4' ? 54 :
+                                    data.domainName === 'D5' ? 55 :
+                                        data.domainName === 'D6' ? 56 :
+                                            data.domainName === 'D7' ? 57 :
+                                                data.domainName === 'EU' ? 58 :
+                                                    data.domainName === 'MG' ? 59 :
+                                                        data.domainName === 'EQU' ? 60 :
+                                                            data.domainName === 'NRI-01' ? 61 :
+                                                                data.domainName === 'MS' ? 62 : 1) : 10, // 下拉框选择的domainName映射到传给后端的domainStatusId
                 domainStatusName: data.domainName,
                 domainGroup: data.domainGroup,
-                noDomainReason: data.noDomainReason,
-                // 转换 smartitStatus: '本地'->1, '远程'->1, '未安装'->0
-                smartitStatusId: data.smartitStatus === '本地' || data.smartitStatus === '远程' ? 1 : data.smartitStatus === '未安装' ? 0 : null,
+                noDomainReason: data.domainName === '无' ? data.noDomainReason : '',
+                // 转换 smartitStatus: '本地'->63, '远程'->64, '未安装'->65，其他->null
+                smartitStatusId: data.smartitStatus === '本地' ? 63 :
+                    data.smartitStatus === '远程' ? 64 :
+                        data.smartitStatus === '未安装' ? 65 : null,
                 smartitStatusName: data.smartitStatus, // 保存文本值
                 noSmartitReason: data.noSmartitReason,
-                // 转换 usbStatus: '数据'->1, '3G网卡'->1, '关闭'->0
-                usbStatusId: data.usbStatus === '数据' || data.usbStatus === '3G网卡' ? 1 : data.usbStatus === '关闭' ? 0 : null,
+                // 转换 usbStatus: '数据'->67, '3G网卡'->68, '关闭'->66，其他->null
+                usbStatusId: data.usbStatus === '数据' ? 67 :
+                    data.usbStatus === '3G网卡' ? 68 :
+                        data.usbStatus === '关闭' ? 66 : null,
                 usbStatusName: data.usbStatus, // 保存文本值
                 usbReason: data.usbReason,
                 usbExpireDate: data.useEndDate ? data.useEndDate.format('YYYY-MM-DD') : null,
                 // 转换 connectionStatus: '自动'->1, '手动'->0
-                antivirusStatusId: data.connectionStatus === '自动' ? 1 : data.connectionStatus === '手动' ? 0 : null,
+                antivirusStatusId: data.connectionStatus === '自动' ? 70 :
+                    data.connectionStatus === '手动' ? 71 :
+                        data.connectionStatus === '无连接' ? 69 : null,
                 antivirusStatusName: data.connectionStatus, // 保存文本值
                 noSymantecReason: data.noSymantecReason,
                 remark: data.remarks,
@@ -489,74 +537,97 @@ const DevicePermissions: React.FC = () => {
                 </div>
             </Card>
 
-            {/* 设备权限详情 */}
+            {/* 设备权限详情模态框 */}
             <Modal
-                title={`设备权限详情 - ${editingPermission?.permissionId || ''}`}
+                title={
+                    <div className="modal-title">
+                        <FileTextOutlined className="icon-blue" />
+                        <span>{`设备权限详情 - ${editingPermission?.permissionId || ''}`}</span>
+                    </div>
+                }
                 open={modalVisible}
                 onCancel={() => {
-                    message.info('编辑取消了');
                     setModalVisible(false);
                     resetForm();
                     setEditingPermission(null);
                 }}
                 footer={null}
-                width={820}
+                width={725}
                 confirmLoading={loading}
-                style={{ top: 10 }}
-                bodyStyle={{ padding: '12px 16px' }}
+                style={{ top: 20 }}
+                bodyStyle={{ padding: '12px 16px', maxHeight: '80vh', overflowY: 'auto' }}
                 destroyOnClose
+                className="device-permission-modal"
             >
                 <Form
                     layout="vertical"
                     onFinish={handleFormSubmit(onSubmitForm)}
-                    initialValues={{ remember: true }}
+                    style={{ padding: '4px 0' }}
                 >
                     {/* 设备基本信息区域-不可编辑 */}
+                    {/* 设备基本信息区域 */}
                     <Card
-                        title="设备基本信息"
+                        title={
+                            <div className="card-header-title">
+                                <FolderOpenOutlined className="icon-green" />
+                                <span style={{ color: '#52c41a' }}>设备基本信息</span>
+                            </div>
+                        }
                         size="small"
-                        style={{ marginBottom: 4 }}
-                        bodyStyle={{ padding: '8px 12px' }}
+                        style={{ marginBottom: 12 }}
+                        headStyle={{ background: 'linear-gradient(135deg, #f6ffed 0%, #e6fffb 100%)', padding: '8px 12px', borderRadius: '6px 6px 0 0', borderBottom: '1px solid #b5f5ec', fontSize: '14px', fontWeight: 600, color: '#08979c' }}
+                        bodyStyle={{ padding: '12px', background: '#ffffff', borderRadius: '0 0 6px 6px' }}
                         bordered={false}
                     >
-                        <Descriptions column={2} bordered size="small">
-                            <Descriptions.Item label="设备ID" span={2}>
-                                {editingPermission?.deviceId || '-'}
+                        <Descriptions
+                            column={2}
+                            size="small"
+                            labelStyle={LABEL_STYLE}
+                            contentStyle={VALUE_STYLE}
+                        >
+                            <Descriptions.Item label={<><IdcardOutlined />设备ID</>} >
+                                <strong>{editingPermission?.deviceId || '-'}</strong>
                             </Descriptions.Item>
-                            <Descriptions.Item label="电脑名">
+                            <Descriptions.Item label={<><LaptopOutlined />电脑名</>}>
                                 {editingPermission?.computerName || '-'}
                             </Descriptions.Item>
-                            {/*<Descriptions.Item label="IP地址">*/}
-                            {/*    {editingPermission?.ipAddress || '-'}*/}
+                            {/*<Descriptions.Item label={<><GlobalOutlined />IP地址</>}>*/}
+                            {/*    {editingPermission?.ipAddress*/}
+                            {/*        ? (Array.isArray(editingPermission.ipAddress)*/}
+                            {/*            ? editingPermission.ipAddress.join(', ')*/}
+                            {/*            : editingPermission.ipAddress)*/}
+                            {/*        : '-'}*/}
                             {/*</Descriptions.Item>*/}
                         </Descriptions>
                     </Card>
 
-                    {/* 权限配置信息领域-可编辑 */}
+                    {/* 权限配置信息区域 */}
                     <Card
-                        title="权限配置信息"
+                        title={
+                            <div className="card-header-title">
+                                <SettingOutlined className="icon-blue" />
+                                <span style={{ color: '#1890ff' }}>权限配置信息</span>
+                            </div>
+                        }
                         size="small"
-                        style={{ marginBottom: 4 }}
-                        bodyStyle={{ padding: '8px 12px' }}
+                        style={{ marginBottom: 12 }}
+                        headStyle={{ background: 'linear-gradient(135deg, #f6ffed 0%, #e6fffb 100%)', padding: '8px 12px', borderRadius: '6px 6px 0 0', borderBottom: '1px solid #b5f5ec', fontSize: '14px', fontWeight: 600, color: '#08979c' }}
+                        bodyStyle={{ padding: '12px', background: '#ffffff', borderRadius: '0 0 6px 6px' }}
                         bordered={false}
                     >
-                        <div style={{ marginBottom: 6 }}>
-                            <Row gutter={8} style={{ marginBottom: 2 }}>
-                                <Col span={12}>
-                                    <h4 style={SECTION_TITLE_STYLE}>域配置</h4>
-                                </Col>
-                                <Col span={12}>
-                                    <h4 style={{ ...SECTION_TITLE_STYLE, textAlign: 'left' }}>SmartIT配置</h4>
-                                </Col>
-                            </Row>
-                            <Row gutter={8} style={{ marginBottom: 2 }}>
+                        {/* 域配置和SmartIT配置在同一行 */}
+                        <div className="section-block">
+                            <Row gutter={16}>
                                 {/* 域配置 */}
                                 <Col span={12}>
-                                    <Row gutter={24}>
+                                    <div className="section-title">
+                                        <span>域配置</span>
+                                    </div>
+                                    <Row gutter={8} align="middle">
                                         <Col span={12}>
                                             <Form.Item
-                                                label="域名："
-                                                name="domainName"
+                                                label={<span className="form-label"><BankOutlined />域名</span>}
+                                                style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                             >
                                                 <Controller
                                                     name="domainName"
@@ -565,17 +636,8 @@ const DevicePermissions: React.FC = () => {
                                                         <Select
                                                             {...field}
                                                             style={{ width: '100%' }}
-                                                            placeholder="選択をお願いします"
-                                                            value={field.value}
-                                                            onChange={(value) => {
-                                                                field.onChange(value);
-                                                                //无=》域内组名清空，有=》不加域理由清空
-                                                                if (value === '无') {
-                                                                    setValue('domainGroup', '');
-                                                                } else if (value && value !== '无') {
-                                                                    setValue('noDomainReason', '');
-                                                                }
-                                                            }}
+                                                            placeholder="请选择域名"
+                                                            size="small"
                                                             allowClear
                                                         >
                                                             <Option value="无">无</Option>
@@ -600,18 +662,26 @@ const DevicePermissions: React.FC = () => {
                                         {domainNameValue && domainNameValue !== '' && domainNameValue !== '无' && (
                                             <Col span={12}>
                                                 <Form.Item
-                                                    label="域内组名："
+                                                    label={<span className="form-label"><TeamOutlined />域内组名</span>}
                                                     validateStatus={errors.domainGroup ? 'error' : undefined}
-                                                    help={errors.domainGroup?.message as string}
+                                                    help={errors.domainGroup?.message}
+                                                    style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                                 >
                                                     <Controller
                                                         name="domainGroup"
                                                         control={formControl}
                                                         rules={{
-                                                            required: domainNameValue && domainNameValue !== '' && domainNameValue !== '无' ? '请填写域内组名！' : false,
-                                                            maxLength: { value: 50, message: '域内组名长度不能超过50个字符！' }
+                                                            required: '请填写域内组名',
+                                                            maxLength: { value: 50, message: '最大50个字符' }
                                                         }}
-                                                        render={({ field }) => <Input {...field} placeholder="请输入域内组名" style={{ width: '100%' }} />}
+                                                        render={({ field }) => (
+                                                            <Input
+                                                                {...field}
+                                                                placeholder="请输入域内组名"
+                                                                allowClear
+                                                                size="small"
+                                                            />
+                                                        )}
                                                     />
                                                 </Form.Item>
                                             </Col>
@@ -620,18 +690,28 @@ const DevicePermissions: React.FC = () => {
                                         {domainNameValue === '无' && (
                                             <Col span={12}>
                                                 <Form.Item
-                                                    label="不加域理由："
+                                                    label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />不加域理由</span>}
                                                     validateStatus={errors.noDomainReason ? 'error' : undefined}
-                                                    help={errors.noDomainReason?.message as string}
+                                                    help={errors.noDomainReason?.message}
+                                                    style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                                 >
                                                     <Controller
                                                         name="noDomainReason"
                                                         control={formControl}
                                                         rules={{
-                                                            required: domainNameValue === '无' ? '请填写不加域理由！' : false,
-                                                            maxLength: { value: 200, message: '理由长度不能超过20个字符！' }
+                                                            required: '请填写不加域理由',
+                                                            maxLength: { value: 20, message: '最大20个字符' }
                                                         }}
-                                                        render={({ field }) => <Input {...field} placeholder="请填写不加域理由" />}
+                                                        render={({ field }) => (
+                                                            <Input.TextArea
+                                                                {...field}
+                                                                placeholder="请填写不加域理由"
+                                                                rows={1}
+                                                                showCount
+                                                                maxLength={20}
+                                                                size="small"
+                                                            />
+                                                        )}
                                                     />
                                                 </Form.Item>
                                             </Col>
@@ -639,21 +719,27 @@ const DevicePermissions: React.FC = () => {
                                     </Row>
                                 </Col>
 
-                                {/* SmartIT 字段*/}
-                                <Col span={12} style={{ textAlign: 'left' }}>
-                                    <Row gutter={24}>
+                                {/* SmartIT配置 */}
+                                <Col span={12}>
+                                    <div className="section-title">
+                                        <span>SmartIT配置</span>
+                                    </div>
+                                    <Row gutter={8} align="middle">
                                         <Col span={12}>
                                             <Form.Item
-                                                label="SmartIT状态："
-                                                name="smartitStatus"
+                                                label={<span className="form-label"><SafetyOutlined />状态</span>}
+                                                style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                             >
                                                 <Controller
                                                     name="smartitStatus"
                                                     control={formControl}
                                                     render={({ field }) => (
-                                                        <Select {...field} style={{ width: '100%' }} placeholder="请选择" value={field.value} onChange={(value) => { field.onChange(value);
-                                                        if (value !== '未安装') setValue('noSmartitReason', '');
-                                                    }}
+                                                        <Select
+                                                            {...field}
+                                                            style={{ width: '100%' }}
+                                                            placeholder="请选择状态"
+                                                            size="small"
+                                                            allowClear
                                                         >
                                                             <Option value="本地">本地</Option>
                                                             <Option value="远程">远程</Option>
@@ -667,18 +753,28 @@ const DevicePermissions: React.FC = () => {
                                         {smartitStatusValue === '未安装' && (
                                             <Col span={12}>
                                                 <Form.Item
-                                                    label="不安装SmartIT理由："
+                                                    label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />不安装理由</span>}
                                                     validateStatus={errors.noSmartitReason ? 'error' : undefined}
-                                                    help={errors.noSmartitReason?.message as string}
+                                                    help={errors.noSmartitReason?.message}
+                                                    style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                                 >
                                                     <Controller
                                                         name="noSmartitReason"
                                                         control={formControl}
                                                         rules={{
-                                                            required: smartitStatusValue === '未安装' ? '请选择并填写不安装SmartIT理由！' : false,
-                                                            maxLength: { value: 200, message: '不安装SmartIT理由长度不能超过20个字符！' }
+                                                            required: '请填写不安装理由',
+                                                            maxLength: { value: 20, message: '最大20个字符' }
                                                         }}
-                                                        render={({ field }) => <Input {...field} placeholder="请填写不安装理由" />}
+                                                        render={({ field }) => (
+                                                            <Input.TextArea
+                                                                {...field}
+                                                                placeholder="请填写不安装理由"
+                                                                rows={1}
+                                                                showCount
+                                                                maxLength={20}
+                                                                size="small"
+                                                            />
+                                                        )}
                                                     />
                                                 </Form.Item>
                                             </Col>
@@ -689,24 +785,26 @@ const DevicePermissions: React.FC = () => {
                         </div>
 
                         {/* USB配置 */}
-                        <div style={SECTION_BLOCK_STYLE}>
-                            <h4 style={SECTION_TITLE_STYLE}>USB配置</h4>
-                            <Row gutter={8} style={{ marginBottom: 2 }}>
-                                <Col span={6}>
+                        <div className="section-block">
+                            <div className="section-title">
+                                <span>USB配置</span>
+                            </div>
+                            <Row gutter={8} align="middle">
+                                <Col span={8}>
                                     <Form.Item
-                                        label="USB状态："
-                                        name="usbStatus"
+                                        label={<span className="form-label"><UsbOutlined />USB状态</span>}
+                                        style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                     >
                                         <Controller
                                             name="usbStatus"
                                             control={formControl}
                                             render={({ field }) => (
-                                                <Select {...field} style={{ width: '100%' }} placeholder="请选择" value={field.value} onChange={(value) => { field.onChange(value);
-                                                if (value == '关闭') {
-                                                    setValue('usbReason', '');
-                                                    setValue('useEndDate', null);
-                                                    }
-                                                     }}
+                                                <Select
+                                                    {...field}
+                                                    style={{ width: '100%' }}
+                                                    placeholder="请选择状态"
+                                                    size="small"
+                                                    allowClear
                                                 >
                                                     <Option value="关闭">关闭</Option>
                                                     <Option value="数据">数据</Option>
@@ -719,48 +817,54 @@ const DevicePermissions: React.FC = () => {
 
                                 {(usbStatusValue !== '关闭') && (
                                     <>
-                                        <Col span={6}>
+                                        <Col span={8}>
                                             <Form.Item
-                                                label="USB开通理由："
+                                                label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />开通理由</span>}
                                                 validateStatus={errors.usbReason ? 'error' : undefined}
-                                                help={errors.usbReason?.message as string}
+                                                help={errors.usbReason?.message}
+                                                style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                             >
                                                 <Controller
                                                     name="usbReason"
                                                     control={formControl}
                                                     rules={{
-                                                        required: (usbStatusValue === '数据' || usbStatusValue === '3G网卡') ? '请填写USB开通理由！' : false,
-                                                        maxLength: { value: 200, message: 'USB开通理由长度不能超过20个字符！' }
+                                                        required: '请填写USB开通理由',
+                                                        maxLength: { value: 20, message: '最大20个字符' }
                                                     }}
-                                                    render={({ field }) => <Input {...field} placeholder="请填写开通理由" />}
+                                                    render={({ field }) => (
+                                                        <Input.TextArea
+                                                            {...field}
+                                                            placeholder="请填写开通理由"
+                                                            rows={1}
+                                                            showCount
+                                                            maxLength={20}
+                                                            size="small"
+                                                        />
+                                                    )}
                                                 />
                                             </Form.Item>
                                         </Col>
-                                        <Col span={6}>
+                                        <Col span={8}>
                                             <Form.Item
-                                                label="使用截止日期："
+                                                label={<span className="form-label"><CalendarOutlined />使用截止日期</span>}
                                                 validateStatus={errors.useEndDate ? 'error' : undefined}
-                                                help={errors.useEndDate?.message as string}
+                                                help={errors.useEndDate?.message}
+                                                style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                             >
                                                 <Controller
                                                     name="useEndDate"
                                                     control={formControl}
                                                     rules={{
-                                                        validate: (value) => {
-                                                            if (usbStatusValue !== '关闭') {
-                                                                return value ? true : '请选择使用截止日期！';
-                                                            }
-                                                            return true;
-                                                        }
+                                                        required: usbStatusValue === '数据' || usbStatusValue === '3G网卡' ? '请选择截止日期' : false
                                                     }}
                                                     render={({ field }) => (
                                                         <DatePicker
                                                             {...field}
                                                             style={{ width: '100%' }}
-                                                            placeholder="截止日期"
+                                                            placeholder="请选择日期"
                                                             format="YYYY-MM-DD"
-                                                            value={field.value ? dayjs(field.value) : null}
-                                                            onChange={(date) => field.onChange(date)}
+                                                            allowClear={false}
+                                                            size="small"
                                                         />
                                                     )}
                                                 />
@@ -772,69 +876,96 @@ const DevicePermissions: React.FC = () => {
                         </div>
 
                         {/* 防病毒配置 */}
-                        <div style={{ marginBottom: 6 }}>
-                            <Row gutter={16} style={{ marginBottom: 2 }}>
-                                <Col span={12}>
-                                    <h4 style={SECTION_TITLE_STYLE}>防病毒配置</h4>
-                                </Col>
-                            </Row>
-
-                            <Row gutter={16} align="middle" style={{ marginBottom: 4 }}>
-                                <Col span={12}>
-                                    <Row gutter={8}>
-                                        <Col span={12}>
-                                            <Form.Item
-                                                label="连接状态："
-                                                validateStatus={errors.connectionStatus ? 'error' : undefined}
-                                                help={errors.connectionStatus?.message as string}
-                                            >
-                                                <Controller
-                                                    name="connectionStatus"
-                                                    control={formControl}
-                                                    render={({ field }) => (
-                                                        <Select {...field} style={{ width: '100%' }} placeholder="请选择" value={field.value} onChange={(value) => { field.onChange(value);
-                                                        if (value !== '无连接') setValue('noSymantecReason', ''); }}
-                                                        >
-                                                            <Option value="无连接">无连接</Option>
-                                                            <Option value="自动">自动</Option>
-                                                            <Option value="手动">手动</Option>
-                                                        </Select>
-                                                    )}
-                                                />
-                                            </Form.Item>
-                                        </Col>
-
-                                        {connectionStatusValue === '无连接' && (
-                                            <Col span={12}>
-                                                <Form.Item
-                                                    label="无Symantec理由："
-                                                    validateStatus={errors.noSymantecReason ? 'error' : undefined}
-                                                    help={errors.noSymantecReason?.message as string}
-                                                >
-                                                    <Controller
-                                                        name="noSymantecReason"
-                                                        control={formControl}
-                                                        rules={{
-                                                            required: connectionStatusValue === '无连接' ? '请选择并填写无Symantec理由！' : false,
-                                                            maxLength: { value: 200, message: '理由长度不能超过200个字符！' }
-                                                        }}
-                                                        render={({ field }) => <Input {...field} placeholder="请填写不安装理由" />}
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                        )}
-                                    </Row>
-                                </Col>
-
+                        <div className="section-block">
+                            <div className="section-title">
+                                <span>防病毒配置</span>
+                            </div>
+                            <Row gutter={8} align="middle">
                                 <Col span={8}>
-                                    <Form.Item                                        label={<span style={SECTION_TITLE_STYLE}>备注：</span>}                                        validateStatus={errors.remarks ? 'error' : undefined}
-                                        help={errors.remarks?.message as string}
+                                    <Form.Item
+                                        label={<span className="form-label"><SafetyOutlined />连接状态</span>}
+                                        style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
+                                    >
+                                        <Controller
+                                            name="connectionStatus"
+                                            control={formControl}
+                                            render={({ field }) => (
+                                                <Select
+                                                    {...field}
+                                                    style={{ width: '100%' }}
+                                                    placeholder="请选择状态"
+                                                    size="small"
+                                                    allowClear
+                                                >
+                                                    <Option value="无连接">无连接</Option>
+                                                    <Option value="自动">自动</Option>
+                                                    <Option value="手动">手动</Option>
+                                                </Select>
+                                            )}
+                                        />
+                                    </Form.Item>
+                                </Col>
+
+                                {connectionStatusValue === '无连接' && (
+                                    <Col span={8}>
+                                        <Form.Item
+                                            label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />无Symantec理由</span>}
+                                            validateStatus={errors.noSymantecReason ? 'error' : undefined}
+                                            help={errors.noSymantecReason?.message}
+                                            style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
+                                        >
+                                            <Controller
+                                                name="noSymantecReason"
+                                                control={formControl}
+                                                rules={{
+                                                    required: '请填写无Symantec理由',
+                                                    maxLength: { value: 20, message: '最大20个字符' }
+                                                }}
+                                                render={({ field }) => (
+                                                    <Input.TextArea
+                                                        {...field}
+                                                        placeholder="请填写无Symantec理由"
+                                                        rows={1}
+                                                        showCount
+                                                        maxLength={20}
+                                                        size="small"
+                                                    />
+                                                )}
+                                            />
+                                        </Form.Item>
+                                    </Col>
+                                )}
+                            </Row>
+                        </div>
+
+                        {/* 备注信息 */}
+                        <div className="section-block">
+                            <div className="section-title">
+                                <ExclamationCircleOutlined className="icon-orange" />
+                                <span>备注</span>
+                            </div>
+                            <Row gutter={8}>
+                                <Col span={18}>
+                                    <Form.Item
+                                        validateStatus={errors.remarks ? 'error' : undefined}
+                                        help={errors.remarks?.message}
+                                        style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                     >
                                         <Controller
                                             name="remarks"
                                             control={formControl}
-                                            rules={{ maxLength: { value: 500, message: '备注长度不能超过500个字符！' } }}
-                                            render={({ field }) => <Input {...field} placeholder="请输入备注信息" style={{ width: '100%' }} />}
+                                            rules={{ maxLength: { value: 200, message: '最大200个字符' } }}
+                                            render={({ field }) => (
+                                                <Input.TextArea
+                                                    {...field}
+                                                    placeholder="请输入备注信息"
+                                                    rows={1}
+                                                    showCount
+                                                    maxLength={200}
+                                                    style={{ resize: 'vertical', width: '100%' }}
+                                                    size="small"
+                                                />
+                                            )}
                                         />
                                     </Form.Item>
                                 </Col>
@@ -842,34 +973,35 @@ const DevicePermissions: React.FC = () => {
                         </div>
                     </Card>
 
-                    {/* 操作按钮和更新信息 */}
-                    <Row gutter={24} justify="center" style={{ marginTop: 4 }}>
-                        <Col span={24} style={{ display: 'flex', justifyContent: 'center' }}>
-                            <Space size="middle">
-                                <Button
-                                    type="primary"
-                                    htmlType="submit"
-                                    loading={loading}
-                                    size="middle"
-                                    style={ACTION_BUTTON_STYLE}
-                                >
-                                    更新
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        message.info('已取消编辑');
-                                        setModalVisible(false);
-                                        resetForm();
-                                        setEditingPermission(null);
-                                    }}
-                                    size="middle"
-                                    style={ACTION_BUTTON_STYLE}
-                                >
-                                    取消
-                                </Button>
-                            </Space>
-                        </Col>
-                    </Row>
+                    {/* 操作按钮 */}
+                    <div style={{
+                        paddingTop: 12,
+                        borderTop: '1px solid #f0f0f0',
+                        textAlign: 'center'
+                    }}>
+                        <Space size="middle">
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={loading}
+                                size="middle"
+                                className="action-button"
+                            >
+                                更新
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setModalVisible(false);
+                                    resetForm();
+                                    setEditingPermission(null);
+                                }}
+                                size="middle"
+                                className="action-button"
+                            >
+                                取消
+                            </Button>
+                        </Space>
+                    </div>
                 </Form>
             </Modal>
         </Layout>
