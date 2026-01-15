@@ -151,24 +151,24 @@ const DevicePermissions: React.FC = () => {
     const connectionStatusText = findDictItemName(antivirusStatusOptions, connectionStatusValue);
 
     useEffect(() => {
-        if (domainStatusValue && domainStatusText !== '无') {
+        if (domainStatusValue && domainStatusText !== '未参加') {
             setValue('noDomainReason', '');
         }
     }, [domainStatusValue, domainStatusText, setValue]);
     useEffect(() => {
-        if (smartitStatusValue && smartitStatusText !== '未安装') {
+        if (smartitStatusValue && smartitStatusText !== '未インストール') {
             setValue('noSmartitReason', '');
         }
     }, [smartitStatusValue, smartitStatusText, setValue]);
 
     useEffect(() => {
-        if (connectionStatusValue && connectionStatusText !== '无连接') {
+        if (connectionStatusValue && connectionStatusText !== '未インストール') {
             setValue('noSymantecReason', '');
         }
     }, [connectionStatusValue, connectionStatusText, setValue]);
 
     useEffect(() => {
-        if (usbStatusValue && usbStatusText !== '数据' && usbStatusText !== '3G网卡') {
+        if (usbStatusValue && usbStatusText !== '一時許可' && usbStatusText !== '許可') {
             setValue('usbReason', '');
             setValue('useEndDate', null);
         }
@@ -384,6 +384,13 @@ const DevicePermissions: React.FC = () => {
                 // 从 dictItemName 查找对应的 dictId
                 const dictId = findDictId(domainStatusOptions, value);
                 const label = getLabel(domainStatusOptions, dictId);
+
+                if (label !== '-') {
+                    const color = 
+                        label === '参加済み' ? 'green' :
+                        label === '未参加' ? 'red' : 'orange';
+                    return <Tag color={color}>{label}</Tag>;
+                }
                 return label !== '-' ? <Tag color="blue">{label}</Tag> : '-';
             },
         },
@@ -400,8 +407,8 @@ const DevicePermissions: React.FC = () => {
                 
                 if (label !== '-') {
                     const color = 
-                        label === '本地' || label === '远程' ? 'green' :
-                        label === '未安装' ? 'red' : 'orange';
+                        label === 'インストール済み' ? 'green' :
+                        label === '未インストール' ? 'red' : 'orange';
                     return <Tag color={color}>{label}</Tag>;
                 }
                 return '-';
@@ -415,13 +422,16 @@ const DevicePermissions: React.FC = () => {
             render: (value: string, record: DevicePermissionList) => {
                 // 优先使用 usbStatus（dictId）
                 let dictId = record.usbStatus;
-                
-                const label = getLabel(usbStatusOptions, dictId);
-                
+                let label = value;
+
+                 if (!label && dictId != null) {
+                    label = getLabel(smartitStatusOptions, dictId);
+                }
+            
                 if (label !== '-') {
                     const color = 
-                        label === '数据' || label === '3G网卡' ? 'green' :
-                        label === '关闭' ? 'red' : 'orange';
+                        label === '一時許可' || label === '許可' ? 'green' :
+                        label === '禁止' ? 'red' : 'orange';
                     return <Tag color={color}>{label}</Tag>;
                 }
                 return '-';
@@ -434,14 +444,17 @@ const DevicePermissions: React.FC = () => {
             width: 120,
             render: (value: string, record: DevicePermissionList) => {
                 // 优先使用 antivirusStatus（dictId）
-                let dictId = record.antivirusStatus;
+                 let dictId = record.antivirusStatus;
+                let label = value;
                 
-                const label = getLabel(antivirusStatusOptions, dictId);
+                if (!label && dictId != null) {
+                    label = getLabel(antivirusStatusOptions, dictId);
+                }
                 
                 if (label !== '-') {
                     const color = 
-                        label === '自动' ? 'green' :
-                        label === '手动' ? 'orange' : 'default';
+                        label === '有効期限切れ' || label === 'インストール済み' ? 'green' :
+                        label === '未インストール' ? 'red' : 'orange';
                     return <Tag color={color}>{label}</Tag>;
                 }
                 return '-';
