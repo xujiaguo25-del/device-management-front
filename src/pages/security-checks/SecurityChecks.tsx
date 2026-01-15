@@ -18,6 +18,12 @@ const SecurityChecks: React.FC = () => {
   const [editVisible, setEditVisible] = useState(false);
   const [currentRecord, setCurrentRecord] = useState< SecurityCheck | null>(null);
   const [searchTrigger, setSearchTrigger] = useState(0); // 用于触发搜索
+  const [currentRecord, setCurrentRecord] = useState<SecurityCheck | null>(null);
+
+  const monitorOptions = useMemo(() => {
+    const unique = Array.from(new Set(testData.map((x) => x.monitorId)));
+    return unique.map((id) => ({ label: id, value: id }));
+  }, []);
 
   // 加载数据
   const fetchData = async () => {
@@ -147,19 +153,19 @@ const SecurityChecks: React.FC = () => {
   return (
     <Layout title="安全检查记录">
       <Card>
-        {/* 搜索栏 */}
+        {/*搜索栏*/}
         <Card size="small" style={{ marginBottom: 16 }}>
-          <Row gutter={[16, 16]} align="middle">
+          <Row gutter={16}>
             <Col xs={24} sm={12} md={8} lg={6}>
               <Input
-                placeholder="请输入用户ID"
-                value={userId}
+                placeholder="用户ID"
+                value={userId || ''}
                 onChange={(e) => setUserId(e.target.value)}
                 allowClear
                 onPressEnter={handleSearch}
               />
             </Col>
-            <Col xs={24} sm={12} md={16} lg={18}>
+            <Col xs={24} sm={24} md={8} lg={12}>
               <Space>
                 <Button
                   type="primary"
@@ -184,7 +190,7 @@ const SecurityChecks: React.FC = () => {
           </Row>
         </Card>
 
-        {/* 表格栏 */}
+        {/*表格栏*/}
         <Table
           columns={columns}
           dataSource={data}
@@ -206,19 +212,15 @@ const SecurityChecks: React.FC = () => {
           }}
         />
 
-        {/* 编辑弹窗 */}
-        {currentRecord && (
-          <EditModal
-            visible={editVisible}
-            title="编辑安全检查记录"
-            record={currentRecord}
-            onCancel={() => {
-              setEditVisible(false);
-              setCurrentRecord(null);
-            }}
-            onOk={handleUpdate}
-          />
-        )}
+        {/* 编辑栏 */}
+        <EditModal
+          visible={editVisible}
+          title="编辑安全检查"
+          record={currentRecord}
+          onCancel={() => setEditVisible(false)}
+          onOk={handleUpdate}
+          monitorOptions={monitorOptions}
+        />
       </Card>
     </Layout>
   );

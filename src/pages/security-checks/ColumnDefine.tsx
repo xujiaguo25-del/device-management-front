@@ -1,6 +1,7 @@
-import { Button, Tag } from 'antd';
+import { Button, Tag, } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 import type { SecurityCheck } from '../../types';
+import ReadonlySelect from './ReadonlySelect';
 
 /**
  * 创建表格列定义
@@ -20,22 +21,37 @@ export const createColumns = (
     render: (_text, _record, index) => (currentPage - 1) * pageSize + index + 1,
   },
   {
-    title: '用户ID',
+    title: '工号',
     dataIndex: 'userId',
     key: 'userId',
     width: 120,
   },
   {
-    title: '用户名',
+    title: '姓名',
     dataIndex: 'name',
     key: 'name',
     width: 120,
   },
   {
-    title: '设备ID',
+    title: '设备编号',
     dataIndex: 'deviceId',
     key: 'deviceId',
-    width: 120,
+    width: 100,
+  },
+  {
+    title: '显示器编号',
+    dataIndex: 'monitorId',
+    key: 'monitorId',
+    width: 160,
+    render: (_: string, record: SecurityCheck) => (
+      <ReadonlySelect
+        value={record.monitorId}
+        options={record.monitorIds.map((id) => ({
+          label: id,
+          value: id,
+        }))}
+      />
+    ),
   },
   {
     title: '开机认证',
