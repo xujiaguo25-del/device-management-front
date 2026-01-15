@@ -11,9 +11,10 @@ interface SearchFormData {
 interface PermissionSearchFormProps {
     onSearch: (data: SearchFormData) => void;
     onReset: () => void;
+    isAdmin?: boolean;
 }
 
-const PermissionSearchForm: React.FC<PermissionSearchFormProps> = ({ onSearch, onReset }) => {
+const PermissionSearchForm: React.FC<PermissionSearchFormProps> = ({ onSearch, onReset, isAdmin = true }) => {
     const { control, handleSubmit, reset } = useForm<SearchFormData>();
 
     const handleSearchSubmit = handleSubmit((data) => {
@@ -28,13 +29,15 @@ const PermissionSearchForm: React.FC<PermissionSearchFormProps> = ({ onSearch, o
     return (
         <div style={{ marginBottom: 16 }}>
             <Space>
-                <Form.Item label="用户ID" style={{ marginBottom: 0 }}>
-                    <Controller
-                        name="userId"
-                        control={control}
-                        render={({ field }) => <Input {...field} placeholder="请输入用户ID" style={{ width: 150 }} />}
-                    />
-                </Form.Item>
+                {isAdmin && (
+                    <Form.Item label="用户ID" style={{ marginBottom: 0 }}>
+                        <Controller
+                            name="userId"
+                            control={control}
+                            render={({ field }) => <Input {...field} placeholder="请输入用户ID" style={{ width: 150 }} />}
+                        />
+                    </Form.Item>
+                )}
                 <Form.Item label="设备ID" style={{ marginBottom: 0 }}>
                     <Controller
                         name="deviceId"

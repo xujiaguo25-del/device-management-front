@@ -3,7 +3,8 @@ import { Table, Button, Tag } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import type { DevicePermissionList } from '../../types';
+import type { DevicePermissionList, DictItem } from '../../types';
+import { useDicts } from '../../hooks/useDicts';
 
 interface PermissionTableProps {
     data: DevicePermissionList[];
@@ -15,6 +16,7 @@ interface PermissionTableProps {
     };
     onPageChange: (page: number, pageSize: number) => void;
     onEdit: (permissionId: string) => void;
+    isAdmin?: boolean;
 }
 
 const PermissionTable: React.FC<PermissionTableProps> = ({
@@ -23,7 +25,30 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
     pagination,
     onPageChange,
     onEdit,
+    isAdmin = true,
 }) => {
+    // 获取字典数据（与详情页面保持一致）
+    const { map: dictMap } = useDicts([
+        'DOMAIN_STATUS',
+        'SMARTIT_STATUS',
+        'USB_STATUS',
+        'ANTIVIRUS_STATUS'
+    ]);
+
+    // 提取各字段的字典数据
+    const domainStatusOptions = (dictMap?.['DOMAIN_STATUS'] || []) as DictItem[];
+    const smartitStatusOptions = (dictMap?.['SMARTIT_STATUS'] || []) as DictItem[];
+    const usbStatusOptions = (dictMap?.['USB_STATUS'] || []) as DictItem[];
+    const antivirusStatusOptions = (dictMap?.['ANTIVIRUS_STATUS'] || []) as DictItem[];
+
+    // 辅助函数：从 dictId 查找 dictItemName（与详情页面保持一致）
+    const getLabel = (options: DictItem[], dictId?: number | null) => {
+        if (dictId == null) return '-';
+        const it = options.find(o => o.dictId === dictId);
+        return it ? it.dictItemName : '-';
+    };
+
+
     const columns: ColumnsType<DevicePermissionList> = [
         {
             title: '权限ID',
@@ -80,13 +105,27 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             dataIndex: 'domainName',
             key: 'domainName',
             width: 120,
-            render: (domainName: string) => domainName || '-',
+            render: (_: string, record: DevicePermissionList) => {
+                // 只使用 domainStatus (dictId) 从字典数据获取显示文本
+                // 不显示原始值如 "D1"、"D2" 等
+                if (record.domainStatus != null) {
+                    const label = getLabel(domainStatusOptions, record.domainStatus);
+                    if (label !== '-') {
+                        const color = 
+                            label === '参加済み' ? 'green' :
+                            label === '未参加' ? 'red' : 'blue';
+                        return <Tag color={color}>{label}</Tag>;
+                    }
+                }
+                return '-';
+            },
         },
         {
             title: 'Domain组',
             dataIndex: 'domainGroup',
             key: 'domainGroup',
             width: 120,
+            render: (text: string) => text || '-',
         },
         {
             title: 'SmartIT状态',
@@ -94,31 +133,17 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             key: 'smartitStatus',
             width: 120,
             render: (_: number, record: DevicePermissionList) => {
-                // 优先使用存储的文本值
-                const statusText = record.smartitStatusText;
-                let color = 'default';
-                
-                if (statusText) {
-                    // 根据文本值设置颜色
-                    if (statusText === '本地' || statusText === '远程') {
-                        color = 'green';
-                    } else if (statusText === '未安装') {
-                        color = 'red';
-                    } else {
-                        color = 'orange';
-                    }
-                    return <Tag color={color}>{statusText}</Tag>;
-                } else {
-                    // 如果没有文本值，根据数字转换（兼容旧数据）
-                    const status = record.smartitStatus;
-                    if (status === 1) {
-                        return <Tag color="green">本地</Tag>;
-                    } else if (status === 0) {
-                        return <Tag color="red">未安装</Tag>;
-                    } else {
-                        return <Tag>-</Tag>;
+                // 直接使用 smartitStatus (dictId) 从字典数据获取显示文本
+                if (record.smartitStatus != null) {
+                    const label = getLabel(smartitStatusOptions, record.smartitStatus);
+                    if (label !== '-') {
+                        const color = 
+                            label === 'インストール済み' || label === '本地' || label === '远程' ? 'green' :
+                            label === '未インストール' || label === '未安装' ? 'red' : 'orange';
+                        return <Tag color={color}>{label}</Tag>;
                     }
                 }
+                return '-';
             },
         },
         {
@@ -127,31 +152,17 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             key: 'usbStatus',
             width: 100,
             render: (_: number, record: DevicePermissionList) => {
-                // 优先使用存储的文本值
-                const statusText = record.usbStatusText;
-                let color = 'default';
-                
-                if (statusText) {
-                    // 根据文本值设置颜色
-                    if (statusText === '数据' || statusText === '3G网卡') {
-                        color = 'green';
-                    } else if (statusText === '关闭') {
-                        color = 'red';
-                    } else {
-                        color = 'orange';
-                    }
-                    return <Tag color={color}>{statusText}</Tag>;
-                } else {
-                    // 如果没有文本值，根据数字转换（兼容旧数据）
-                    const status = record.usbStatus;
-                    if (status === 1) {
-                        return <Tag color="green">数据</Tag>;
-                    } else if (status === 0) {
-                        return <Tag color="red">关闭</Tag>;
-                    } else {
-                        return <Tag>-</Tag>;
+                // 直接使用 usbStatus (dictId) 从字典数据获取显示文本
+                if (record.usbStatus != null) {
+                    const label = getLabel(usbStatusOptions, record.usbStatus);
+                    if (label !== '-') {
+                        const color = 
+                            label === '一時許可' || label === '許可' || label === '数据' || label === '3G网卡' ? 'green' :
+                            label === '禁止' || label === '关闭' ? 'red' : 'orange';
+                        return <Tag color={color}>{label}</Tag>;
                     }
                 }
+                return '-';
             },
         },
         {
@@ -159,38 +170,35 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             dataIndex: 'usbExpireDate',
             key: 'usbExpireDate',
             width: 120,
-            render: (date: string) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
+            render: (date: string | null) => {
+                if (date) {
+                    try {
+                        return dayjs(date).format('YYYY-MM-DD');
+                    } catch (e) {
+                        return date;
+                    }
+                }
+                return '-';
+            },
         },
         {
             title: '防病毒状态',
             dataIndex: 'antivirusStatus',
             key: 'antivirusStatus',
             width: 120,
-            render: (status: number, record: DevicePermissionList) => {
-                // 优先使用存储的文本值，如果没有则根据数字转换
-                let statusText = record.antivirusStatusText;
-                let color = 'default';
-                
-                if (!statusText) {
-                    // 如果没有文本值，根据数字转换
-                    if (status === 1) {
-                        statusText = '自动';
-                        color = 'green';
-                    } else if (status === 0) {
-                        statusText = '手动';
-                        color = 'orange';
-                    } else {
-                        statusText = '-';
-                    }
-                } else {
-                    // 根据文本值设置颜色
-                    if (statusText === '自动') {
-                        color = 'green';
-                    } else if (statusText === '手动') {
-                        color = 'orange';
+            render: (_: number, record: DevicePermissionList) => {
+                // 直接使用 antivirusStatus (dictId) 从字典数据获取显示文本
+                if (record.antivirusStatus != null) {
+                    const label = getLabel(antivirusStatusOptions, record.antivirusStatus);
+                    if (label !== '-') {
+                        const color = 
+                            label === '有効期限切れ' || label === 'インストール済み' || label === '自动' ? 'green' :
+                            label === '未インストール' || label === '无连接' ? 'red' :
+                            label === '手动' ? 'orange' : 'default';
+                        return <Tag color={color}>{label}</Tag>;
                     }
                 }
-                return <Tag color={color}>{statusText || '-'}</Tag>;
+                return '-';
             },
         },
         {
@@ -199,6 +207,7 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             key: 'remark',
             width: 200,
             ellipsis: true,
+            render: (text: string) => text || '-',
         },
         {
             title: '操作',
