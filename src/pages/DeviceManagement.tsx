@@ -39,7 +39,8 @@ import {
 import { 
   fetchDictData, 
   fetchUsers, 
-  saveDevice as saveDeviceService 
+  saveDevice as saveDeviceService,
+  updateDevice as updateDeviceService
 } from '../services/device/deviceFormService';
 
 const { Search } = Input;
@@ -83,29 +84,42 @@ const DeviceManagement: React.FC = () => {
   const fetchDevices = async (params: DeviceQueryParams) => {
     setLoading(true);
     try {
+      console.log('开始获取设备列表，参数:', params);
       const response = await getDeviceList(params);
+      console.log('获取到的设备列表响应:', response);
       
-      // 处理返回的数据，确保总是能获取到 list 和 total
-      let deviceList: DeviceListItem[] = [];
-      let totalCount = 0;
-      
-      if (response.data) {
+      // 处理返回的数据
+      if (response.code === 200 && response.data) {
+        // 确保我们能正确获取list和total
+        let deviceList: DeviceListItem[] = [];
+        let totalCount = 0;
+        
         if ('list' in response.data) {
           // 数据是分页格式 { list: [], total: number, ... }
           deviceList = response.data.list || [];
           totalCount = response.data.total || 0;
+          console.log(`获取到设备列表: ${deviceList.length} 条，总计: ${totalCount}`);
         } else if (Array.isArray(response.data)) {
           // 数据是数组格式
           deviceList = response.data;
           totalCount = response.data.length;
+        } else {
+          console.warn('未知的数据格式:', response.data);
         }
+        
+        setDevices(deviceList);
+        setTotal(totalCount);
+      } else {
+        console.error('获取设备列表失败:', response.message);
+        message.error(`获取设备列表失败: ${response.message}`);
+        setDevices([]);
+        setTotal(0);
       }
-      
-      setDevices(deviceList);
-      setTotal(totalCount);
     } catch (error) {
-      message.error('获取设备列表失败');
       console.error('获取设备列表失败:', error);
+      message.error('获取设备列表失败');
+      setDevices([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -262,7 +276,19 @@ const DeviceManagement: React.FC = () => {
   // 处理表单提交
   const handleFormSubmit = async (values: DeviceListItem) => {
     try {
-      const success = await saveDeviceService(values);
+      // const success = await saveDeviceService(values);
+
+      /////修改
+      let success;
+      if (isEditing) {
+        // 编辑模式下调用 updateDevice
+        success = await updateDeviceService(values);  
+      } else {
+        // 新增模式下调用 saveDevice
+        success = await saveDeviceService(values);
+      }
+      /////修改
+
       
       if (success) {
         if (isEditing) {
@@ -294,7 +320,7 @@ const DeviceManagement: React.FC = () => {
     textOverflow: 'ellipsis',
   };
 
-  // 表格列定义（移除了查看按钮）
+  // 表格列定义
   const columns = [
     {
       title: '主机编号',
@@ -316,8 +342,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 180,
       ellipsis: true,
-      render: (monitors: Monitor[] | null | undefined) => {
-        const text = monitors?.map(m => m.monitorName).join('\n') || '';
+      render: (monitors: Monitor[]) => {
+        const monitorNames = monitors?.map(m => m.monitorName).filter(Boolean) || [];
+        const text = monitorNames.length > 0 ? monitorNames.join('\n') : '-';
         return (
           <div 
             style={{ 
@@ -340,9 +367,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string | null | undefined) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || ''}>
-          {text || '-'}
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
+          {text}
         </div>
       ),
     },
@@ -353,9 +380,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string | null | undefined) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || ''}>
-          {text || '-'}
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
+          {text}
         </div>
       ),
     },
@@ -366,9 +393,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 120,
       ellipsis: true,
-      render: (text: string | null | undefined) => (
-        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || ''}>
-          {text || '-'}
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
+          {text}
         </div>
       ),
     },
@@ -379,9 +406,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 120,
       ellipsis: true,
-      render: (text: string | null | undefined) => (
-        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || ''}>
-          {text || '-'}
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
+          {text}
         </div>
       ),
     },
@@ -392,9 +419,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 120,
       ellipsis: true,
-      render: (text: string | null | undefined) => (
-        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || ''}>
-          {text || '-'}
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
+          {text}
         </div>
       ),
     },
@@ -405,8 +432,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 150,
       ellipsis: true,
-      render: (deviceIps: DeviceIp[] | null | undefined) => {
-        const text = deviceIps?.map(ip => ip.ipAddress).join('\n') || '';
+      render: (deviceIps: DeviceIp[]) => {
+        const ipAddresses = deviceIps?.map(ip => ip.ipAddress).filter(Boolean) || [];
+        const text = ipAddresses.length > 0 ? ipAddresses.join('\n') : '-';
         return (
           <div 
             style={{ 
@@ -481,9 +509,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string | null | undefined) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || ''}>
-          {text || '-'}
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
+          {text}
         </div>
       ),
     },
@@ -494,9 +522,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string | null | undefined) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || ''}>
-          {text || '-'}
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
+          {text}
         </div>
       ),
     },
@@ -507,9 +535,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 150,
       ellipsis: true,
-      render: (text: string | null | undefined) => (
-        <div style={{ ...cellStyle, maxWidth: '150px' }} title={text || ''}>
-          {text || '-'}
+      render: (text: string) => (
+        <div style={{ ...cellStyle, maxWidth: '150px' }} title={text}>
+          {text}
         </div>
       ),
     },
@@ -521,7 +549,7 @@ const DeviceManagement: React.FC = () => {
       width: 100,
       fixed: 'right' as const,
       render: (status: string) => {
-        const color = status === '已确认' ? 'green' : 'red';
+        const color = status === '已确认' ? 'green' : 'default';
         return (
           <div style={cellStyle}>
             <Tag color={color}>{status}</Tag>

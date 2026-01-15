@@ -29,22 +29,23 @@ interface DeviceFormModalProps {
   visible: boolean;
   isEditing: boolean;
   device: DeviceListItem | null;
-  dictData: Record<string, any[]>;
+  dictData: Record<string, any[]>; // Record定义对象
   users: any[];
   onCancel: () => void;
   onSubmit: (values: DeviceListItem) => void;
 }
 
+                                  // 定义参数类型
 const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   visible,
   isEditing,
   device,
-  dictData,
+  dictData,                 // 解构参数
   users,
   onCancel,
   onSubmit,
 }) => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm(); // antd库
   const [monitors, setMonitors] = useState<Monitor[]>([]);
   const [deviceIps, setDeviceIps] = useState<DeviceIp[]>([]);
 
@@ -101,12 +102,12 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         return;
       }
 
-      // 验证显示器名称
-      const emptyMonitors = monitors.filter(m => !m.monitorName.trim());
-      if (emptyMonitors.length > 0) {
-        message.error('请填写所有显示器名称');
-        return;
-      }
+      // // 验证显示器名称
+      // const emptyMonitors = monitors.filter(m => !m.monitorName.trim());
+      // if (emptyMonitors.length > 0) {
+      //   message.error('请填写所有显示器名称');
+      //   return;
+      // }
 
       // 获取字典显示名称
       const osName = dictData.OS_TYPE?.find(item => item.dictId === values.osId)?.dictItemName || '';
@@ -119,8 +120,27 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       
       const submitData: DeviceListItem = {
         ...values,
-        monitors: monitors.filter(m => m.monitorName.trim()),
-        deviceIps: deviceIps.filter(ip => ip.ipAddress.trim()),
+
+        ///// 修改
+        // monitors: monitors.filter(m => m.monitorName.trim()),
+        monitors: monitors
+        .filter(m => m.monitorName.trim())
+        .map(monitor => ({
+          ...monitor,
+          // 确保 deviceId 与主表一致
+          deviceId: values.deviceId,
+        })),
+
+
+        // deviceIps: deviceIps.filter(ip => ip.ipAddress.trim()),
+         deviceIps: deviceIps
+        .filter(ip => ip.ipAddress.trim())
+        .map(ip => ({
+          ...ip,
+          deviceId: values.deviceId,
+        })),
+        ///// 修改
+
         // 设置字典显示值
         confirmStatus: values.selfConfirmId === 1 ? '已确认' : '未确认',
         osName,
@@ -146,7 +166,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   // 处理显示器变更
   const handleMonitorChange = (index: number, field: keyof Monitor, value: any) => {
     const newMonitors = [...monitors];
-    newMonitors[index] = { ...newMonitors[index], [field]: value };
+    newMonitors[index] = { ...newMonitors[index], [field]: value }; // 全展开，再改动，保留monitorId
     setMonitors(newMonitors);
   };
 
@@ -157,7 +177,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   const removeMonitor = (index: number) => {
     if (monitors.length > 1) {
       const newMonitors = [...monitors];
-      newMonitors.splice(index, 1);
+      newMonitors.splice(index, 1);// 删除1个index位置的元素
       setMonitors(newMonitors);
     }
   };
@@ -253,7 +273,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 <Select 
                   placeholder="请选择使用人" 
                   showSearch
-                  optionFilterProp="children"
+                  optionFilterProp="children" // 输入内容，用 Option （children）进行搜索匹配
                   onChange={handleUserChange}
                 >
                   {users.map(user => (
@@ -456,6 +476,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
             </Button>
           </Title>
           
+          {/* 有几个monitor就有几个文本框*/}
           {monitors.map((monitor, index) => (
             <Card key={index} size="small" style={{ marginBottom: 8 }}>
               <Row gutter={16} align="middle">
