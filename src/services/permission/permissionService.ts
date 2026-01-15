@@ -3,7 +3,7 @@
  */
 
 import { get, post, put, del } from '../api';
-import type { DevicePermissionList, DevicePermissionInsert, ApiResponse } from '../../types';
+import type { DevicePermissionList, DevicePermissionInsert, ApiResponse, DictItem, UserInfo } from '../../types';
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
@@ -72,8 +72,13 @@ export const deletePermission = async (permissionId: string): Promise<ApiRespons
 /**
  * 导出权限列表为Excel
  * 优先使用后端API，如果后端不支持则使用前端生成
+ * @param userInfo 用户信息，用于权限控制
+ * @param dictMap 字典数据映射，用于状态文本转换
  */
-export const exportPermissionsExcel = async (): Promise<void> => {
+export const exportPermissionsExcel = async (
+    userInfo?: UserInfo | null,
+    dictMap?: Record<string, DictItem[]>
+): Promise<void> => {
     try {
         // 优先尝试使用后端API导出
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
@@ -99,12 +104,27 @@ export const exportPermissionsExcel = async (): Promise<void> => {
 
     // 前端生成Excel（需要先获取所有数据）
     try {
-        const response = await getPermissions({ page: 1, size: 10000 });
+        // 如果不是管理员，只获取当前用户的数据
+        const userId = userInfo?.USER_TYPE_NAME?.toUpperCase() === 'ADMIN' ? undefined : userInfo?.USER_ID;
+        const response = await getPermissions({ page: 1, size: 10000, userId });
         if (response.code !== 200 || !response.data) {
             throw new Error('获取权限数据失败');
         }
 
         const permissions = response.data;
+        
+        // 获取字典数据用于状态文本转换
+        const domainStatusOptions = (dictMap?.['DOMAIN_STATUS'] || []) as DictItem[];
+        const smartitStatusOptions = (dictMap?.['SMARTIT_STATUS'] || []) as DictItem[];
+        const usbStatusOptions = (dictMap?.['USB_STATUS'] || []) as DictItem[];
+        const antivirusStatusOptions = (dictMap?.['ANTIVIRUS_STATUS'] || []) as DictItem[];
+        
+        // 辅助函数：从 dictId 查找 dictItemName
+        const getLabel = (options: DictItem[], dictId?: number | null) => {
+            if (dictId == null) return '';
+            const it = options.find(o => o.dictId === dictId);
+            return it ? it.dictItemName : '';
+        };
 
         // 准备表头
         const headers = [
@@ -113,22 +133,23 @@ export const exportPermissionsExcel = async (): Promise<void> => {
             '防病毒状态', '备注'
         ];
 
-        // 准备Excel数据
+        // 准备Excel数据（使用字典数据转换状态文本）
         const excelData = permissions.map(p => [
             p.permissionId,
             p.deviceId,
-            p.computerName,
+            p.computerName || '',
             p.ipAddress?.join(', ') || '',
             p.userId,
-            p.name,
+            p.name || '',
             p.deptId || '',
-            p.loginUsername,
-            p.domainName || '',
+            p.loginUsername || '',
+            // 使用字典数据转换状态文本
+            getLabel(domainStatusOptions, p.domainStatus) || p.domainName || '',
             p.domainGroup || '',
-            p.smartitStatusText || '',
-            p.usbStatusText || '',
+            getLabel(smartitStatusOptions, p.smartitStatus) || p.smartitStatusText || '',
+            getLabel(usbStatusOptions, p.usbStatus) || p.usbStatusText || '',
             p.usbExpireDate || '',
-            p.antivirusStatusText || '',
+            getLabel(antivirusStatusOptions, p.antivirusStatus) || p.antivirusStatusText || '',
             p.remark || '',
         ]);
 

@@ -263,7 +263,8 @@ const DevicePermissions: React.FC = () => {
     const handleExport = async () => {
         try {
             setLoading(true);
-            await exportPermissionsExcel();
+            // 传递用户信息和字典数据给导出函数
+            await exportPermissionsExcel(userInfo, dictMap);
             message.success('导出成功，文件已保存到下载文件夹');
         } catch (error: any) {
             message.error(error.message || '导出失败');
