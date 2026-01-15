@@ -78,7 +78,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         form.resetFields();
         setMonitors([{ monitorName: '', deviceId: '' }]);
         setDeviceIps([{ ipAddress: '', deviceId: '' }]);
-        
+
         // 设置默认值
         form.setFieldsValue({
           selfConfirmId: 0,

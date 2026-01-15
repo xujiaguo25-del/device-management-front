@@ -8,7 +8,7 @@ export const fetchDictData = async (): Promise<Record<string, any[]>> => {
     // 这里可以调用后端获取字典数据的接口
     // 暂时先用模拟数据，你需要根据后端实际接口修改
     const response = await get('/dict/data'); // 假设有这样一个接口
-    
+
     if (response.code === 200) {
       return response.data;
     } else {
@@ -16,7 +16,7 @@ export const fetchDictData = async (): Promise<Record<string, any[]>> => {
     }
   } catch (error) {
     console.error('获取字典数据失败:', error);
-    
+
     // 如果API调用失败，返回模拟数据作为fallback
     return {
       CONFIRM_STATUS: [
@@ -62,14 +62,14 @@ export const fetchUsers = async (): Promise<Array<{userId: string, name: string,
     }).toString();
 
     const response = await get(`/devices/list?${queryString}`);
-    
+
     if (response.code === 200) {
       // 从设备列表中提取用户
       const deviceList = response.data?.list || response.data || [];
-      
+
       // 创建用户映射，确保用户ID唯一
       const userMap = new Map<string, {userId: string, name: string, deptId?: string}>();
-      
+
       deviceList.forEach((device: any) => {
         if (device.userId && device.userName) {
           // 如果用户ID还不存在，添加到映射中
@@ -82,10 +82,10 @@ export const fetchUsers = async (): Promise<Array<{userId: string, name: string,
           }
         }
       });
-      
+
       // 将映射转换为数组
       const users = Array.from(userMap.values());
-      
+
       // 如果从设备数据中提取的用户太少，可以添加一些默认用户
       if (users.length < 5) {
         // 添加一些常用用户作为备选
@@ -96,23 +96,23 @@ export const fetchUsers = async (): Promise<Array<{userId: string, name: string,
           { userId: 'JS0013', name: '王五', deptId: '产品部' },
           { userId: 'JS0014', name: '李松', deptId: '研发部' }
         ];
-        
+
         defaultUsers.forEach(user => {
           if (!userMap.has(user.userId)) {
             userMap.set(user.userId, user);
           }
         });
-        
+
         return Array.from(userMap.values());
       }
-      
+
       return users;
     } else {
       throw new Error(response.message || '获取用户列表失败');
     }
   } catch (error) {
     console.error('获取用户列表失败:', error);
-    
+
     // 如果API调用失败，返回模拟数据作为fallback
     const users = [
       { userId: 'JS0010', name: '小娟', deptId: 'IT' },
@@ -132,7 +132,7 @@ export const fetchUsers = async (): Promise<Array<{userId: string, name: string,
       { userId: 'JS0024', name: '新用户2', deptId: '测试部' },
       { userId: 'JS0025', name: '新用户3', deptId: '研发部' }
     ];
-    
+
     return users;
   }
 };
@@ -141,14 +141,14 @@ export const fetchUsers = async (): Promise<Array<{userId: string, name: string,
 const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean = false): any => {
   // 获取当前登录用户（这里需要根据你的认证系统获取）
   const currentUser = localStorage.getItem('user_name') || 'system';
-  
+
 
   // 无调用
   // 获取当前时间
   // const now = new Date().toISOString();
 
 
-  
+
   // 构建DeviceFullDTO
   const deviceFullDTO = {
     deviceId: deviceData.deviceId,
@@ -185,7 +185,7 @@ const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean =
     name: deviceData.userName || '',
     deptId: deviceData.deptId || ''
   };
-  
+
   return deviceFullDTO;
 };
 
@@ -193,12 +193,12 @@ const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean =
 export const saveDevice = async (deviceData: DeviceListItem): Promise<boolean> => {
   try {
     const deviceFullDTO = convertToDeviceFullDTO(deviceData, false);
-    
+
     console.log('发送给后端的数据:', JSON.stringify(deviceFullDTO, null, 2));
-    
+
     // 调用后端insertDevice接口
     const response = await post('/devices/insertDevice', deviceFullDTO);
-    
+
     if (response.code === 200) {
       console.log('设备保存成功:', response.data);
       return true;
@@ -208,7 +208,7 @@ export const saveDevice = async (deviceData: DeviceListItem): Promise<boolean> =
     }
   } catch (error: any) {
     console.error('设备保存请求失败:', error);
-    
+
     // 提取错误信息
     const errorMessage = error.message || error.msg || error.toString() || '未知错误';
     throw new Error(`设备保存失败: ${errorMessage}`);
@@ -219,12 +219,12 @@ export const saveDevice = async (deviceData: DeviceListItem): Promise<boolean> =
 export const updateDevice = async (deviceData: DeviceListItem): Promise<boolean> => {
   try {
     const deviceFullDTO = convertToDeviceFullDTO(deviceData, true);
-    
+
     console.log('发送给后端的数据:', JSON.stringify(deviceFullDTO, null, 2));
-    
+
     // 调用后端updateDevice接口
     const response = await put(`/devices/updateDevice/${deviceData.deviceId}`, deviceFullDTO);
-    
+
     if (response.code === 200) {
       console.log('设备更新成功:', response.data);
       return true;
@@ -234,7 +234,7 @@ export const updateDevice = async (deviceData: DeviceListItem): Promise<boolean>
     }
   } catch (error: any) {
     console.error('设备更新请求失败:', error);
-    
+
     // 提取错误信息
     const errorMessage = error.message || error.msg || error.toString() || '未知错误';
     throw new Error(`设备更新失败: ${errorMessage}`);
@@ -276,7 +276,7 @@ export const getDefaultDeviceData = (): DeviceListItem => {
 
 
 // 无调用
-// 根据用户ID获取用户信息 
+// 根据用户ID获取用户信息
 // export const getUserInfoById = async (userId: string) => {
 //   const users = await fetchUsers();
 //   return users.find(user => user.userId === userId) || null;
@@ -294,33 +294,33 @@ export const getDefaultDeviceData = (): DeviceListItem => {
 //   if (!deviceData.deviceId?.trim()) {
 //     errors.push('设备编号不能为空');
 //   }
-  
+
 //   // 验证设备型号
 //   if (!deviceData.deviceModel?.trim()) {
 //     errors.push('设备型号不能为空');
 //   }
-  
+
 //   // 验证电脑名称
 //   if (!deviceData.computerName?.trim()) {
 //     errors.push('电脑名称不能为空');
 //   }
-  
+
 //   // 验证使用人
 //   if (!deviceData.userId?.trim()) {
 //     errors.push('请选择使用人');
 //   }
-  
+
 //   // 验证IP地址格式
 //   if (deviceData.deviceIps) {
 //     const invalidIps = deviceData.deviceIps
 //       .filter(ip => ip.ipAddress && !isValidIP(ip.ipAddress))
 //       .map(ip => ip.ipAddress);
-    
+
 //     if (invalidIps.length > 0) {
 //       errors.push(`以下IP地址格式不正确: ${invalidIps.join(', ')}`);
 //     }
 //   }
-  
+
 //   // 验证显示器名称
 //   if (deviceData.monitors) {
 //     const emptyMonitors = deviceData.monitors.filter(m => !m.monitorName.trim());
@@ -328,7 +328,7 @@ export const getDefaultDeviceData = (): DeviceListItem => {
 //       errors.push('请填写所有显示器名称');
 //     }
 //   }
-  
+
 //   return {
 //     isValid: errors.length === 0,
 //     errors
