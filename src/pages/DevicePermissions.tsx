@@ -42,9 +42,10 @@ import {
     updatePermission,
     exportPermissionsExcel,
 } from '../services/permission/permissionService';
-import type { DevicePermissionList, DevicePermissionInsert } from '../types';
+import type { DevicePermissionList, DevicePermissionInsert, DictItem } from '../types';
 
 import './DevicePermissions.css';
+import { useDicts } from '../hooks/useDicts';
 
 const { Option } = Select;
 
@@ -70,15 +71,15 @@ const VALUE_STYLE = {
 
 interface PermissionFormData {
     deviceId: string;
-    domainName?: string;
+    domainStatus?: number | null;  
     domainGroup?: string;
     noDomainReason?: string;
-    smartitStatus?: string;
+    smartitStatus?: number | null; 
     noSmartitReason?: string;
-    usbStatus?: string;
+    usbStatus?: number | null; 
     usbReason?: string;
     useEndDate?: dayjs.Dayjs | null;
-    connectionStatus?: string;
+    connectionStatus?: number | null; 
     noSymantecReason?: string;
     remarks?: string;
 }
@@ -89,6 +90,41 @@ interface SearchFormData {
 }
 
 const DevicePermissions: React.FC = () => {
+    // ステップ1: 辞書データの一括取得
+    const { map: dictMap } = useDicts([
+        'DOMAIN_STATUS',
+        'SMARTIT_STATUS',
+        'USB_STATUS',
+        'ANTIVIRUS_STATUS'
+    ]);
+
+    // ステップ2: 各フィールドの辞書データを抽出
+    const domainStatusOptions = (dictMap?.['DOMAIN_STATUS'] || []) as DictItem[];
+    const smartitStatusOptions = (dictMap?.['SMARTIT_STATUS'] || []) as DictItem[];
+    const usbStatusOptions = (dictMap?.['USB_STATUS'] || []) as DictItem[];
+    const antivirusStatusOptions = (dictMap?.['ANTIVIRUS_STATUS'] || []) as DictItem[];
+
+    // ステップ3: 表示値の変換関数 - 使用 dictId
+    const getLabel = (options: DictItem[], dictId?: number | null) => {
+        if (dictId == null) return '-';
+        const it = options.find(o => o.dictId === dictId);
+        return it ? it.dictItemName : '-';
+    };
+
+    // 从 dictItemName 查找 dictId 的辅助函数
+    const findDictId = (options: DictItem[], dictItemName?: string) => {
+        if (!dictItemName) return null;
+        const it = options.find(o => o.dictItemName === dictItemName);
+        return it?.dictId || null;
+    };
+
+    // 从 dictId 查找 dictItemName 的辅助函数
+    const findDictItemName = (options: DictItem[], dictId?: number | null) => {
+        if (dictId == null) return '';
+        const it = options.find(o => o.dictId === dictId);
+        return it?.dictItemName || '';
+    };
+
     const [permissions, setPermissions] = useState<DevicePermissionList[]>([]);
     const [loading, setLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -101,37 +137,42 @@ const DevicePermissions: React.FC = () => {
 
     const { control: searchControl, handleSubmit: handleSearchSubmit, reset: resetSearch } = useForm<SearchFormData>();
     const { control: formControl, handleSubmit: handleFormSubmit, reset: resetForm, setValue, formState: { errors } } = useForm<PermissionFormData>();
-    const domainNameValue = useWatch({ control: formControl, name: 'domainName' });
+
+
+    const domainStatusValue = useWatch({ control: formControl, name: 'domainStatus' });
     const smartitStatusValue = useWatch({ control: formControl, name: 'smartitStatus' });
     const connectionStatusValue = useWatch({ control: formControl, name: 'connectionStatus' });
     const usbStatusValue = useWatch({ control: formControl, name: 'usbStatus' });
 
+    
+    const domainStatusText = findDictItemName(domainStatusOptions, domainStatusValue);
+    const smartitStatusText = findDictItemName(smartitStatusOptions, smartitStatusValue);
+    const usbStatusText = findDictItemName(usbStatusOptions, usbStatusValue);
+    const connectionStatusText = findDictItemName(antivirusStatusOptions, connectionStatusValue);
+
     useEffect(() => {
-        if (domainNameValue === '无') {
-            setValue('domainGroup', '');
-        } else if (domainNameValue && domainNameValue !== '') {
+        if (domainStatusValue && domainStatusText !== '无') {
             setValue('noDomainReason', '');
         }
-    }, [domainNameValue, setValue]);
-
+    }, [domainStatusValue, domainStatusText, setValue]);
     useEffect(() => {
-        if (smartitStatusValue !== '未安装') {
+        if (smartitStatusValue && smartitStatusText !== '未安装') {
             setValue('noSmartitReason', '');
         }
-    }, [smartitStatusValue, setValue]);
+    }, [smartitStatusValue, smartitStatusText, setValue]);
 
     useEffect(() => {
-        if (connectionStatusValue !== '无连接') {
+        if (connectionStatusValue && connectionStatusText !== '无连接') {
             setValue('noSymantecReason', '');
         }
-    }, [connectionStatusValue, setValue]);
+    }, [connectionStatusValue, connectionStatusText, setValue]);
 
     useEffect(() => {
-        if (usbStatusValue !== '数据' && usbStatusValue !== '3G网卡') {
+        if (usbStatusValue && usbStatusText !== '数据' && usbStatusText !== '3G网卡') {
             setValue('usbReason', '');
             setValue('useEndDate', null);
         }
-    }, [usbStatusValue, setValue]);
+    }, [usbStatusValue, usbStatusText, setValue]);
 
     // 加载权限列表
     const loadPermissions = async (page: number = 1, size: number = 10, userId?: string, deviceId?: string) => {
@@ -180,17 +221,40 @@ const DevicePermissions: React.FC = () => {
             if (response.code === 200 && response.data) {
                 const permission = response.data;
                 setEditingPermission(permission);
-                // 填充表单数据
+                
+                // 填充表单数据 - 使用 dictId
                 setValue('deviceId', permission.deviceId);
-                setValue('domainName', permission.domainName || '');
+                
+                // 查找域名对应的 dictId
+                const domainDictId = findDictId(domainStatusOptions, permission.domainName);
+                setValue('domainStatus', domainDictId);
+                
                 setValue('domainGroup', permission.domainGroup || '');
                 setValue('noDomainReason', permission.noDomainReason || '');
-                setValue('smartitStatus', permission.smartitStatus === 1 ? '本地' : permission.smartitStatus === 0 ? '未安装' : '');
+                
+                // 查找 SmartIT 状态对应的 dictId
+                const smartitStatusName = permission.smartitStatusText || 
+                    (permission.smartitStatus === 1 ? '本地' : permission.smartitStatus === 0 ? '未安装' : '');
+                const smartitDictId = findDictId(smartitStatusOptions, smartitStatusName);
+                setValue('smartitStatus', smartitDictId);
+                
                 setValue('noSmartitReason', permission.noSmartitReason || '');
-                setValue('usbStatus', permission.usbStatus === 1 ? '数据' : permission.usbStatus === 0 ? '关闭' : '');
+                
+                // 查找 USB 状态对应的 dictId
+                const usbStatusName = permission.usbStatusText || 
+                    (permission.usbStatus === 1 ? '数据' : permission.usbStatus === 0 ? '关闭' : '');
+                const usbDictId = findDictId(usbStatusOptions, usbStatusName);
+                setValue('usbStatus', usbDictId);
+                
                 setValue('usbReason', permission.usbReason || '');
                 setValue('useEndDate', permission.usbExpireDate ? dayjs(permission.usbExpireDate) : null);
-                setValue('connectionStatus', permission.antivirusStatus === 1 ? '自动' : permission.antivirusStatus === 0 ? '手动' : '');
+                
+                // 查找防病毒状态对应的 dictId
+                const antivirusStatusName = permission.antivirusStatusText || 
+                    (permission.antivirusStatus === 1 ? '自动' : permission.antivirusStatus === 0 ? '手动' : '');
+                const antivirusDictId = findDictId(antivirusStatusOptions, antivirusStatusName);
+                setValue('connectionStatus', antivirusDictId);
+                
                 setValue('noSymantecReason', permission.noSymantecReason || '');
                 setValue('remarks', permission.remark || '');
                 setModalVisible(true);
@@ -207,21 +271,27 @@ const DevicePermissions: React.FC = () => {
     // 提交表单
     const onSubmitForm = async (data: PermissionFormData) => {
         try {
+            // 获取字典项对应的文本值
+            const domainStatusText = findDictItemName(domainStatusOptions, data.domainStatus);
+            const smartitStatusText = findDictItemName(smartitStatusOptions, data.smartitStatus);
+            const usbStatusText = findDictItemName(usbStatusOptions, data.usbStatus);
+            const antivirusStatusText = findDictItemName(antivirusStatusOptions, data.connectionStatus);
+
             const permissionData: DevicePermissionInsert = {
                 deviceId: data.deviceId,
-                domainStatus: data.domainName && data.domainName !== '无' ? 1 : 0,
-                domainName: data.domainName,
+                domainStatus: domainStatusText && domainStatusText !== '无' ? 1 : 0,
+                domainName: domainStatusText,
                 domainGroup: data.domainGroup,
                 noDomainReason: data.noDomainReason,
-                smartitStatus: data.smartitStatus === '本地' || data.smartitStatus === '远程' ? 1 : data.smartitStatus === '未安装' ? 0 : null,
-                smartitStatusText: data.smartitStatus,
+                smartitStatus: data.smartitStatus,
+                smartitStatusText: smartitStatusText,
                 noSmartitReason: data.noSmartitReason,
-                usbStatus: data.usbStatus === '数据' || data.usbStatus === '3G网卡' ? 1 : data.usbStatus === '关闭' ? 0 : null,
-                usbStatusText: data.usbStatus,
+                usbStatus: data.usbStatus,
+                usbStatusText: usbStatusText,
                 usbReason: data.usbReason,
                 usbExpireDate: data.useEndDate ? data.useEndDate.format('YYYY-MM-DD') : null,
-                antivirusStatus: data.connectionStatus === '自动' ? 1 : data.connectionStatus === '手动' ? 0 : null,
-                antivirusStatusText: data.connectionStatus,
+                antivirusStatus: data.connectionStatus,
+                antivirusStatusText: antivirusStatusText,
                 noSymantecReason: data.noSymantecReason,
                 remark: data.remarks,
             };
@@ -259,7 +329,7 @@ const DevicePermissions: React.FC = () => {
         }
     };
 
-    // 表格列定义
+    // 表格列定义 - 使用 getLabel 函数转换显示
     const columns: ColumnsType<DevicePermissionList> = [
         {
             title: '权限ID',
@@ -310,70 +380,71 @@ const DevicePermissions: React.FC = () => {
             dataIndex: 'domainName',
             key: 'domainName',
             width: 120,
-            render: (domainName: string) => domainName ? <Tag color="blue">{domainName}</Tag> : '-',
+            render: (value: string) => {
+                // 从 dictItemName 查找对应的 dictId
+                const dictId = findDictId(domainStatusOptions, value);
+                const label = getLabel(domainStatusOptions, dictId);
+                return label !== '-' ? <Tag color="blue">{label}</Tag> : '-';
+            },
         },
         {
             title: 'SmartIT状态',
-            dataIndex: 'smartitStatus',
-            key: 'smartitStatus',
+            dataIndex: 'smartitStatusText',
+            key: 'smartitStatusText',
             width: 120,
-            render: (_: number, record: DevicePermissionList) => {
-                const statusText = record.smartitStatusText;
-                if (statusText) {
-                    const color = statusText === '本地' || statusText === '远程' ? 'green' :
-                        statusText === '未安装' ? 'red' : 'orange';
-                    return <Tag color={color}>{statusText}</Tag>;
-                } else {
-                    const status = record.smartitStatus;
-                    if (status === 1) return <Tag color="green">本地</Tag>;
-                    if (status === 0) return <Tag color="red">未安装</Tag>;
-                    return <Tag>-</Tag>;
+            render: (value: string, record: DevicePermissionList) => {
+                // 优先使用 smartitStatus（dictId）
+                let dictId = record.smartitStatus;
+                
+                const label = getLabel(smartitStatusOptions, dictId);
+                
+                if (label !== '-') {
+                    const color = 
+                        label === '本地' || label === '远程' ? 'green' :
+                        label === '未安装' ? 'red' : 'orange';
+                    return <Tag color={color}>{label}</Tag>;
                 }
+                return '-';
             },
         },
         {
             title: 'USB状态',
-            dataIndex: 'usbStatus',
-            key: 'usbStatus',
+            dataIndex: 'usbStatusText',
+            key: 'usbStatusText',
             width: 100,
-            render: (_: number, record: DevicePermissionList) => {
-                const statusText = record.usbStatusText;
-                if (statusText) {
-                    const color = statusText === '数据' || statusText === '3G网卡' ? 'green' :
-                        statusText === '关闭' ? 'red' : 'orange';
-                    return <Tag color={color}>{statusText}</Tag>;
-                } else {
-                    const status = record.usbStatus;
-                    if (status === 1) return <Tag color="green">数据</Tag>;
-                    if (status === 0) return <Tag color="red">关闭</Tag>;
-                    return <Tag>-</Tag>;
+            render: (value: string, record: DevicePermissionList) => {
+                // 优先使用 usbStatus（dictId）
+                let dictId = record.usbStatus;
+                
+                const label = getLabel(usbStatusOptions, dictId);
+                
+                if (label !== '-') {
+                    const color = 
+                        label === '数据' || label === '3G网卡' ? 'green' :
+                        label === '关闭' ? 'red' : 'orange';
+                    return <Tag color={color}>{label}</Tag>;
                 }
+                return '-';
             },
         },
         {
             title: '防病毒状态',
-            dataIndex: 'antivirusStatus',
-            key: 'antivirusStatus',
+            dataIndex: 'antivirusStatusText',
+            key: 'antivirusStatusText',
             width: 120,
-            render: (status: number, record: DevicePermissionList) => {
-                let statusText = record.antivirusStatusText;
-                let color = 'default';
-
-                if (!statusText) {
-                    if (status === 1) {
-                        statusText = '自动';
-                        color = 'green';
-                    } else if (status === 0) {
-                        statusText = '手动';
-                        color = 'orange';
-                    } else {
-                        statusText = '-';
-                    }
-                } else {
-                    if (statusText === '自动') color = 'green';
-                    else if (statusText === '手动') color = 'orange';
+            render: (value: string, record: DevicePermissionList) => {
+                // 优先使用 antivirusStatus（dictId）
+                let dictId = record.antivirusStatus;
+                
+                const label = getLabel(antivirusStatusOptions, dictId);
+                
+                if (label !== '-') {
+                    const color = 
+                        label === '自动' ? 'green' :
+                        label === '手动' ? 'orange' : 'default';
+                    return <Tag color={color}>{label}</Tag>;
                 }
-                return <Tag color={color}>{statusText || '-'}</Tag>;
+                return '-';
             },
         },
         {
@@ -541,7 +612,10 @@ const DevicePermissions: React.FC = () => {
                         }
                         size="small"
                         style={{ marginBottom: 12 }}
-                        headStyle={{ background: 'linear-gradient(135deg, #f6ffed 0%, #e6fffb 100%)', padding: '8px 12px', borderRadius: '6px 6px 0 0', borderBottom: '1px solid #b5f5ec', fontSize: '14px', fontWeight: 600, color: '#08979c' }}
+                        headStyle={{ background: 'linear-gradient(135deg, #f6ffed 0%, #e6fffb 100%)', 
+                            padding: '8px 12px', borderRadius: '6px 6px 0 0', 
+                            borderBottom: '1px solid #b5f5ec', fontSize: '14px', 
+                            fontWeight: 600, color: '#08979c' }}
                         bodyStyle={{ padding: '12px', background: '#ffffff', borderRadius: '0 0 6px 6px' }}
                         bordered={false}
                     >
@@ -557,13 +631,6 @@ const DevicePermissions: React.FC = () => {
                             <Descriptions.Item label={<><LaptopOutlined />电脑名</>}>
                                 {editingPermission?.computerName || '-'}
                             </Descriptions.Item>
-                            {/*<Descriptions.Item label={<><GlobalOutlined />IP地址</>}>*/}
-                            {/*    {editingPermission?.ipAddress*/}
-                            {/*        ? (Array.isArray(editingPermission.ipAddress)*/}
-                            {/*            ? editingPermission.ipAddress.join(', ')*/}
-                            {/*            : editingPermission.ipAddress)*/}
-                            {/*        : '-'}*/}
-                            {/*</Descriptions.Item>*/}
                         </Descriptions>
                     </Card>
 
@@ -596,7 +663,7 @@ const DevicePermissions: React.FC = () => {
                                                 style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                             >
                                                 <Controller
-                                                    name="domainName"
+                                                    name="domainStatus"
                                                     control={formControl}
                                                     render={({ field }) => (
                                                         <Select
@@ -606,40 +673,26 @@ const DevicePermissions: React.FC = () => {
                                                             size="small"
                                                             allowClear
                                                         >
-                                                            <Option value="无">无</Option>
-                                                            <Option value="D1">D1</Option>
-                                                            <Option value="D2">D2</Option>
-                                                            <Option value="D3">D3</Option>
-                                                            <Option value="D4">D4</Option>
-                                                            <Option value="D5">D5</Option>
-                                                            <Option value="D6">D6</Option>
-                                                            <Option value="D7">D7</Option>
-                                                            <Option value="EU">EU</Option>
-                                                            <Option value="MG">MG</Option>
-                                                            <Option value="EQU">EQU</Option>
-                                                            <Option value="NRI-01">NRI-01</Option>
-                                                            <Option value="MS">MS</Option>
+                                                            {domainStatusOptions.map((item) => (
+                                                                <Option key={item.dictId} value={item.dictId}>
+                                                                    {item.dictItemName}
+                                                                </Option>
+                                                            ))}
                                                         </Select>
                                                     )}
                                                 />
                                             </Form.Item>
                                         </Col>
 
-                                        {domainNameValue && domainNameValue !== '' && domainNameValue !== '无' && (
+                                        {domainStatusValue && domainStatusText === '参加済み' && (
                                             <Col span={12}>
                                                 <Form.Item
                                                     label={<span className="form-label"><TeamOutlined />域内组名</span>}
-                                                    validateStatus={errors.domainGroup ? 'error' : undefined}
-                                                    help={errors.domainGroup?.message}
                                                     style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                                 >
                                                     <Controller
                                                         name="domainGroup"
                                                         control={formControl}
-                                                        rules={{
-                                                            required: '请填写域内组名',
-                                                            maxLength: { value: 50, message: '最大50个字符' }
-                                                        }}
                                                         render={({ field }) => (
                                                             <Input
                                                                 {...field}
@@ -653,7 +706,7 @@ const DevicePermissions: React.FC = () => {
                                             </Col>
                                         )}
 
-                                        {domainNameValue === '无' && (
+                                        {domainStatusValue && domainStatusText === '未参加' && (
                                             <Col span={12}>
                                                 <Form.Item
                                                     label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />不加域理由</span>}
@@ -707,16 +760,18 @@ const DevicePermissions: React.FC = () => {
                                                             size="small"
                                                             allowClear
                                                         >
-                                                            <Option value="本地">本地</Option>
-                                                            <Option value="远程">远程</Option>
-                                                            <Option value="未安装">未安装</Option>
+                                                            {smartitStatusOptions.map((item) => (
+                                                                <Option key={item.dictId} value={item.dictId}>
+                                                                    {item.dictItemName}
+                                                                </Option>
+                                                            ))}
                                                         </Select>
                                                     )}
                                                 />
                                             </Form.Item>
                                         </Col>
 
-                                        {smartitStatusValue === '未安装' && (
+                                        {smartitStatusValue && smartitStatusText === '未インストール' && (
                                             <Col span={12}>
                                                 <Form.Item
                                                     label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />不安装理由</span>}
@@ -772,16 +827,18 @@ const DevicePermissions: React.FC = () => {
                                                     size="small"
                                                     allowClear
                                                 >
-                                                    <Option value="关闭">关闭</Option>
-                                                    <Option value="数据">数据</Option>
-                                                    <Option value="3G网卡">3G网卡</Option>
+                                                    {usbStatusOptions.map((item) => (
+                                                        <Option key={item.dictId} value={item.dictId}>
+                                                            {item.dictItemName}
+                                                        </Option>
+                                                    ))}
                                                 </Select>
                                             )}
                                         />
                                     </Form.Item>
                                 </Col>
 
-                                {(usbStatusValue === '数据' || usbStatusValue === '3G网卡') && (
+                                {usbStatusValue && (usbStatusText === '許可' || usbStatusText === '一時許可') && (
                                     <>
                                         <Col span={8}>
                                             <Form.Item
@@ -821,7 +878,7 @@ const DevicePermissions: React.FC = () => {
                                                     name="useEndDate"
                                                     control={formControl}
                                                     rules={{
-                                                        required: usbStatusValue === '数据' || usbStatusValue === '3G网卡' ? '请选择截止日期' : false
+                                                        required: usbStatusText === '許可' || usbStatusText === '一時許可' ? '请选择截止日期' : false
                                                     }}
                                                     render={({ field }) => (
                                                         <DatePicker
@@ -863,16 +920,18 @@ const DevicePermissions: React.FC = () => {
                                                     size="small"
                                                     allowClear
                                                 >
-                                                    <Option value="无连接">无连接</Option>
-                                                    <Option value="自动">自动</Option>
-                                                    <Option value="手动">手动</Option>
+                                                    {antivirusStatusOptions.map((item) => (
+                                                        <Option key={item.dictId} value={item.dictId}>
+                                                            {item.dictItemName}
+                                                        </Option>
+                                                    ))}
                                                 </Select>
                                             )}
                                         />
                                     </Form.Item>
                                 </Col>
 
-                                {connectionStatusValue === '无连接' && (
+                                {connectionStatusValue && connectionStatusText === '未インストール' && (
                                     <Col span={8}>
                                         <Form.Item
                                             label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />无Symantec理由</span>}
