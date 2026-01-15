@@ -3,28 +3,6 @@ import type { DeviceListItem } from '../../types/device';
 import { get, post, put } from '../api';
 import type { ApiResponse, DictResponseData, DeviceListResponseData } from '../../types/device';
 
-// // 定义 API 响应类型
-// interface ApiResponse<T = any> {
-//   code: number;
-//   message?: string;
-//   data: T;
-// }
-
-// interface DictResponseData {
-//   [key: string]: Array<{
-//     dictId: number;
-//     dictItemName: string;
-//     [key: string]: any;
-//   }>;
-// }
-
-// interface DeviceListResponseData {
-//   list: DeviceListItem[];
-//   total?: number;
-//   page?: number;
-//   pageSize?: number;
-// }
-
 
 // 获取字典数据
 export const fetchDictData = async (): Promise<DictResponseData> => {
@@ -156,12 +134,6 @@ const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean =
   const currentUser = localStorage.getItem('user_name') || 'system';
 
 
-  // 无调用
-  // 获取当前时间
-  // const now = new Date().toISOString();
-
-
-
   // 构建DeviceFullDTO
   const deviceFullDTO = {
     deviceId: deviceData.deviceId,
@@ -183,7 +155,7 @@ const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean =
       monitorName: monitor.monitorName,
       deviceId: deviceData.deviceId,
       // 如果是编辑模式且monitor有id，则保留id
-      ...(monitor.monitorId && { monitorId: monitor.monitorId }),
+      // ...(monitor.monitorId && { monitorId: monitor.monitorId }),
       creater: currentUser,
       updater: currentUser
     })),
@@ -191,7 +163,7 @@ const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean =
       ipAddress: ip.ipAddress,
       deviceId: deviceData.deviceId,
       // 如果是编辑模式且ip有id，则保留id
-      ...(ip.ipId && { ipId: ip.ipId }),
+      // ...(ip.ipId && { ipId: ip.ipId }),
       creater: currentUser,
       updater: currentUser
     })),
@@ -261,92 +233,3 @@ export const isValidIP = (ip: string): boolean => {
   const ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
   return ipPattern.test(ip);
 };
-
-// 无调用
-// 获取默认设备数据（用于新增设备）
-// export const getDefaultDeviceData = (): DeviceListItem => {
-//   return {
-//     deviceId: '',
-//     deviceModel: '',
-//     computerName: '',
-//     loginUsername: '',
-//     project: '',
-//     devRoom: '',
-//     userId: '',
-//     userName: '',
-//     remark: '',
-//     selfConfirmId: 0,
-//     osId: 1,
-//     memoryId: 16,
-//     ssdId: 0,
-//     hddId: 0,
-//     confirmStatus: '未确认',
-//     osName: 'Windows 11',
-//     memorySize: '16G',
-//     ssdSize: '—',
-//     hddSize: '—',
-//     monitors: [],
-//     deviceIps: [],
-//   };
-// };
-
-
-// 无调用
-// 根据用户ID获取用户信息
-// export const getUserInfoById = async (userId: string) => {
-//   const users = await fetchUsers();
-//   return users.find(user => user.userId === userId) || null;
-// };
-
-
-// 好像未调用
-// 表单验证函数  Partial定义属性为可选
-// export const validateDeviceForm = (
-//   deviceData: Partial<DeviceListItem>
-// ): { isValid: boolean; errors: string[] } => {
-//   const errors: string[] = [];
-  
-//   // 验证设备编号
-//   if (!deviceData.deviceId?.trim()) {
-//     errors.push('设备编号不能为空');
-//   }
-
-//   // 验证设备型号
-//   if (!deviceData.deviceModel?.trim()) {
-//     errors.push('设备型号不能为空');
-//   }
-
-//   // 验证电脑名称
-//   if (!deviceData.computerName?.trim()) {
-//     errors.push('电脑名称不能为空');
-//   }
-
-//   // 验证使用人
-//   if (!deviceData.userId?.trim()) {
-//     errors.push('请选择使用人');
-//   }
-
-//   // 验证IP地址格式
-//   if (deviceData.deviceIps) {
-//     const invalidIps = deviceData.deviceIps
-//       .filter(ip => ip.ipAddress && !isValidIP(ip.ipAddress))
-//       .map(ip => ip.ipAddress);
-
-//     if (invalidIps.length > 0) {
-//       errors.push(`以下IP地址格式不正确: ${invalidIps.join(', ')}`);
-//     }
-//   }
-
-//   // 验证显示器名称
-//   if (deviceData.monitors) {
-//     const emptyMonitors = deviceData.monitors.filter(m => !m.monitorName.trim());
-//     if (emptyMonitors.length > 0) {
-//       errors.push('请填写所有显示器名称');
-//     }
-//   }
-
-//   return {
-//     isValid: errors.length === 0,
-//     errors
-//   };
-// };

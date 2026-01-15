@@ -123,20 +123,34 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 
         ///// 修改
         // monitors: monitors.filter(m => m.monitorName.trim()),
-        monitors: monitors
+        // monitors: monitors
+        // .filter(m => m.monitorName.trim())
+        // .map(monitor => ({
+        //   ...monitor,
+        //   // 确保 deviceId 与主表一致
+        //   deviceId: values.deviceId,
+        // })),
+         monitors: monitors
         .filter(m => m.monitorName.trim())
         .map(monitor => ({
-          ...monitor,
-          // 确保 deviceId 与主表一致
+          monitorName: monitor.monitorName,
           deviceId: values.deviceId,
         })),
 
 
         // deviceIps: deviceIps.filter(ip => ip.ipAddress.trim()),
-         deviceIps: deviceIps
+        //  deviceIps: deviceIps
+        // .filter(ip => ip.ipAddress.trim())
+        // .map(ip => ({
+        //   ...ip,
+        //   deviceId: values.deviceId,
+        // })),
+
+        // 确保 deviceIps 不包含 ipId
+        deviceIps: deviceIps
         .filter(ip => ip.ipAddress.trim())
         .map(ip => ({
-          ...ip,
+          ipAddress: ip.ipAddress,
           deviceId: values.deviceId,
         })),
         ///// 修改
@@ -166,7 +180,10 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   // 处理显示器变更
   const handleMonitorChange = (index: number, field: keyof Monitor, value: any) => {
     const newMonitors = [...monitors];
-    newMonitors[index] = { ...newMonitors[index], [field]: value }; // 全展开，再改动，保留monitorId
+    // newMonitors[index] = { ...newMonitors[index], [field]: value }; // 全展开，再改动，保留monitorId
+    
+    // 移除 monitorId 的处理，只保留 monitorName
+    newMonitors[index] = { monitorName: value };
     setMonitors(newMonitors);
   };
 
@@ -185,7 +202,10 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   // 处理IP地址变更
   const handleIpChange = (index: number, field: keyof DeviceIp, value: any) => {
     const newIps = [...deviceIps];
-    newIps[index] = { ...newIps[index], [field]: value };
+    // newIps[index] = { ...newIps[index], [field]: value };
+
+    // 移除 ipId 的处理，只保留 ipAddress
+    newIps[index] = { ipAddress: value };
     setDeviceIps(newIps);
   };
 
