@@ -20,32 +20,32 @@ export const fetchDictData = async (): Promise<Record<string, any[]>> => {
     // 如果API调用失败，返回模拟数据作为fallback
     return {
       CONFIRM_STATUS: [
-        { dictId: 1, dictItemName: '已确认' },
-        { dictId: 0, dictItemName: '未确认' }
+        { dictId: 13, dictItemName: '已确认' },
+        { dictId: 12, dictItemName: '未确认' }
       ],
       OS_TYPE: [
         { dictId: 1, dictItemName: 'Windows 11' },
         { dictId: 2, dictItemName: 'Windows 10' },
         { dictId: 3, dictItemName: 'Mac OS' },
-        { dictId: 4, dictItemName: 'Linux' }
+        //{ dictId: 4, dictItemName: 'Linux' }
       ],
       MEMORY_SIZE: [
-        { dictId: 8, dictItemName: '8G' },
-        { dictId: 16, dictItemName: '16G' },
-        { dictId: 32, dictItemName: '32G' },
-        { dictId: 64, dictItemName: '64G' }
+        { dictId: 4, dictItemName: '8G' },
+        { dictId: 5, dictItemName: '16G' },
+        { dictId: 6, dictItemName: '32G' },
+        //{ dictId: 64, dictItemName: '64G' }
       ],
       SSD_SIZE: [
-        { dictId: 256, dictItemName: '256G' },
-        { dictId: 512, dictItemName: '512G' },
-        { dictId: 1024, dictItemName: '1T' },
-        { dictId: 2048, dictItemName: '2T' }
+        { dictId: 7, dictItemName: '256G' },
+        { dictId: 8, dictItemName: '512G' },
+        { dictId: 9, dictItemName: '1T' },
+        //{ dictId: 2048, dictItemName: '2T' }
       ],
       HDD_SIZE: [
-        { dictId: 512, dictItemName: '512G' },
-        { dictId: 1024, dictItemName: '1T' },
-        { dictId: 2048, dictItemName: '2T' },
-        { dictId: 4096, dictItemName: '4T' }
+        //{ dictId: 512, dictItemName: '512G' },
+        { dictId: 10, dictItemName: '1T' },
+        { dictId: 11, dictItemName: '2T' },
+        //{ dictId: 4096, dictItemName: '4T' }
       ]
     };
   }

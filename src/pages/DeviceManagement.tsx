@@ -33,8 +33,9 @@ import type {
 import { 
   getDeviceList, 
   deleteDevice,
-  getFilterOptions,
-  getDeviceDetail
+  getDeviceDetail,
+  getProjectOptions,
+  getDevRoomOptions
 } from '../services/device/deviceService';
 import { 
   fetchDictData, 
@@ -54,20 +55,9 @@ const DeviceManagement: React.FC = () => {
     page: 1,
     pageSize: 10,
   });
-  const [searchValue, setSearchValue] = useState('');
-  const [projectValue, setProjectValue] = useState<string>('all');
-  const [devRoomValue, setDevRoomValue] = useState<string>('all');
-  const [confirmStatusValue, setConfirmStatusValue] = useState<string>('all');
-  
-  const [filterOptions, setFilterOptions] = useState<{
-    projects: string[];
-    devRooms: string[];
-    confirmStatuses: string[];
-  }>({
-    projects: [],
-    devRooms: [],
-    confirmStatuses: []
-  });
+  const [userIdSearch, setUserIdSearch] = useState('');
+  const [projectFilter, setProjectFilter] = useState<string>('all');
+  const [devRoomFilter, setDevRoomFilter] = useState<string>('all');
   
   const [total, setTotal] = useState(0);
   
@@ -79,7 +69,11 @@ const DeviceManagement: React.FC = () => {
   // 字典和用户数据
   const [dictData, setDictData] = useState<Record<string, any[]>>({});
   const [users, setUsers] = useState<Array<{userId: string, name: string}>>([]);
-
+  
+  // 筛选选项状态
+  const [projectOptions, setProjectOptions] = useState<string[]>([]);
+  const [devRoomOptions, setDevRoomOptions] = useState<string[]>([]);
+  
   // 获取设备列表
   const fetchDevices = async (params: DeviceQueryParams) => {
     setLoading(true);
@@ -90,7 +84,6 @@ const DeviceManagement: React.FC = () => {
       
       // 处理返回的数据
       if (response.code === 200 && response.data) {
-        // 确保我们能正确获取list和total
         let deviceList: DeviceListItem[] = [];
         let totalCount = 0;
         
@@ -125,13 +118,34 @@ const DeviceManagement: React.FC = () => {
     }
   };
 
-  // 获取筛选选项
+  // 获取筛选选项数据
   const fetchFilterOptions = async () => {
     try {
-      const options = await getFilterOptions();
-      setFilterOptions(options);
+      const [projects, devRooms] = await Promise.all([
+        getProjectOptions(),
+        getDevRoomOptions()
+      ]);
+      setProjectOptions(projects);
+      setDevRoomOptions(devRooms);
+      console.log('获取到项目选项:', projects);
+      console.log('获取到开发室选项:', devRooms);
     } catch (error) {
       console.error('获取筛选选项失败:', error);
+      message.warning('获取筛选选项失败，将使用本地选项');
+      // 失败时可以尝试从现有设备中提取作为后备
+      const localProjects = devices
+        .map(device => device.project)
+        .filter((project): project is string => 
+          project !== null && project !== undefined && project !== '-'
+        );
+      const localDevRooms = devices
+        .map(device => device.devRoom)
+        .filter((devRoom): devRoom is string => 
+          devRoom !== null && devRoom !== undefined && devRoom !== '-'
+        );
+      
+      setProjectOptions([...new Set(localProjects)]);
+      setDevRoomOptions([...new Set(localDevRooms)]);
     }
   };
 
@@ -153,8 +167,8 @@ const DeviceManagement: React.FC = () => {
   // 初始化数据
   useEffect(() => {
     fetchDevices(searchParams);
-    fetchFilterOptions();
     fetchFormData();
+    fetchFilterOptions();
   }, [searchParams]);
 
   // 分页处理函数
@@ -222,19 +236,19 @@ const DeviceManagement: React.FC = () => {
     setFormVisible(true);
   };
 
-  // 处理搜索
-  const handleSearch = (value: string) => {
-    setSearchValue(value);
+  // 处理用户ID搜索
+  const handleUserIdSearch = (value: string) => {
+    setUserIdSearch(value);
     setSearchParams({
       ...searchParams,
-      computerName: value,
+      userId: value.trim() || undefined,
       page: 1,
     });
   };
 
-  // 处理筛选变化
+  // 处理项目筛选变化
   const handleProjectChange = (value: string) => {
-    setProjectValue(value);
+    setProjectFilter(value);
     setSearchParams({
       ...searchParams,
       project: value === 'all' ? undefined : value,
@@ -242,8 +256,9 @@ const DeviceManagement: React.FC = () => {
     });
   };
 
+  // 处理开发室筛选变化
   const handleDevRoomChange = (value: string) => {
-    setDevRoomValue(value);
+    setDevRoomFilter(value);
     setSearchParams({
       ...searchParams,
       devRoom: value === 'all' ? undefined : value,
@@ -251,34 +266,26 @@ const DeviceManagement: React.FC = () => {
     });
   };
 
-  const handleConfirmStatusChange = (value: string) => {
-    setConfirmStatusValue(value);
-    setSearchParams({
-      ...searchParams,
-      confirmStatus: value === 'all' ? undefined : value,
-      page: 1,
-    });
-  };
-
   // 重置筛选条件
   const handleReset = () => {
-    setSearchValue('');
-    setProjectValue('all');
-    setDevRoomValue('all');
-    setConfirmStatusValue('all');
+    setUserIdSearch('');
+    setProjectFilter('all');
+    setDevRoomFilter('all');
     
     setSearchParams({
       page: 1,
       pageSize: searchParams.pageSize,
+      // 清空所有筛选参数
+      userId: undefined,
+      project: undefined,
+      devRoom: undefined,
+      computerName: undefined,
     });
   };
 
   // 处理表单提交
   const handleFormSubmit = async (values: DeviceListItem) => {
     try {
-      // const success = await saveDeviceService(values);
-
-      /////修改
       let success;
       if (isEditing) {
         // 编辑模式下调用 updateDevice
@@ -287,8 +294,6 @@ const DeviceManagement: React.FC = () => {
         // 新增模式下调用 saveDevice
         success = await saveDeviceService(values);
       }
-      /////修改
-
       
       if (success) {
         if (isEditing) {
@@ -342,7 +347,7 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 180,
       ellipsis: true,
-      render: (monitors: Monitor[]) => {
+      render: (monitors: Monitor[] | null | undefined) => {
         const monitorNames = monitors?.map(m => m.monitorName).filter(Boolean) || [];
         const text = monitorNames.length > 0 ? monitorNames.join('\n') : '-';
         return (
@@ -367,9 +372,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -380,9 +385,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -393,9 +398,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 120,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -406,9 +411,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 120,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -419,9 +424,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 120,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '120px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -432,7 +437,7 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 150,
       ellipsis: true,
-      render: (deviceIps: DeviceIp[]) => {
+      render: (deviceIps: DeviceIp[] | null | undefined) => {
         const ipAddresses = deviceIps?.map(ip => ip.ipAddress).filter(Boolean) || [];
         const text = ipAddresses.length > 0 ? ipAddresses.join('\n') : '-';
         return (
@@ -509,9 +514,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -522,9 +527,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 100,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '100px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -535,9 +540,9 @@ const DeviceManagement: React.FC = () => {
       align: 'center' as const,
       width: 150,
       ellipsis: true,
-      render: (text: string) => (
-        <div style={{ ...cellStyle, maxWidth: '150px' }} title={text}>
-          {text}
+      render: (text: string | null | undefined) => (
+        <div style={{ ...cellStyle, maxWidth: '150px' }} title={text || '-'}>
+          {text || '-'}
         </div>
       ),
     },
@@ -608,45 +613,34 @@ const DeviceManagement: React.FC = () => {
             <Col>
               <Space>
                 <Search
-                  placeholder="搜索用户姓名、工号或主机编号"
+                  placeholder="输入用户工号进行搜索"
                   allowClear
                   enterButton={<SearchOutlined />}
-                  onSearch={handleSearch}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  value={searchValue}
-                  style={{ width: 285 }}
+                  onSearch={handleUserIdSearch}
+                  onChange={(e) => setUserIdSearch(e.target.value)}
+                  value={userIdSearch}
+                  style={{ width: 240 }}
                 />
                 <Select 
                   placeholder="项目筛选" 
                   style={{ width: 120 }}
-                  value={projectValue}
+                  value={projectFilter}
                   onChange={handleProjectChange}
                 >
                   <Option value="all">全部项目</Option>
-                  {filterOptions.projects.map(project => (
+                  {projectOptions.map(project => (
                     <Option key={project} value={project}>{project}</Option>
                   ))}
                 </Select>
                 <Select 
                   placeholder="开发室筛选" 
                   style={{ width: 120 }}
-                  value={devRoomValue}
+                  value={devRoomFilter}
                   onChange={handleDevRoomChange}
                 >
                   <Option value="all">全部开发室</Option>
-                  {filterOptions.devRooms.map(room => (
+                  {devRoomOptions.map(room => (
                     <Option key={room} value={room}>{room}</Option>
-                  ))}
-                </Select>
-                <Select 
-                  placeholder="确认状态" 
-                  style={{ width: 120 }}
-                  value={confirmStatusValue}
-                  onChange={handleConfirmStatusChange}
-                >
-                  <Option value="all">全部状态</Option>
-                  {filterOptions.confirmStatuses.map(status => (
-                    <Option key={status} value={status}>{status}</Option>
                   ))}
                 </Select>
                 <Button 
