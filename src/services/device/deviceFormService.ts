@@ -30,7 +30,7 @@ export const fetchDictData = async (): Promise<Record<string, any[]>> => {
         { dictId: 4, dictItemName: 'Linux' }
       ],
       MEMORY_SIZE: [
-        { dictId: 8, dictItemName: '8G' },
+        { dictId: 5, dictItemName: '8G' },
         { dictId: 16, dictItemName: '16G' },
         { dictId: 32, dictItemName: '32G' },
         { dictId: 64, dictItemName: '64G' }
