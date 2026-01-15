@@ -9,6 +9,7 @@ import {
 import Layout from '../components/common/Layout';
 import DeviceFormModal from '../components/device/DeviceFormModal';
 import { useDeviceStore } from '../stores/deviceStore';
+// import { fetchUsers } from '../services/device/deviceFormService'; // 添加这行
 
 import type { DeviceListItem, DeviceIp, Monitor } from '../types/device';
 import type { ColumnsType } from 'antd/es/table';
@@ -18,12 +19,34 @@ const { Search } = Input;
 const DeviceManagement: React.FC = () => {
   const {
     devices, loading, searchParams, total, formVisible, isEditing, selectedDevice,
-    userIdSearch, fetchDevices, handlePageChange, handlePageSizeChange,
+    userIdSearch, users, fetchDevices, handlePageChange, handlePageSizeChange,
     handleEditDevice, handleDeleteDevice, handleAddDevice,
-    handleUserIdSearch, handleFormSubmit, initialize
+    handleUserIdSearch, handleFormSubmit, initialize,
+    setFormVisible, setIsEditing, setSelectedDevice // 添加这行
   } = useDeviceStore();
 
+  // // 添加用户状态
+  // const [users, setUsers] = useState<any[]>([]);
+  // const [usersLoading, setUsersLoading] = useState(false);
+
   useEffect(() => { initialize(); }, []);
+   // 初始化时获取用户列表
+  // useEffect(() => {
+  //   const loadUsers = async () => {
+  //     setUsersLoading(true);
+  //     try {
+  //       const userList = await fetchUsers();
+  //       setUsers(userList);
+  //     } catch (error) {
+  //       console.error('获取用户列表失败:', error);
+  //     } finally {
+  //       setUsersLoading(false);
+  //     }
+  //   };
+
+  //   initialize();
+  //   loadUsers();
+  // }, []);
 
   const cellStyle: React.CSSProperties = {
     textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap',
@@ -168,11 +191,14 @@ const DeviceManagement: React.FC = () => {
           isEditing={isEditing}
           device={selectedDevice}
           dictData={{}}
-          users={[]}
+          users={users} // 传入用户列表
           onCancel={() => {
-            useDeviceStore.getState().setFormVisible(false);
-            useDeviceStore.getState().setIsEditing(false);
-            useDeviceStore.getState().setSelectedDevice(null);
+            // useDeviceStore.getState().setFormVisible(false);
+            // useDeviceStore.getState().setIsEditing(false);
+            // useDeviceStore.getState().setSelectedDevice(null);
+            setFormVisible(false);
+            setIsEditing(false);
+            setSelectedDevice(null);
           }}
           onSubmit={handleFormSubmit}
         />
