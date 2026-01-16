@@ -1,5 +1,5 @@
 // pages/DeviceManagement.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Table, Button, Space, Tag, Input, Row, Col, Pagination
 } from 'antd';
@@ -17,14 +17,37 @@ const { Search } = Input;
 const DeviceManagement: React.FC = () => {
   const {
     devices, loading, searchParams, total, formVisible, isEditing, selectedDevice,
-    userIdSearch, users, fetchDevices, handlePageChange, handlePageSizeChange,
+    userIdSearch, users, handlePageChange, handlePageSizeChange,
     handleEditDevice, handleDeleteDevice, handleAddDevice,
     handleUserIdSearch, handleFormSubmit, initialize,
     setFormVisible, setIsEditing, setSelectedDevice
   } = useDeviceStore();
 
+  // テーブルコンテナの参照と高さ状態
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [tableHeight, setTableHeight] = useState<number>(600);
+
   // コンポーネントマウント時に初期化
   useEffect(() => { initialize(); }, []);
+
+  // リサイズオブザーバーでテーブルコンテナの高さを監視
+  useEffect(() => {
+    if (!tableContainerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        // スムーズなトランジションのためにrequestAnimationFrameを使用
+        requestAnimationFrame(() => {
+          setTableHeight(entry.contentRect.height);
+        });
+      }
+    });
+
+    resizeObserver.observe(tableContainerRef.current);
+    
+    // クリーンアップ関数
+    return () => resizeObserver.disconnect();
+  }, [searchParams.pageSize]);
 
   // テーブル列定義
   const columns: ColumnsType<DeviceListItem> = [
@@ -138,7 +161,14 @@ const DeviceManagement: React.FC = () => {
 
   return (
     <Layout title="デバイス管理">
-      <div style={{ display: 'flex', flexDirection: 'column', background: '#fff', padding: 20, minHeight: 'calc(100vh - 150px)' }}>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        background: '#fff', 
+        padding: 20, 
+        height: '100%', 
+        overflow: 'hidden' 
+      }}>
         {/* 上部検索エリア */}
         <div style={{ marginBottom: 20, flexShrink: 0 }}>
           <Row gutter={16} align="middle" justify="space-between">
@@ -159,22 +189,60 @@ const DeviceManagement: React.FC = () => {
           </Row>
         </div>
 
-        {/* テーブル */}
-        <div style={{ flex: '1 1 auto', minWidth: '100%' }}>
+        {/* テーブルコンテナ - リサイズ監視用 */}
+        <div 
+          ref={tableContainerRef}
+          style={{ 
+            flex: 1,
+            minHeight: 0, // flexコンテナで必要
+            position: 'relative',
+            transition: 'all 0.3s ease' // スムーズなトランジション
+          }}
+        >
+          {/* 絶対配置で内部スクロールを実現 */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: -36,
+            overflow: 'hidden'
+          }}>
+            <style>{`
+              ::-webkit-scrollbar {
+                display: none; /* Chrome, Safari and Opera */
+              }
+            `}</style>
           <Table<DeviceListItem>
             rowKey="deviceId"
             columns={columns}
             dataSource={devices}
             loading={loading}
-            scroll={{ x: 2200 }}
+            scroll={{ 
+              x: 2200,
+              y: tableHeight - 20 // マージンを考慮
+            }}
             pagination={false}
             size="middle"
             bordered={false}
+            style={{
+              transition: 'all 0.3s ease',
+              // スクロールバーを自動的に非表示にする
+              scrollbarWidth: 'none',  /* Firefox */
+              msOverflowStyle: 'none', /* IE and Edge */
+            }}
           />
+          </div>
         </div>
 
         {/* ページネーション */}
-        <div style={{ marginTop: 16, flexShrink: 0, textAlign: 'right', paddingRight: 10 }}>
+        <div style={{ 
+          marginTop: 40, 
+          flexShrink: 0, 
+          textAlign: 'right', 
+          paddingRight: 10,
+          transition: 'all 0.3s ease' // ページネーションもトランジション
+        }}>
           <Pagination
             current={searchParams.page}
             pageSize={searchParams.pageSize}
