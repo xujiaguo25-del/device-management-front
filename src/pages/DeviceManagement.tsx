@@ -25,28 +25,8 @@ const DeviceManagement: React.FC = () => {
     setFormVisible, setIsEditing, setSelectedDevice // 添加这行
   } = useDeviceStore();
 
-  // // 添加用户状态
-  // const [users, setUsers] = useState<any[]>([]);
-  // const [usersLoading, setUsersLoading] = useState(false);
 
   useEffect(() => { initialize(); }, []);
-   // 初始化时获取用户列表
-  // useEffect(() => {
-  //   const loadUsers = async () => {
-  //     setUsersLoading(true);
-  //     try {
-  //       const userList = await fetchUsers();
-  //       setUsers(userList);
-  //     } catch (error) {
-  //       console.error('获取用户列表失败:', error);
-  //     } finally {
-  //       setUsersLoading(false);
-  //     }
-  //   };
-
-  //   initialize();
-  //   loadUsers();
-  // }, []);
 
   const cellStyle: React.CSSProperties = {
     textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap',
@@ -113,7 +93,7 @@ const DeviceManagement: React.FC = () => {
       align: 'center',
       width: 100,
       fixed: 'right',
-      render: (s: string) => <Tag color={s === '已确认' ? 'green' : 'default'}>{s}</Tag>,
+      render: (s: string) => <Tag color={s === '已确认' ? 'green' : 'red'}>{s}</Tag>,
     },
     {
       title: '操作',
