@@ -150,7 +150,8 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       };
 
       onSubmit(submitData);
-      form.resetFields();
+      // 保留表单数据，提交失败时可重新修改再提交
+      // form.resetFields();
     } catch (error) {
       console.log('表单验证失败:', error);
     }
