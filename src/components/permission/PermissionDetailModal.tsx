@@ -56,7 +56,7 @@ interface PermissionFormData {
     remarks?: string;
 }
 
-// 用于传递给父组件的接口（保持向后兼容）
+// 親コンポーネントに渡すためのインターフェース（後方互換性を維持）
 interface PermissionFormDataForParent {
     deviceId: string;
     domainName?: string;
@@ -89,7 +89,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
     onSubmit,
     isAdmin = true,
 }) => {
-    // 获取字典数据
+    // 辞書データを取得する
     const { map: dictMap } = useDicts([
         'DOMAIN_STATUS',
         'SMARTIT_STATUS',
@@ -97,20 +97,20 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
         'ANTIVIRUS_STATUS'
     ]);
 
-    // 提取各字段的字典数据
+    // 各フィールドの辞書データを抽出する
     const domainStatusOptions = (dictMap?.['DOMAIN_STATUS'] || []) as DictItem[];
     const smartitStatusOptions = (dictMap?.['SMARTIT_STATUS'] || []) as DictItem[];
     const usbStatusOptions = (dictMap?.['USB_STATUS'] || []) as DictItem[];
     const antivirusStatusOptions = (dictMap?.['ANTIVIRUS_STATUS'] || []) as DictItem[];
 
-    // 辅助函数：从 dictItemName 查找 dictId
+    // 補助関数：dictItemNameからdictIdを検索
     const findDictId = (options: DictItem[], dictItemName?: string) => {
         if (!dictItemName) return null;
         const it = options.find(o => o.dictItemName === dictItemName);
         return it?.dictId || null;
     };
 
-    // 辅助函数：从 dictId 查找 dictItemName
+    // 補助関数：dictId から dictItemName を検索
     const findDictItemName = (options: DictItem[], dictId?: number | null) => {
         if (dictId == null) return '';
         const it = options.find(o => o.dictId === dictId);
@@ -119,7 +119,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
 
     const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<PermissionFormData>();
     
-    // 用于标记是否正在初始化表单（避免初始化时清空数据库值）
+    // フォームを初期化中かどうかを示すために使用（初期化時にデータベースの値を消去するのを回避）
     const isInitializingRef = React.useRef(false);
     
     const domainStatusValue = useWatch({ control, name: 'domainStatus' });
@@ -127,20 +127,20 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
     const connectionStatusValue = useWatch({ control, name: 'connectionStatus' });
     const usbStatusValue = useWatch({ control, name: 'usbStatus' });
 
-    // 获取当前选中值的文本
+    // 現在選択されている値のテキストを取得する
     const domainStatusText = findDictItemName(domainStatusOptions, domainStatusValue);
     const smartitStatusText = findDictItemName(smartitStatusOptions, smartitStatusValue);
     const usbStatusText = findDictItemName(usbStatusOptions, usbStatusValue);
     const connectionStatusText = findDictItemName(antivirusStatusOptions, connectionStatusValue);
 
     const handleFormSubmit = handleSubmit(async (data) => {
-        // 如果不是管理员，阻止提交
+        // 管理者でなければ、提出を禁止する
         if (!isAdmin) {
-            message.warning('您没有权限更新设备权限信息');
+            message.warning('あなたにはデバイス権限情報を更新する権限がありません');
             return;
         }
         
-        // 将 dictId 转换为 dictItemName，以保持与父组件的接口兼容
+        // dictId を dictItemName に変換して、親コンポーネントとのインターフェースの互換性を保つ
         const dataForParent: PermissionFormDataForParent = {
             deviceId: data.deviceId,
             domainName: findDictItemName(domainStatusOptions, data.domainStatus),
@@ -163,55 +163,54 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
         reset();
     };
 
-    // 当字段值变化时，清空相关字段（仅在用户修改时，不在初始化时）
+    // フィールドの値が変更されたときに、関連するフィールドをクリアします（ユーザーが変更した場合のみ、初期化時は除く）
     React.useEffect(() => {
-        // 如果正在初始化，不执行清空操作
+        // 初期化中の場合は、クリア操作を実行しない
         if (isInitializingRef.current) return;
         
-        if (domainStatusText === '未参加' || domainStatusText === '无') {
+        if (domainStatusText === '未参加' || domainStatusText === 'なし') {
             setValue('domainGroup', '');
-        } else if (domainStatusValue && domainStatusText !== '未参加' && domainStatusText !== '无') {
+        } else if (domainStatusValue && domainStatusText !== '未参加' && domainStatusText !== 'なし') {
             setValue('noDomainReason', '');
         }
     }, [domainStatusValue, domainStatusText, setValue]);
 
     React.useEffect(() => {
-        // 如果正在初始化，不执行清空操作
+        // 初期化中の場合は、クリア操作を実行しない
         if (isInitializingRef.current) return;
         
-        if (smartitStatusText !== '未インストール' && smartitStatusText !== '未安装') {
+        if (smartitStatusText !== '未インストール' && smartitStatusText !== '未インストール') {
             setValue('noSmartitReason', '');
         }
     }, [smartitStatusValue, smartitStatusText, setValue]);
 
     React.useEffect(() => {
-        // 如果正在初始化，不执行清空操作
+        // 初期化中の場合は、クリア操作を実行しない
         if (isInitializingRef.current) return;
         
-        if (connectionStatusText !== '未インストール' && connectionStatusText !== '无连接') {
+        if (connectionStatusText !== '未インストール' && connectionStatusText !== '接続なし') {
             setValue('noSymantecReason', '');
         }
     }, [connectionStatusValue, connectionStatusText, setValue]);
 
     React.useEffect(() => {
-        // 如果正在初始化，不执行清空操作
+        // 初期化中の場合は、クリア操作を実行しない
         if (isInitializingRef.current) return;
         
-        if (usbStatusText !== '許可' && usbStatusText !== '一時許可' && usbStatusText !== '数据' && usbStatusText !== '3G网卡') {
+        if (usbStatusText !== '許可' && usbStatusText !== '一時許可' && usbStatusText !== 'データ' && usbStatusText !== '3Gモデム') {
             setValue('usbReason', '');
             setValue('useEndDate', null);
         }
     }, [usbStatusValue, usbStatusText, setValue]);
 
-    // 当编辑权限数据变化时，更新表单值 - 使用 dictId
+    // 編集権限データが変更されたとき、フォームの値を更新する - dictId を使用
     React.useEffect(() => {
         if (editingPermission && visible) {
-            // 标记正在初始化，避免其他 useEffect 清空数据库值
+            // マークが初期化中です。他の useEffect がデータベースの値をクリアするのを避けてください
             isInitializingRef.current = true;
-            
-            console.log('初始化详情表单，editingPermission 完整对象:', JSON.stringify(editingPermission, null, 2));
-            console.log('editingPermission 的所有键:', Object.keys(editingPermission));
-            console.log('关键字段值:', {
+            console.log('初期化詳細フォーム、editingPermission 完全なオブジェクト:', JSON.stringify(editingPermission, null, 2));
+            console.log('editingPermission の所有キー:', Object.keys(editingPermission));
+            console.log('重要なフィールド値:', {
                 domainStatus: editingPermission.domainStatus,
                 domainName: editingPermission.domainName,
                 domainGroup: editingPermission.domainGroup,
@@ -224,8 +223,8 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                 antivirusStatusText: editingPermission.antivirusStatusText,
                 remark: editingPermission.remark,
             });
-            // 检查可能的字段名变体（下划线命名）
-            console.log('检查可能的字段名变体:', {
+            // 可能なフィールド名のバリエーションを確認する（スネークケース）
+            console.log('可能なフィールド名のバリエーションを確認する:', {
                 domain_group: (editingPermission as any).domain_group,
                 usb_expire_date: (editingPermission as any).usb_expire_date,
                 domain_status: (editingPermission as any).domain_status,
@@ -233,16 +232,16 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                 usb_status: (editingPermission as any).usb_status,
                 antivirus_status: (editingPermission as any).antivirus_status,
             });
-            console.log('字典数据:', {
+            console.log('辞書データ:', {
                 domainStatusOptions: domainStatusOptions.length,
                 smartitStatusOptions: smartitStatusOptions.length,
                 usbStatusOptions: usbStatusOptions.length,
                 antivirusStatusOptions: antivirusStatusOptions.length,
             });
             
-            // 优先使用后端返回的 dictId，如果没有则通过 domainName 查找
+            // バックエンドから返された dictId を優先的に使用し、なければ domainName で検索する
             let domainDictId: number | null = null;
-            console.log('检查 domainStatus 字段:', {
+            console.log('domainStatus フィールドを確認する:', {
                 domainStatus: editingPermission.domainStatus,
                 domainName: editingPermission.domainName,
                 domainStatusType: typeof editingPermission.domainStatus,
@@ -250,80 +249,75 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                 domainStatusIsUndefined: editingPermission.domainStatus === undefined,
             });
             
-            // 检查 domainStatus 是否存在（包括 0，因为 0 也是有效的 dictId）
+            // domainStatus が存在するか確認する（0 を含む、0 も有効な dictId であるため）
             if (editingPermission.domainStatus !== null && editingPermission.domainStatus !== undefined) {
-                // 如果后端直接返回了 domainStatus (dictId)，直接使用
+                // もしバックエンドが直接 domainStatus (dictId) を返す場合は、直接使用する
                 domainDictId = editingPermission.domainStatus;
-                console.log('使用后端返回的 domainStatus (dictId):', domainDictId);
+                console.log('バックエンドから返された domainStatus (dictId) を使用する:', domainDictId);
             } else if (editingPermission.domainName && domainStatusOptions.length > 0) {
-                // 如果只有 domainName，通过字典查找
+                // もし domainName だけがある場合は、辞書から検索する
                 domainDictId = findDictId(domainStatusOptions, editingPermission.domainName);
-                console.log('通过 domainName 查找 dictId:', editingPermission.domainName, '->', domainDictId);
+                console.log('domainName から dictId を検索する:', editingPermission.domainName, '->', domainDictId);
             } else {
-                console.warn('无法获取 domainDictId:', {
+                console.warn('domainDictId を取得できませんでした:', {
                     domainStatus: editingPermission.domainStatus,
                     domainName: editingPermission.domainName,
                     domainStatusOptionsLength: domainStatusOptions.length,
                 });
             }
-            
-            // SmartIT 状态：优先使用 dictId，否则通过文本查找
+            // SmartIT 状態：優先使用 dictId、なければテキストで検索    
             let smartitDictId: number | null = null;
             if (editingPermission.smartitStatus !== null && editingPermission.smartitStatus !== undefined) {
                 smartitDictId = editingPermission.smartitStatus;
-                console.log('使用后端返回的 smartitStatus (dictId):', smartitDictId);
+                console.log('バックエンドから返された smartitStatus (dictId) を使用する:', smartitDictId);
             } else if (smartitStatusOptions.length > 0) {
                 const smartitStatusName = editingPermission.smartitStatusText || 
-                    (editingPermission.smartitStatus === 1 ? '本地' : editingPermission.smartitStatus === 0 ? '未安装' : '');
+                    (editingPermission.smartitStatus === 1 ? 'ローカル' : editingPermission.smartitStatus === 0 ? '未インストール' : '');
                 smartitDictId = findDictId(smartitStatusOptions, smartitStatusName);
-                console.log('通过 smartitStatusText 查找 dictId:', smartitStatusName, '->', smartitDictId);
+                console.log('smartitStatusText を使って dictId を検索する:', smartitStatusName, '->', smartitDictId);
             }
             
-            // USB 状态：优先使用 dictId，否则通过文本查找
+            // USB 状態：優先使用 dictId、なければテキストで検索        
             let usbDictId: number | null = null;
             if (editingPermission.usbStatus !== null && editingPermission.usbStatus !== undefined) {
                 usbDictId = editingPermission.usbStatus;
-                console.log('使用后端返回的 usbStatus (dictId):', usbDictId);
+                console.log('バックエンドから返された usbStatus (dictId) を使用する:', usbDictId);
             } else if (usbStatusOptions.length > 0) {
                 const usbStatusName = editingPermission.usbStatusText || 
-                    (editingPermission.usbStatus === 1 ? '数据' : editingPermission.usbStatus === 0 ? '关闭' : '');
+                    (editingPermission.usbStatus === 1 ? 'データ' : editingPermission.usbStatus === 0 ? '閉じる' : '');
                 usbDictId = findDictId(usbStatusOptions, usbStatusName);
-                console.log('通过 usbStatusText 查找 dictId:', usbStatusName, '->', usbDictId);
+                console.log('usbStatusText を使って dictId を検索する:', usbStatusName, '->', usbDictId);
             }
             
-            // 防病毒状态：优先使用 dictId，否则通过文本查找
+            // 防ウイルス状態：優先使用 dictId、なければテキストで検索 
             let antivirusDictId: number | null = null;
             if (editingPermission.antivirusStatus !== null && editingPermission.antivirusStatus !== undefined) {
                 antivirusDictId = editingPermission.antivirusStatus;
-                console.log('使用后端返回的 antivirusStatus (dictId):', antivirusDictId);
+                console.log('バックエンドから返された antivirusStatus (dictId) を使用する:', antivirusDictId);
             } else if (antivirusStatusOptions.length > 0) {
                 const antivirusStatusName = editingPermission.antivirusStatusText || 
-                    (editingPermission.antivirusStatus === 1 ? '自动' : editingPermission.antivirusStatus === 0 ? '手动' : '');
+                    (editingPermission.antivirusStatus === 1 ? '自動' : editingPermission.antivirusStatus === 0 ? '手動' : '');
                 antivirusDictId = findDictId(antivirusStatusOptions, antivirusStatusName);
-                console.log('通过 antivirusStatusText 查找 dictId:', antivirusStatusName, '->', antivirusDictId);
+                console.log('antivirusStatusText を使って dictId を検索する:', antivirusStatusName, '->', antivirusDictId);
             }
             
-            // 重置表单，使用数据库中的真实数据（不强制为空，保留数据库中的值）
-            // 注意：即使某些状态字段为空，其他字段（domainGroup、usbExpireDate、remark）也应该显示
             const formData = {
                 deviceId: editingPermission.deviceId,
-                domainStatus: domainDictId, // 可能为 null，但这是正常的
-                // 直接使用数据库中的值，如果为 null/undefined 则使用空字符串
+                domainStatus: domainDictId, 
                 domainGroup: editingPermission.domainGroup ?? '',
                 noDomainReason: editingPermission.noDomainReason ?? '',
-                smartitStatus: smartitDictId, // 可能为 null，但这是正常的
+                smartitStatus: smartitDictId,
                 noSmartitReason: editingPermission.noSmartitReason ?? '',
-                usbStatus: usbDictId, // 可能为 null，但这是正常的
+                usbStatus: usbDictId,
                 usbReason: editingPermission.usbReason ?? '',
-                // 直接使用数据库中的日期值，如果存在则转换为 dayjs 对象
+                // データベースの日時値を直接使用し、存在する場合は dayjs オブジェクトに変換する
                 useEndDate: editingPermission.usbExpireDate ? dayjs(editingPermission.usbExpireDate) : null,
-                connectionStatus: antivirusDictId, // 可能为 null，但这是正常的
+                connectionStatus: antivirusDictId, 
                 noSymantecReason: editingPermission.noSymantecReason ?? '',
-                // 直接使用数据库中的备注值
                 remarks: editingPermission.remark ?? '',
             };
-            console.log('设置表单数据（从数据库读取）:', formData);
-            console.log('数据库原始值:', {
+            console.log('フォームデータを設定する（データベースから読み込む）:', formData);
+            console.log('データベースの元の値::', {
                 domainGroup: editingPermission.domainGroup,
                 domainGroupType: typeof editingPermission.domainGroup,
                 domainGroupIsNull: editingPermission.domainGroup === null,
@@ -335,12 +329,10 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
             });
             reset(formData);
             
-            // 初始化完成后，延迟重置标志，确保其他 useEffect 不会在初始化时触发
             setTimeout(() => {
                 isInitializingRef.current = false;
             }, 100);
         } else {
-            // 如果不在编辑状态，重置标志
             isInitializingRef.current = false;
         }
     }, [editingPermission, visible, reset, domainStatusOptions, smartitStatusOptions, usbStatusOptions, antivirusStatusOptions]);
@@ -350,7 +342,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
             title={
                 <div className="modal-title">
                     <FileTextOutlined className="icon-blue" />
-                    <span>{`设备权限详情 - ${editingPermission?.permissionId || ''}`}</span>
+                    <span>{`デバイス権限の詳細 - ${editingPermission?.permissionId || ''}`}</span>
                 </div>
             }
             open={visible}
@@ -368,12 +360,12 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                 onFinish={handleFormSubmit}
                 style={{ padding: '4px 0' }}
             >
-                {/* 设备基本信息区域 */}
+                {/* デバイス基本情報エリア */}
                 <Card
                     title={
                         <div className="card-header-title">
                             <FolderOpenOutlined className="icon-green" />
-                            <span style={{ color: '#52c41a' }}>设备基本信息</span>
+                            <span style={{ color: '#52c41a' }}>デバイス基本情報</span>
                         </div>
                     }
                     size="small"
@@ -388,21 +380,21 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                         labelStyle={LABEL_STYLE}
                         contentStyle={VALUE_STYLE}
                     >
-                        <Descriptions.Item label={<><IdcardOutlined />设备ID</>} >
+                        <Descriptions.Item label={<><IdcardOutlined />デバイスID</>} >
                             <strong>{editingPermission?.deviceId || '-'}</strong>
                         </Descriptions.Item>
-                        <Descriptions.Item label={<><LaptopOutlined />电脑名</>}>
+                        <Descriptions.Item label={<><LaptopOutlined />コンピュータ名</>}>
                             {editingPermission?.computerName || '-'}
                         </Descriptions.Item>
                     </Descriptions>
                 </Card>
 
-                {/* 权限配置信息区域 */}
+                {/* 権限設定情報エリア */}
                 <Card
                     title={
                         <div className="card-header-title">
                             <SettingOutlined className="icon-blue" />
-                            <span style={{ color: '#1890ff' }}>权限配置信息</span>
+                            <span style={{ color: '#1890ff' }}>権限設定情報</span>
                         </div>
                     }
                     size="small"
@@ -411,7 +403,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                     bodyStyle={{ padding: '12px', background: '#ffffff', borderRadius: '0 0 6px 6px' }}
                     bordered={false}
                 >
-                    {/* 域配置和SmartIT配置在同一行 */}
+                    {/* 域配置とSmartIT配置を同一行に */}
                     <div className="section-block">
                         <Row gutter={16}>
                             {/* 域配置 */}
@@ -422,7 +414,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                 <Row gutter={8} align="middle">
                                     <Col span={12}>
                                         <Form.Item
-                                            label={<span className="form-label"><BankOutlined />域名</span>}
+                                            label={<span className="form-label"><BankOutlined />ドメイン名</span>}
                                             style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                         >
                                             <Controller
@@ -432,7 +424,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                     <Select
                                                         {...field}
                                                         style={{ width: '100%' }}
-                                                        placeholder="请选择域名"
+                                                        placeholder="ドメイン名を選択してください"
                                                         size="small"
                                                         allowClear
                                                         disabled={!isAdmin}
@@ -448,10 +440,10 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                         </Form.Item>
                                     </Col>
 
-                                    {domainStatusValue && domainStatusText !== '未参加' && domainStatusText !== '无' && (
+                                    {domainStatusValue && domainStatusText !== '未参加' && domainStatusText !== 'なし' && (
                                         <Col span={12}>
                                             <Form.Item
-                                                label={<span className="form-label"><TeamOutlined />域内组名</span>}
+                                                label={<span className="form-label"><TeamOutlined />エリア内グループ名</span>}
                                                 validateStatus={errors.domainGroup ? 'error' : undefined}
                                                 help={errors.domainGroup?.message}
                                                 style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -460,13 +452,13 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                     name="domainGroup"
                                                     control={control}
                                                     rules={{
-                                                        required: '请填写域内组名',
-                                                        maxLength: { value: 50, message: '最大50个字符' }
+                                                        required: 'Domainグループ名を入力してください',
+                                                        maxLength: { value: 50, message: '最大50文字' }
                                                     }}
                                                     render={({ field }) => (
                                                         <Input
                                                             {...field}
-                                                            placeholder="请输入域内组名"
+                                                            placeholder="Domainグループ名を入力してください"
                                                             allowClear
                                                             size="small"
                                                             disabled={!isAdmin}
@@ -477,10 +469,10 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                         </Col>
                                     )}
 
-                                    {(domainStatusText === '未参加' || domainStatusText === '无') && (
+                                    {(domainStatusText === '未参加' || domainStatusText === 'なし') && (
                                         <Col span={12}>
                                             <Form.Item
-                                                label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />不加域理由</span>}
+                                                label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />ドメインに参加しない理由</span>}
                                                 validateStatus={errors.noDomainReason ? 'error' : undefined}
                                                 help={errors.noDomainReason?.message}
                                                 style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -489,13 +481,13 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                     name="noDomainReason"
                                                     control={control}
                                                     rules={{
-                                                        required: '请填写不加域理由',
-                                                        maxLength: { value: 20, message: '最大20个字符' }
+                                                        required: '不加域理由を入力してください',
+                                                        maxLength: { value: 20, message: '最大20文字' }
                                                     }}
                                                     render={({ field }) => (
                                                         <Input.TextArea
                                                             {...field}
-                                                            placeholder="请填写不加域理由"
+                                                            placeholder="不加域理由を入力してください"
                                                             rows={1}
                                                             showCount
                                                             maxLength={20}
@@ -510,15 +502,15 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                 </Row>
                             </Col>
 
-                            {/* SmartIT配置 */}
+                            {/* SmartITの配置 */}
                             <Col span={12}>
                                 <div className="section-title">
-                                    <span>SmartIT配置</span>
+                                    <span>SmartITの配置</span>
                                 </div>
                                 <Row gutter={8} align="middle">
                                     <Col span={12}>
                                         <Form.Item
-                                            label={<span className="form-label"><SafetyOutlined />状态</span>}
+                                            label={<span className="form-label"><SafetyOutlined />状態</span>}
                                             style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                         >
                                             <Controller
@@ -528,7 +520,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                     <Select
                                                         {...field}
                                                         style={{ width: '100%' }}
-                                                        placeholder="请选择状态"
+                                                        placeholder="状態を選択してください"
                                                         size="small"
                                                         allowClear
                                                         disabled={!isAdmin}
@@ -544,10 +536,10 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                         </Form.Item>
                                     </Col>
 
-                                    {(smartitStatusText === '未インストール' || smartitStatusText === '未安装') && (
+                                    {(smartitStatusText === '未インストール' || smartitStatusText === '未インストール') && (
                                         <Col span={12}>
                                             <Form.Item
-                                                label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />不安装理由</span>}
+                                                label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />インストールしない理由</span>}
                                                 validateStatus={errors.noSmartitReason ? 'error' : undefined}
                                                 help={errors.noSmartitReason?.message}
                                                 style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -556,13 +548,13 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                     name="noSmartitReason"
                                                     control={control}
                                                     rules={{
-                                                        required: '请填写不安装理由',
-                                                        maxLength: { value: 20, message: '最大20个字符' }
+                                                        required: '不安装理由を入力してください',
+                                                        maxLength: { value: 20, message: '最大20文字' }
                                                     }}
                                                     render={({ field }) => (
                                                         <Input.TextArea
                                                             {...field}
-                                                            placeholder="请填写不安装理由"
+                                                            placeholder="不安装理由を入力してください"
                                                             rows={1}
                                                             showCount
                                                             maxLength={20}
@@ -587,7 +579,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                         <Row gutter={8} align="middle">
                             <Col span={8}>
                                 <Form.Item
-                                    label={<span className="form-label"><UsbOutlined />USB状态</span>}
+                                    label={<span className="form-label"><UsbOutlined />USB状態</span>}
                                     style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                 >
                                     <Controller
@@ -597,7 +589,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                             <Select
                                                 {...field}
                                                 style={{ width: '100%' }}
-                                                placeholder="请选择状态"
+                                                placeholder="状態を選択してください"
                                                 size="small"
                                                 allowClear
                                                 disabled={!isAdmin}
@@ -613,11 +605,11 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                 </Form.Item>
                             </Col>
 
-                            {(usbStatusText === '許可' || usbStatusText === '一時許可' || usbStatusText === '数据' || usbStatusText === '3G网卡') && (
+                            {(usbStatusText === '許可' || usbStatusText === '一時許可' || usbStatusText === 'データ' || usbStatusText === '3Gモデム') && (
                                 <>
                                     <Col span={8}>
                                         <Form.Item
-                                            label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />开通理由</span>}
+                                            label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />開通理由</span>}
                                             validateStatus={errors.usbReason ? 'error' : undefined}
                                             help={errors.usbReason?.message}
                                             style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -626,13 +618,13 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                 name="usbReason"
                                                 control={control}
                                                 rules={{
-                                                    required: '请填写USB开通理由',
-                                                    maxLength: { value: 20, message: '最大20个字符' }
+                                                    required: 'USB開通理由を入力してください',
+                                                    maxLength: { value: 20, message: '最大20文字' }
                                                 }}
                                                 render={({ field }) => (
                                                     <Input.TextArea
                                                         {...field}
-                                                        placeholder="请填写开通理由"
+                                                        placeholder="開通理由を入力してください"
                                                         rows={1}
                                                         showCount
                                                         maxLength={20}
@@ -645,7 +637,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                     </Col>
                                     <Col span={8}>
                                         <Form.Item
-                                            label={<span className="form-label"><CalendarOutlined />使用截止日期</span>}
+                                            label={<span className="form-label"><CalendarOutlined />使用期限</span>}
                                             validateStatus={errors.useEndDate ? 'error' : undefined}
                                             help={errors.useEndDate?.message}
                                             style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -654,13 +646,13 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                 name="useEndDate"
                                                 control={control}
                                                 rules={{
-                                                    required: (usbStatusText === '許可' || usbStatusText === '一時許可' || usbStatusText === '数据' || usbStatusText === '3G网卡') ? '请选择截止日期' : false
+                                                    required: (usbStatusText === '許可' || usbStatusText === '一時許可' || usbStatusText === 'データ' || usbStatusText === '3Gモデム') ? '使用期限を選択してください' : false
                                                 }}
                                                 render={({ field }) => (
                                                     <DatePicker
                                                         {...field}
                                                         style={{ width: '100%' }}
-                                                        placeholder="请选择日期"
+                                                        placeholder="日付を選択してください"
                                                         format="YYYY-MM-DD"
                                                         allowClear={false}
                                                         disabled={!isAdmin}
@@ -675,15 +667,15 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                         </Row>
                     </div>
 
-                    {/* 防病毒配置 */}
+                    {/* ウイルス対策の配置 */}
                     <div className="section-block">
                         <div className="section-title">
-                            <span>防病毒配置</span>
+                            <span>ウイルス対策の配置</span>
                         </div>
                         <Row gutter={8} align="middle">
                             <Col span={8}>
                                 <Form.Item
-                                    label={<span className="form-label"><SafetyOutlined />连接状态</span>}
+                                    label={<span className="form-label"><SafetyOutlined />接続状態</span>}
                                     style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
                                 >
                                     <Controller
@@ -693,7 +685,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                             <Select
                                                 {...field}
                                                 style={{ width: '100%' }}
-                                                placeholder="请选择状态"
+                                                placeholder="状態を選択してください"
                                                 size="small"
                                                 allowClear
                                                 disabled={!isAdmin}
@@ -709,10 +701,10 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                 </Form.Item>
                             </Col>
 
-                            {(connectionStatusText === '未インストール' || connectionStatusText === '无连接') && (
+                            {(connectionStatusText === '未インストール' || connectionStatusText === '接続なし') && (
                                 <Col span={8}>
                                     <Form.Item
-                                        label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />无Symantec理由</span>}
+                                        label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />Symantec未接続の理由</span>}
                                         validateStatus={errors.noSymantecReason ? 'error' : undefined}
                                         help={errors.noSymantecReason?.message}
                                         style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -721,13 +713,13 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                             name="noSymantecReason"
                                             control={control}
                                             rules={{
-                                                required: '请填写无Symantec理由',
-                                                maxLength: { value: 20, message: '最大20个字符' }
+                                                required: 'Symantecでない理由を記入してください',
+                                                maxLength: { value: 20, message: '最大20文字' }
                                             }}
                                             render={({ field }) => (
                                                 <Input.TextArea
                                                     {...field}
-                                                    placeholder="请填写无Symantec理由"
+                                                    placeholder="Symantecでない理由を記入してください"
                                                     rows={1}
                                                     showCount
                                                     maxLength={20}
@@ -742,11 +734,11 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                         </Row>
                     </div>
 
-                    {/* 备注信息 */}
+                    {/* 備考情報 */}
                     <div className="section-block">
                         <div className="section-title">
                             <ExclamationCircleOutlined className="icon-orange" />
-                            <span>备注</span>
+                            <span>備考</span>
                         </div>
                         <Row gutter={8}>
                             <Col span={18}>
@@ -758,11 +750,11 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                     <Controller
                                         name="remarks"
                                         control={control}
-                                        rules={{ maxLength: { value: 200, message: '最大200个字符' } }}
+                                        rules={{ maxLength: { value: 200, message: '最大200文字' } }}
                                         render={({ field }) => (
                                             <Input.TextArea
                                                 {...field}
-                                                placeholder="请输入备注信息"
+                                                placeholder="備考情報を入力してください"
                                                 rows={1}
                                                 showCount
                                                 maxLength={200}
@@ -778,7 +770,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                     </div>
                 </Card>
 
-                {/* 操作按钮 */}
+                {/* 操作ボタン */}
                 <div style={{
                     paddingTop: 12,
                     borderTop: '1px solid #f0f0f0',
@@ -801,7 +793,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                             size="middle"
                             className="action-button"
                         >
-                            {isAdmin ? '取消' : '关闭'}
+                            {isAdmin ? 'キャンセル' : ' 閉じる'}
                         </Button>
                     </Space>
                 </div>

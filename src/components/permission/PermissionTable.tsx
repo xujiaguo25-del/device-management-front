@@ -25,9 +25,8 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
     pagination,
     onPageChange,
     onEdit,
-    isAdmin = true,
 }) => {
-    // 获取字典数据（与详情页面保持一致）
+    // 辞書データを取得する
     const { map: dictMap } = useDicts([
         'DOMAIN_STATUS',
         'SMARTIT_STATUS',
@@ -35,13 +34,13 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
         'ANTIVIRUS_STATUS'
     ]);
 
-    // 提取各字段的字典数据
+    // 各フィールドの辞書データを抽出する
     const domainStatusOptions = (dictMap?.['DOMAIN_STATUS'] || []) as DictItem[];
     const smartitStatusOptions = (dictMap?.['SMARTIT_STATUS'] || []) as DictItem[];
     const usbStatusOptions = (dictMap?.['USB_STATUS'] || []) as DictItem[];
     const antivirusStatusOptions = (dictMap?.['ANTIVIRUS_STATUS'] || []) as DictItem[];
 
-    // 辅助函数：从 dictId 查找 dictItemName（与详情页面保持一致）
+    // 補助関数：dictId から dictItemName を検索する
     const getLabel = (options: DictItem[], dictId?: number | null) => {
         if (dictId == null) return '-';
         const it = options.find(o => o.dictId === dictId);
@@ -51,63 +50,61 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
 
     const columns: ColumnsType<DevicePermissionList> = [
         {
-            title: '权限ID',
+            title: '権限ID',
             dataIndex: 'permissionId',
             key: 'permissionId',
             width: 120,
             fixed: 'left',
         },
         {
-            title: '设备ID',
+            title: 'デバイスID',
             dataIndex: 'deviceId',
             key: 'deviceId',
             width: 120,
         },
         {
-            title: '电脑名',
+            title: 'コンピュータ名',
             dataIndex: 'computerName',
             key: 'computerName',
             width: 150,
         },
         {
-            title: 'IP地址',
+            title: 'IPアドレス',
             dataIndex: 'ipAddress',
             key: 'ipAddress',
             width: 150,
             render: (ips: string[]) => (ips && ips.length > 0 ? ips.join(', ') : '-'),
         },
         {
-            title: '用户ID',
+            title: 'ユーザーID',
             dataIndex: 'userId',
             key: 'userId',
             width: 120,
         },
         {
-            title: '用户名',
+            title: 'ユーザー名',
             dataIndex: 'name',
             key: 'name',
             width: 120,
         },
         {
-            title: '部门',
+            title: '部門ID',
             dataIndex: 'deptId',
             key: 'deptId',
             width: 120,
         },
         {
-            title: '登录用户名',
+            title: 'ログインユーザー名',
             dataIndex: 'loginUsername',
             key: 'loginUsername',
             width: 120,
         },
         {
-            title: 'Domain状态',
+            title: 'Domain状態',
             dataIndex: 'domainName',
             key: 'domainName',
             width: 120,
             render: (_: string, record: DevicePermissionList) => {
-                // 只使用 domainStatus (dictId) 从字典数据获取显示文本
-                // 不显示原始值如 "D1"、"D2" 等
                 if (record.domainStatus != null) {
                     const label = getLabel(domainStatusOptions, record.domainStatus);
                     if (label !== '-') {
@@ -121,25 +118,24 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             },
         },
         {
-            title: 'Domain组',
+            title: 'Domainグループ',
             dataIndex: 'domainGroup',
             key: 'domainGroup',
             width: 120,
             render: (text: string) => text || '-',
         },
         {
-            title: 'SmartIT状态',
+            title: 'SmartIT状態',
             dataIndex: 'smartitStatus',
             key: 'smartitStatus',
             width: 120,
             render: (_: number, record: DevicePermissionList) => {
-                // 直接使用 smartitStatus (dictId) 从字典数据获取显示文本
                 if (record.smartitStatus != null) {
                     const label = getLabel(smartitStatusOptions, record.smartitStatus);
                     if (label !== '-') {
                         const color = 
-                            label === 'インストール済み' || label === '本地' || label === '远程' ? 'green' :
-                            label === '未インストール' || label === '未安装' ? 'red' : 'orange';
+                            label === 'インストール済み' || label === 'ローカル' || label === 'リモート' ? 'green' :
+                            label === '未インストール' || label === '未インストール' ? 'red' : 'orange';
                         return <Tag color={color}>{label}</Tag>;
                     }
                 }
@@ -147,18 +143,17 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             },
         },
         {
-            title: 'USB状态',
+            title: 'USB状態',
             dataIndex: 'usbStatus',
             key: 'usbStatus',
             width: 100,
             render: (_: number, record: DevicePermissionList) => {
-                // 直接使用 usbStatus (dictId) 从字典数据获取显示文本
                 if (record.usbStatus != null) {
                     const label = getLabel(usbStatusOptions, record.usbStatus);
                     if (label !== '-') {
                         const color = 
-                            label === '一時許可' || label === '許可' || label === '数据' || label === '3G网卡' ? 'green' :
-                            label === '禁止' || label === '关闭' ? 'red' : 'orange';
+                            label === '一時許可' || label === '許可' || label === 'データ' || label === '3Gモデム' ? 'green' :
+                            label === '禁止' || label === '閉じる' ? 'red' : 'orange';
                         return <Tag color={color}>{label}</Tag>;
                     }
                 }
@@ -166,7 +161,7 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             },
         },
         {
-            title: 'USB过期日期',
+            title: 'USBの有効期限',
             dataIndex: 'usbExpireDate',
             key: 'usbExpireDate',
             width: 120,
@@ -182,19 +177,18 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             },
         },
         {
-            title: '防病毒状态',
+            title: 'アンチウイルス状態',
             dataIndex: 'antivirusStatus',
             key: 'antivirusStatus',
             width: 120,
             render: (_: number, record: DevicePermissionList) => {
-                // 直接使用 antivirusStatus (dictId) 从字典数据获取显示文本
                 if (record.antivirusStatus != null) {
                     const label = getLabel(antivirusStatusOptions, record.antivirusStatus);
                     if (label !== '-') {
                         const color = 
-                            label === '有効期限切れ' || label === 'インストール済み' || label === '自动' ? 'green' :
-                            label === '未インストール' || label === '无连接' ? 'red' :
-                            label === '手动' ? 'orange' : 'default';
+                            label === '有効期限切れ' || label === 'インストール済み' || label === '自動' ? 'green' :
+                            label === '未インストール' || label === '無接続' ? 'red' :
+                            label === '手動' ? 'orange' : 'default';
                         return <Tag color={color}>{label}</Tag>;
                     }
                 }
@@ -202,7 +196,7 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             },
         },
         {
-            title: '备注',
+            title: '備考',
             dataIndex: 'remark',
             key: 'remark',
             width: 200,
@@ -221,7 +215,7 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
                     size="small"
                     onClick={() => onEdit(record.permissionId)}
                 >
-                    查看详情
+                    詳細
                 </Button>
             ),
         },
@@ -246,7 +240,7 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
                     pageSize: pagination.pageSize,
                     total: pagination.total,
                     showSizeChanger: true,
-                    showTotal: (total) => `共 ${total} 条`,
+                    showTotal: (total) => `全${total}件`,
                     onChange: onPageChange,
                     onShowSizeChange: (_current, size) => {
                         onPageChange(1, size);

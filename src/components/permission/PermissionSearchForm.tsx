@@ -30,19 +30,19 @@ const PermissionSearchForm: React.FC<PermissionSearchFormProps> = ({ onSearch, o
         <div style={{ marginBottom: 16 }}>
             <Space>
                 {isAdmin && (
-                    <Form.Item label="用户ID" style={{ marginBottom: 0 }}>
+                    <Form.Item label="ユーザーID" style={{ marginBottom: 0 }}>
                         <Controller
                             name="userId"
                             control={control}
-                            render={({ field }) => <Input {...field} placeholder="请输入用户ID" style={{ width: 150 }} />}
+                            render={({ field }) => <Input {...field} placeholder="ユーザーIDを入力してください" style={{ width: 150 }} />}
                         />
                     </Form.Item>
                 )}
-                <Form.Item label="设备ID" style={{ marginBottom: 0 }}>
+                <Form.Item label="设备デバイスID" style={{ marginBottom: 0 }}>
                     <Controller
                         name="deviceId"
                         control={control}
-                        render={({ field }) => <Input {...field} placeholder="请输入设备ID" style={{ width: 150 }} />}
+                        render={({ field }) => <Input {...field} placeholder="設備IDを入力してください" style={{ width: 150 }} />}
                     />
                 </Form.Item>
                 <Form.Item style={{ marginBottom: 0 }}>
@@ -52,10 +52,10 @@ const PermissionSearchForm: React.FC<PermissionSearchFormProps> = ({ onSearch, o
                             icon={<SearchOutlined />}
                             onClick={handleSearchSubmit}
                         >
-                            搜索
+                            検索
                         </Button>
                         <Button onClick={handleReset} icon={<ReloadOutlined />}>
-                            重置
+                            リセット
                         </Button>
                     </Space>
                 </Form.Item>
