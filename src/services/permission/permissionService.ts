@@ -1,17 +1,17 @@
 /**
- * 权限管理相关服务
+ * 権限管理関連サービス
  */
 
-import { get, post, put, del } from '../api';
+import { get, post, put } from '../api';
 import type { DevicePermissionList, DevicePermissionInsert, ApiResponse, DictItem, UserInfo } from '../../types';
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
 
 /**
- * 获取权限列表
- * @param params 查询参数
- * @returns Promise 权限列表响应
+ * 権限リストを取得
+ * @param params クエリパラメータ
+ * @returns Promise 権限リストレスポンス
  */
 export const getPermissions = async (params: {
     page?: number;
@@ -30,8 +30,8 @@ export const getPermissions = async (params: {
 };
 
 /**
- * 新增权限
- * @param permissionData 权限数据
+ * 権限を追加
+ * @param permissionData 権限データ
  * @returns Promise
  */
 export const addPermission = async (permissionData: DevicePermissionInsert): Promise<ApiResponse<any>> => {
@@ -39,18 +39,18 @@ export const addPermission = async (permissionData: DevicePermissionInsert): Pro
 };
 
 /**
- * 获取权限详情
- * @param permissionId 权限ID
- * @returns Promise 权限详情响应
+ * 権限詳細を取得
+ * @param permissionId 権限ID
+ * @returns Promise 権限詳細レスポンス
  */
 export const getPermissionById = async (permissionId: string): Promise<ApiResponse<DevicePermissionList>> => {
     return get<ApiResponse<DevicePermissionList>>(`/permissions/${permissionId}`);
 };
 
 /**
- * 编辑权限
- * @param permissionId 权限ID
- * @param permissionData 权限数据
+ * 権限を編集
+ * @param permissionId 権限ID
+ * @param permissionData 権限データ
  * @returns Promise
  */
 export const updatePermission = async (
@@ -60,80 +60,42 @@ export const updatePermission = async (
     return put<ApiResponse<any>>(`/permissions/${permissionId}`, permissionData);
 };
 
-/**
- * 删除权限
- * @param permissionId 权限ID
- * @returns Promise
- */
-export const deletePermission = async (permissionId: string): Promise<ApiResponse<any>> => {
-    return del<ApiResponse<any>>(`/permissions/${permissionId}`);
-};
-
-/**
- * 导出权限列表为Excel
- * 优先使用后端API，如果后端不支持则使用前端生成
- * @param userInfo 用户信息，用于权限控制
- * @param dictMap 字典数据映射，用于状态文本转换
- */
 export const exportPermissionsExcel = async (
     userInfo?: UserInfo | null,
     dictMap?: Record<string, DictItem[]>
 ): Promise<void> => {
+    // 権限データを取得
     try {
-        // 优先尝试使用后端API导出
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
-        const token = localStorage.getItem('auth_token');
-
-        const response = await fetch(`${API_BASE_URL}/permissions/export`, {
-            method: 'GET',
-            headers: {
-                'Authorization': token ? `Bearer ${token}` : '',
-            },
-        });
-
-        if (response.ok) {
-            const blob = await response.blob();
-            const fileName = `权限列表_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`;
-            saveAs(blob, fileName);
-            return;
-        }
-    } catch (error) {
-        // 如果后端API不可用，使用前端生成（需要先获取数据）
-        console.warn('后端导出API不可用，使用前端生成:', error);
-    }
-
-    // 前端生成Excel（需要先获取所有数据）
-    try {
-        // 如果不是管理员，只获取当前用户的数据
+        // 管理者かどうかで userId パラメータを切り替え
         const userId = userInfo?.USER_TYPE_NAME?.toUpperCase() === 'ADMIN' ? undefined : userInfo?.USER_ID;
         const response = await getPermissions({ page: 1, size: 10000, userId });
         if (response.code !== 200 || !response.data) {
-            throw new Error('获取权限数据失败');
+            throw new Error('権限データの取得に失敗しました');
         }
 
         const permissions = response.data;
         
-        // 获取字典数据用于状态文本转换
+        // 辞書データを取得して状態テキストを変換する
         const domainStatusOptions = (dictMap?.['DOMAIN_STATUS'] || []) as DictItem[];
         const smartitStatusOptions = (dictMap?.['SMARTIT_STATUS'] || []) as DictItem[];
         const usbStatusOptions = (dictMap?.['USB_STATUS'] || []) as DictItem[];
         const antivirusStatusOptions = (dictMap?.['ANTIVIRUS_STATUS'] || []) as DictItem[];
         
-        // 辅助函数：从 dictId 查找 dictItemName
+        // 補助関数：dictId から dictItemName を検索
         const getLabel = (options: DictItem[], dictId?: number | null) => {
             if (dictId == null) return '';
             const it = options.find(o => o.dictId === dictId);
             return it ? it.dictItemName : '';
         };
 
-        // 准备表头
+        // 見出しを準備する
         const headers = [
-            '权限ID', '设备ID', '电脑名', 'IP地址', '用户ID', '用户名', '部门', 
-            '登录用户名', 'Domain状态', 'Domain组', 'SmartIT状态', 'USB状态', 'USB过期日期',
-            '防病毒状态', '备注'
+            '権限ID', 'デバイスID', 'コンピュータ名', 'IPアドレス', 'ユーザーID', 'ユーザー名', '部門ID', 
+            'ログインユーザー名', 'Domain状態', 'Domainグループ', 'SmartIT状態', 'USB状態', 'USBの有効期限',
+            'アンチウイルス状態', '備考'
         ];
 
-        // 准备Excel数据（使用字典数据转换状态文本）
+        // Excelデータを準備する（辞書データを使用して状態テキストを変換）
         const excelData = permissions.map(p => [
             p.permissionId,
             p.deviceId,
@@ -143,7 +105,6 @@ export const exportPermissionsExcel = async (
             p.name || '',
             p.deptId || '',
             p.loginUsername || '',
-            // 使用字典数据转换状态文本
             getLabel(domainStatusOptions, p.domainStatus) || p.domainName || '',
             p.domainGroup || '',
             getLabel(smartitStatusOptions, p.smartitStatus) || p.smartitStatusText || '',
@@ -153,42 +114,42 @@ export const exportPermissionsExcel = async (
             p.remark || '',
         ]);
 
-        // 创建工作簿
+        // ワークブックを作成
         const wb = XLSX.utils.book_new();
         
-        // 创建数据数组（标题行 + 数据行）
+        // データ配列を作成する（ヘッダー行 データ行）
         const allData = [headers, ...excelData];
         const ws = XLSX.utils.aoa_to_sheet(allData);
 
-        // 设置列宽
+        // 列の幅を設定
         const colWidths = [
-            { wch: 12 }, // 权限ID
-            { wch: 12 }, // 设备ID
-            { wch: 15 }, // 电脑名
-            { wch: 20 }, // IP地址
-            { wch: 12 }, // 用户ID
-            { wch: 12 }, // 用户名
-            { wch: 12 }, // 部门
-            { wch: 15 }, // 登录用户名
-            { wch: 15 }, // Domain状态
-            { wch: 12 }, // Domain组
-            { wch: 15 }, // SmartIT状态
-            { wch: 15 }, // USB状态
-            { wch: 15 }, // USB过期日期
-            { wch: 15 }, // 防病毒状态
-            { wch: 30 }, // 备注
+            { wch: 12 }, // 権限ID
+            { wch: 12 }, // デバイスID
+            { wch: 15 }, // コンピュータ名
+            { wch: 20 }, // IPアドレス
+            { wch: 12 }, // ユーザーID
+            { wch: 12 }, // ユーザー名
+            { wch: 12 }, // 部門ID
+            { wch: 15 }, // ログインユーザー名
+            { wch: 15 }, // Domain状態
+            { wch: 12 }, // Domainグループ
+            { wch: 15 }, // SmartIT状態
+            { wch: 15 }, // USB状態
+            { wch: 15 }, // USBの有効期限
+            { wch: 15 }, // アンチウイルス状態
+            { wch: 30 }, // 備考
         ];
         ws['!cols'] = colWidths;
 
-        // 设置行高
+        // 行の高さを設定
         ws['!rows'] = [
-            { hpt: 25 }, // 表头行高
+            { hpt: 25 }, // ヘッダー行の高さ
         ];
 
-        // 定义样式
+        // スタイルを定義
         const headerStyle = {
             font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
-            fill: { fgColor: { rgb: '4472C4' } }, // 蓝色背景
+            fill: { fgColor: { rgb: '4472C4' } }, // 青色背景
             alignment: { 
                 horizontal: 'center', 
                 vertical: 'center',
@@ -215,25 +176,25 @@ export const exportPermissionsExcel = async (
             }
         };
 
-        // 应用表头样式
+        // ヘッダー行スタイルを適用
         for (let C = 0; C <= headers.length - 1; ++C) {
             const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
             if (!ws[cellAddress]) continue;
             ws[cellAddress].s = headerStyle;
         }
 
-        // 应用数据行样式
+        // データ行スタイルを適用
         for (let R = 1; R <= excelData.length; ++R) {
             for (let C = 0; C <= headers.length - 1; ++C) {
                 const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
                 if (!ws[cellAddress]) continue;
                 ws[cellAddress].s = cellStyle;
                 
-                // 状态列特殊处理（根据文本值设置颜色）
+                // 状態列の特別処理（テキスト値に応じて色を設定）
                 const colIndex = C;
                 const value = ws[cellAddress].v;
                 
-                if (colIndex === 10) { // SmartIT状态（第11列，索引10）
+                if (colIndex === 10) { // SmartIT状態（第11列，索引10）
                     if (value === '本地' || value === '远程') {
                         ws[cellAddress].s = {
                             ...cellStyle,
@@ -247,28 +208,28 @@ export const exportPermissionsExcel = async (
                             font: { color: { rgb: '9C0006' } } // 深红色文字
                         };
                     }
-                } else if (colIndex === 11) { // USB状态（第12列，索引11）
-                    if (value === '数据' || value === '3G网卡') {
+                } else if (colIndex === 11) { // USB状態（第12列，索引11）
+                    if (value === 'データ' || value === '3Gモデム') {
                         ws[cellAddress].s = {
                             ...cellStyle,
                             fill: { fgColor: { rgb: 'C6EFCE' } }, // 浅绿色
                             font: { color: { rgb: '006100' } } // 深绿色文字
                         };
-                    } else if (value === '关闭') {
+                    } else if (value === '閉じる') {
                         ws[cellAddress].s = {
                             ...cellStyle,
                             fill: { fgColor: { rgb: 'FFC7CE' } }, // 浅红色
                             font: { color: { rgb: '9C0006' } } // 深红色文字
                         };
                     }
-                } else if (colIndex === 13) { // 防病毒状态（第14列，索引13）
-                    if (value === '自动') {
+                } else if (colIndex === 13) { // アンチウイルス状態（第14列，索引13）
+                    if (value === '自動') {
                         ws[cellAddress].s = {
                             ...cellStyle,
                             fill: { fgColor: { rgb: 'C6EFCE' } }, // 浅绿色
                             font: { color: { rgb: '006100' } } // 深绿色文字
                         };
-                    } else if (value === '手动') {
+                    } else if (value === '手動') {
                         ws[cellAddress].s = {
                             ...cellStyle,
                             fill: { fgColor: { rgb: 'FFE699' } }, // 浅黄色
@@ -279,25 +240,25 @@ export const exportPermissionsExcel = async (
             }
         }
 
-        // 将工作表添加到工作簿
-        XLSX.utils.book_append_sheet(wb, ws, '权限列表');
+        // ワークシートをワークブックに追加
+        XLSX.utils.book_append_sheet(wb, ws, '権限リスト');
 
-        // 将工作簿转换为二进制数据
+        // Excelファイルを生成
         const excelBuffer = XLSX.write(wb, { 
             bookType: 'xlsx', 
             type: 'array',
             cellStyles: true
         });
 
-        // 创建Blob对象并保存
+        // Blobオブジェクトを作成して保存
         const blob = new Blob([excelBuffer], { 
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
         });
 
-        // 使用 file-saver 保存文件，文件名包含时间戳
-        const fileName = `权限列表_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`;
+        // file-saverを使用してファイルを保存し、ファイル名にタイムスタンプを含める
+        const fileName = `権限リスト_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`;
         saveAs(blob, fileName);
     } catch (error) {
-        throw new Error('导出Excel失败: ' + (error instanceof Error ? error.message : String(error)));
+        throw new Error('Excelのエクスポートに失敗しました: ' + (error instanceof Error ? error.message : String(error)));
     }
 };
