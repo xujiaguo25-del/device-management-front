@@ -103,8 +103,8 @@ const DeviceManagement: React.FC = () => {
         </div>
       ),
     },
-    { title: 'OS', dataIndex: 'osName', key: 'osName', align: 'center', width: 120, ellipsis: true },
-    { title: 'メモリ(G)', dataIndex: 'memorySize', key: 'memorySize', align: 'center', width: 80, ellipsis: true },
+    { title: 'OS', dataIndex: 'osName', key: 'osName', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
+    { title: 'メモリ(G)', dataIndex: 'memorySize', key: 'memorySize', align: 'center', width: 80, ellipsis: true, render: (t) => t || '-' },
     { 
       title: 'ストレージ(G)', 
       key: 'storage',
