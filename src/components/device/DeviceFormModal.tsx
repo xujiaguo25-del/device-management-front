@@ -39,7 +39,6 @@ interface DeviceFormModalProps {
   onSubmit: (values: DeviceListItem) => void;
 }
 
-                                  // 定义参数类型
 const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                                                            visible,
                                                            isEditing,
@@ -129,22 +128,17 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       // }
 
       // 获取字典显示名称
-      // const osName = dictData.OS_TYPE?.find(item => item.dictId === values.osId)?.dictItemName || '';
-      // const memorySize = dictData.MEMORY_SIZE?.find(item => item.dictId === values.memoryId)?.dictItemName || '';
-      // const ssdSize = values.ssdId ? (dictData.SSD_SIZE?.find(item => item.dictId === values.ssdId)?.dictItemName || '') : '—';
-      // const hddSize = values.hddId ? (dictData.HDD_SIZE?.find(item => item.dictId === values.hddId)?.dictItemName || '') : '—';
-
-      // 从字典数据中获取显示名称
       const osName = dictMap.OS_TYPE?.find(item => item.dictId === values.osId)?.dictItemName || '';
       const memorySize = dictMap.MEMORY_SIZE?.find(item => item.dictId === values.memoryId)?.dictItemName || '';
       const ssdSize = values.ssdId ? (dictMap.SSD_SIZE?.find(item => item.dictId === values.ssdId)?.dictItemName || '') : '—';
       const hddSize = values.hddId ? (dictMap.HDD_SIZE?.find(item => item.dictId === values.hddId)?.dictItemName || '') : '—';
       const confirmStatus = dictMap.CONFIRM_STATUS?.find(item => item.dictId === values.selfConfirmId)?.dictItemName || '';
-      
-      
-      // 获取选中的用户信息
-      const selectedUser = users.find(user => user.userId === values.userId);
-      
+
+      // 获取选中的用户信息（管理员可能选择其他用户）
+      const selectedUser = isAdmin && values.userId
+          ? users.find(user => user.userId === values.userId)
+          : null;
+
       const submitData: DeviceListItem = {
         ...values,
 
