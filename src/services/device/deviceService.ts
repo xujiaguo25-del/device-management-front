@@ -106,7 +106,7 @@ export const getDeviceList = async (params: DeviceQueryParams): Promise<DeviceAp
 /**
  * デバイスの詳細情報を取得します
  */
-export const getDeviceDetail = async (deviceId: string): Promise<DeviceListItem | null> => {
+export const getDeviceDetail = async (deviceId: string, forEditing: boolean = false): Promise<DeviceListItem | null> => {
   if (!deviceId?.trim()) throw new Error('デバイスIDを入力してください');
   
   const url = `/devices/${encodeURIComponent(deviceId.trim())}`;
@@ -115,6 +115,11 @@ export const getDeviceDetail = async (deviceId: string): Promise<DeviceListItem 
   
   if (response.code !== 200) {
     throw new Error(response.message || '不明なエラーが発生しました');
+  }
+  
+  if (forEditing) {
+    // 編集モードではフォーマットせずに生データを返します
+    return response.data as DeviceListItem;
   }
   
   return transformDeviceData(response.data);

@@ -201,7 +201,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
 
   handleEditDevice: async (device) => {
     try {
-      const detail = await getDeviceDetail(device.deviceId);
+      const detail = await getDeviceDetail(device.deviceId, true);
       set({ selectedDevice: detail, isEditing: true, formVisible: true });
     } catch {
       message.error('获取设备信息失败');
