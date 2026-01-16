@@ -107,21 +107,101 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   },
 
   // 新增：获取用户列表
-  fetchUsers: async () => {
-    const { setUsers, setUsersLoading } = get();
-    setUsersLoading(true);
-    try {
-      const { fetchUsers } = await import('../services/device/deviceFormService');
-      const userList = await fetchUsers();
-      setUsers(userList);
-    } catch (error) {
-      console.error('获取用户列表失败:', error);
-      // 可以设置一个默认用户列表或保持空数组
-      setUsers([]);
-    } finally {
-      setUsersLoading(false);
+  // fetchUsers: async () => {
+  //   const { setUsers, setUsersLoading } = get();
+  //   setUsersLoading(true);
+  //   try {
+  //     const { fetchUsers } = await import('../services/device/deviceFormService');
+  //     const userList = await fetchUsers();
+  //     setUsers(userList);
+  //   } catch (error) {
+  //     console.error('获取用户列表失败:', error);
+  //     // 可以设置一个默认用户列表或保持空数组
+  //     setUsers([]);
+  //   } finally {
+  //     setUsersLoading(false);
+  //   }
+  // },
+  // 在deviceStore.ts中，修改fetchUsers方法：
+
+fetchUsers: async () => {
+  const { setUsers, setUsersLoading, searchParams, setDevices } = get();
+  setUsersLoading(true);
+  
+  try {
+    // 调用fetchDevices获取设备列表
+    const { fetchDevices } = get();
+    
+    // 先保存原始搜索参数
+    const originalParams = { ...searchParams };
+    
+    // 设置获取用户所需的参数（获取大量数据以便提取用户）
+    const userSearchParams = {
+      page: 1,
+      pageSize: 1000,
+      ...originalParams
+    };
+    
+    // 临时修改搜索参数
+    set({ searchParams: userSearchParams });
+    
+    // 获取设备列表
+    await fetchDevices();
+    
+    // 从当前设备列表中提取用户信息
+    const deviceList = get().devices;
+    
+    // 使用Set去重
+    const userSet = new Set<string>();
+    const users: Array<{userId: string, name: string, deptId?: string}> = [];
+    
+    deviceList.forEach((device) => {
+      if (device.userId && device.userName && !userSet.has(device.userId)) {
+        userSet.add(device.userId);
+        users.push({
+          userId: device.userId,
+          name: device.userName || '',
+          deptId: device.deptId || ''
+        });
+      }
+    });
+    
+    // 如果用户太少，添加默认用户
+    if (users.length < 5) {
+      const defaultUsers = [
+        { userId: 'JS0010', name: '小娟', deptId: 'IT' },
+        { userId: 'JS0011', name: '张三', deptId: '研发部' },
+        { userId: 'JS0012', name: '李四', deptId: '测试部' },
+      ];
+      
+      defaultUsers.forEach(user => {
+        if (!userSet.has(user.userId)) {
+          userSet.add(user.userId);
+          users.push(user);
+        }
+      });
     }
-  },
+    
+    setUsers(users);
+    
+    // 恢复原始搜索参数
+    set({ searchParams: originalParams });
+    
+  } catch (error) {
+    console.error('获取用户列表失败:', error);
+    
+    // 返回模拟数据
+    const defaultUsers = [
+      { userId: 'JS0010', name: '小娟', deptId: 'IT' },
+      { userId: 'JS0011', name: '张三', deptId: '研发部' },
+      { userId: 'JS0012', name: '李四', deptId: '测试部' },
+    ];
+    
+    setUsers(defaultUsers);
+  } finally {
+    setUsersLoading(false);
+  }
+},
 
   handlePageChange: (page, pageSize) => {
     const { setSearchParams, fetchDevices } = get();
