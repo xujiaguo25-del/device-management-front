@@ -170,11 +170,11 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   };
 
   const removeMonitor = (index: number) => {
-    if (monitors.length > 1) {
+    // if (monitors.length > 1) {
       const newMonitors = [...monitors];
       newMonitors.splice(index, 1);// 删除1个index位置的元素
       setMonitors(newMonitors);
-    }
+    // }
   };
 
   // 处理IP地址变更
@@ -191,11 +191,11 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   };
 
   const removeIpAddress = (index: number) => {
-    if (deviceIps.length > 1) {
+    // if (deviceIps.length > 1) {
       const newIps = [...deviceIps];
       newIps.splice(index, 1);
       setDeviceIps(newIps);
-    }
+    // }
   };
 
   // 处理用户选择变化
@@ -430,14 +430,12 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 </Col>
                 <Col span={4}>
                   <Space>
-                    {deviceIps.length > 1 && (
-                      <Button
-                        type="text"
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={() => removeIpAddress(index)}
-                      />
-                    )}
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={() => removeIpAddress(index)}
+                    />
                   </Space>
                 </Col>
               </Row>
@@ -471,19 +469,19 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 </Col>
                 <Col span={4}>
                   <Space>
-                    {monitors.length > 1 && (
-                      <Button
-                        type="text"
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={() => removeMonitor(index)}
-                      />
-                    )}
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={() => removeMonitor(index)}
+                    />
                   </Space>
                 </Col>
               </Row>
             </Card>
           ))}
+
+          <Divider />
 
           <Form.Item name="remark" label="备注" style={{ marginTop: 16 }}>
             <TextArea placeholder="请输入备注信息" rows={3} />
