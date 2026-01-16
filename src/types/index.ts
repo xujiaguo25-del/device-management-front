@@ -56,7 +56,7 @@ export interface Device {
   UPDATED_USER: string;
 }
 
-// 设备使用权限列表DTO（匹配后端PermissionsListDTO）
+// デバイス使用権限リストDTO（バックエンドのPermissionsListDTOに対応）
 export interface DevicePermissionList {
   permissionId: string;
   deviceId: string;
@@ -72,14 +72,14 @@ export interface DevicePermissionList {
   domainGroup: string;
   noDomainReason: string;
   smartitStatus: number;
-  smartitStatusText?: string; // 存储文本值：本地、远程、未安装
+  smartitStatusText?: string; // テキスト値の保存：ローカル、リモート、未インストール
   noSmartitReason: string;
   usbStatus: number;
-  usbStatusText?: string; // 存储文本值：关闭、数据、3G网卡
+  usbStatusText?: string; // テキスト値の保存：閉じる、データ、3Gモデム
   usbReason: string;
   usbExpireDate: string | null;
   antivirusStatus: number;
-  antivirusStatusText?: string; // 存储文本值：自动、手动
+  antivirusStatusText?: string; // テキスト値の保存：自動、手動
   noSymantecReason: string;
   remark: string;
   createTime: string;
@@ -88,7 +88,7 @@ export interface DevicePermissionList {
   updater: string;
 }
 
-// 设备使用权限插入DTO（匹配后端PermissionInsertDTO）
+// デバイス使用権限挿入DTO（バックエンドのPermissionInsertDTOに対応）
 export interface DevicePermissionInsert {
   permissionId?: string;
   deviceId: string;
@@ -97,14 +97,14 @@ export interface DevicePermissionInsert {
   domainGroup?: string;
   noDomainReason?: string;
   smartitStatus?: number | null;
-  smartitStatusText?: string; // 存储文本值：本地、远程、未安装
+  smartitStatusText?: string; // テキスト値の保存：ローカル、リモート、未インストール
   noSmartitReason?: string;
   usbStatus?: number | null;
-  usbStatusText?: string; // 存储文本值：关闭、数据、3G网卡
+  usbStatusText?: string; // テキスト値の保存：閉じる、データ、3Gモデム
   usbReason?: string;
   usbExpireDate?: string | null;
   antivirusStatus?: number | null;
-  antivirusStatusText?: string; // 存储文本值：自动、手动
+  antivirusStatusText?: string; // テキスト値の保存：自動、手動
   noSymantecReason?: string;
   remark?: string;
   createTime?: string;
@@ -113,7 +113,7 @@ export interface DevicePermissionInsert {
   updater?: string;
 }
 
-// API响应结构（匹配后端ApiResponse）
+// APIレスポンス構造（バックエンドの ApiResponse に対応）
 export interface ApiResponse<T> {
   code: number;
   message: string;

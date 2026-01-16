@@ -37,13 +37,13 @@ interface SearchFormData {
 }
 
 const DevicePermissions: React.FC = () => {
-    // 获取用户信息
+    // ユーザー情報を取得する
     const { userInfo } = useAuthStore();
     
-    // 判断是否是管理员
+    //管理者ユーザーかどうかを判断する
     const isAdmin = userInfo?.USER_TYPE_NAME?.toUpperCase() === 'ADMIN';
     
-    // 获取字典数据
+    // 辞書データを取得
     const { map: dictMap } = useDicts([
         'DOMAIN_STATUS',
         'SMARTIT_STATUS',
@@ -51,20 +51,18 @@ const DevicePermissions: React.FC = () => {
         'ANTIVIRUS_STATUS'
     ]);
 
-    // 提取各字段的字典数据
+    // 各フィールドの辞書データを抽出する
     const domainStatusOptions = (dictMap?.['DOMAIN_STATUS'] || []) as DictItem[];
     const smartitStatusOptions = (dictMap?.['SMARTIT_STATUS'] || []) as DictItem[];
     const usbStatusOptions = (dictMap?.['USB_STATUS'] || []) as DictItem[];
     const antivirusStatusOptions = (dictMap?.['ANTIVIRUS_STATUS'] || []) as DictItem[];
 
-    // 辅助函数：从 dictItemName 查找 dictId
     const findDictId = (options: DictItem[], dictItemName?: string) => {
         if (!dictItemName) return null;
         const it = options.find(o => o.dictItemName === dictItemName);
         return it?.dictId || null;
     };
 
-    // 辅助函数：从 dictId 查找 dictItemName
     const findDictItemName = (options: DictItem[], dictId?: number | null) => {
         if (dictId == null) return '';
         const it = options.find(o => o.dictId === dictId);
@@ -81,19 +79,18 @@ const DevicePermissions: React.FC = () => {
         total: 0,
     });
 
-    // 加载权限列表（page从1开始）
+    // 権限リストを読み込む
     const loadPermissions = async (page: number = 1, size: number = 10, userId?: string, deviceId?: string) => {
         try {
             setLoading(true);
-            // 如果不是管理员，自动过滤当前用户的权限
+            // 管理者でない場合、現在のユーザーの権限を自動的にフィルタリングする
             const finalUserId = isAdmin ? userId : (userId || userInfo?.USER_ID);
             const response = await getPermissions({ page, size, userId: finalUserId, deviceId });
-            console.log('获取权限列表响应:', response);
+            console.log('権限リストの取得応答:', response);
             if (response.code === 200 && response.data) {
-                console.log('权限列表数据:', response.data);
-                // 打印第一条数据的详细信息，检查字段是否正确
+                console.log('権限リストデータ:', response.data);
                 if (response.data.length > 0) {
-                    console.log('第一条权限数据详情:', {
+                    console.log('第一条権限データ詳細:', {
                         permissionId: response.data[0].permissionId,
                         deviceId: response.data[0].deviceId,
                         domainStatus: response.data[0].domainStatus,
@@ -110,94 +107,94 @@ const DevicePermissions: React.FC = () => {
                     total: response.total || response.data.length,
                 });
             } else {
-                message.error(response.message || '获取权限列表失败');
+                message.error(response.message || '権限リストの取得に失敗しました');
             }
         } catch (error: any) {
-            console.error('获取权限列表失败:', error);
-            message.error(error.message || '获取权限列表失败');
+            console.error('権限リストの取得に失敗しました:', error);
+            message.error(error.message || '権限リストの取得に失敗しました');
         } finally {
             setLoading(false);
         }
     };
 
-    // 初始加载
+    // 初期読み込み
     useEffect(() => {
         loadPermissions();
     }, []);
 
-    // 搜索
+    // 検索
     const onSearch = (data: SearchFormData) => {
-        // 过滤空字符串，转换为 undefined
-        // 如果不是管理员，不允许搜索其他用户的权限
+        // 空の文字列をフィルタリングして undefined に変換する
+        // 管理者でない場合、他のユーザーの権限を検索することは許可されない
         const userId = isAdmin ? (data.userId?.trim() || undefined) : undefined;
         const deviceId = data.deviceId?.trim() || undefined;
         loadPermissions(1, pagination.pageSize, userId, deviceId);
     };
 
-    // 重置搜索
+    // 検索をリセット
     const onResetSearch = () => {
         loadPermissions(1, pagination.pageSize);
     };
 
-    // 打开编辑对话框
+   // 編集ダイアログを開く
     const handleEdit = async (permissionId: string) => {
         try {
             setLoading(true);
-            console.log('正在获取权限详情，permissionId:', permissionId);
+            console.log('権限の詳細を取得中、permissionId:', permissionId);
             const response = await getPermissionById(permissionId);
-            console.log('获取权限详情响应:', response);
+            console.log('権限詳細の取得応答:', response);
             
             if (response.code === 200 && response.data) {
                 const permission = response.data;
-                console.log('权限详情数据:', permission);
-                console.log('权限详情数据类型:', typeof permission);
-                console.log('权限详情数据是否为null:', permission === null);
-                console.log('权限详情数据是否为undefined:', permission === undefined);
-                console.log('权限详情数据的所有键:', Object.keys(permission || {}));
+                console.log('権限詳細データ:', permission);
+                console.log('権限詳細データの型:', typeof permission);
+                console.log('権限詳細データがnullかどうか:', permission === null);
+                console.log('権限詳細データがundefinedかどうか:', permission === undefined);
+                console.log('権限詳細データのすべてのキー:', Object.keys(permission || {}));
                 
-                // 确保设置 editingPermission 后再打开模态框
+                // 確保設定 editingPermission 後にモーダルを開く
                 setEditingPermission(permission);
-                // 使用 setTimeout 确保状态更新后再打开模态框
+                // setTimeout を使用して状態更新後にモーダルを開く
                 setTimeout(() => {
                     setModalVisible(true);
-                    console.log('模态框已打开，editingPermission:', permission);
+                    console.log('モーダルが開きました、editingPermission:', permission);
                 }, 0);
             } else {
-                console.error('获取权限详情失败:', response);
-                message.error(response.message || '获取权限详情失败');
+                console.error('権限詳細の取得に失敗しました:', response);
+                message.error(response.message || '権限詳細の取得に失敗しました');
             }
         } catch (error: any) {
-            console.error('获取权限详情异常:', error);
-            message.error(error.message || '获取权限详情失败');
+            console.error('権限詳細の取得に失敗しました:', error);
+            message.error(error.message || '権限詳細の取得に失敗しました');
         } finally {
             setLoading(false);
         }
     };
 
-    // 提交表单
+    // フォームを送信
     const onSubmitForm = async (data: PermissionFormData) => {
         try {
-            // 获取字典项对应的文本值
+            // 辞書項目に対応するテキスト値を取得する
             const domainStatusText = data.domainName;
             const smartitStatusText = data.smartitStatus;
             const usbStatusText = data.usbStatus;
             const antivirusStatusText = data.connectionStatus;
 
-            console.log('提交表单数据:', data);
-            console.log('字典选项数量:', {
+            console.log('フォームデータを送信:', data);
+            console.log('辞書オプション数:', {
                 domainStatusOptions: domainStatusOptions.length,
                 smartitStatusOptions: smartitStatusOptions.length,
                 usbStatusOptions: usbStatusOptions.length,
                 antivirusStatusOptions: antivirusStatusOptions.length,
             });
 
-            // 根据 dictItemName 查找对应的 dictId
+            // dictItemName に基づいて対応する dictId を検索
             const domainStatusDictId = findDictId(domainStatusOptions, domainStatusText);
             const smartitStatusDictId = findDictId(smartitStatusOptions, smartitStatusText);
             const usbStatusDictId = findDictId(usbStatusOptions, usbStatusText);
             const antivirusStatusDictId = findDictId(antivirusStatusOptions, antivirusStatusText);
 
-            console.log('转换后的 dictId:', {
+            console.log('変換後の dictId:', {
                 domainStatusText,
                 domainStatusDictId,
                 smartitStatusText,
@@ -208,93 +205,90 @@ const DevicePermissions: React.FC = () => {
                 antivirusStatusDictId,
             });
 
-            // 转换表单数据为后端需要的格式
+            // バックエンドに送信するデータを構築
             const permissionData: DevicePermissionInsert = {
                 deviceId: data.deviceId,
-                // 直接使用 dictId，如果找不到则根据文本值判断（兼容处理）
+                // dictId を直接使用する
                 domainStatus: domainStatusDictId ?? (domainStatusText && domainStatusText !== '无' ? 1 : 0),
                 domainName: domainStatusText,
                 domainGroup: data.domainGroup,
                 noDomainReason: data.noDomainReason,
-                // 直接使用 dictId
                 smartitStatus: smartitStatusDictId,
                 smartitStatusText: smartitStatusText,
                 noSmartitReason: data.noSmartitReason,
-                // 直接使用 dictId
                 usbStatus: usbStatusDictId,
                 usbStatusText: usbStatusText,
                 usbReason: data.usbReason,
                 usbExpireDate: data.useEndDate ? data.useEndDate.format('YYYY-MM-DD') : null,
-                // 直接使用 dictId
                 antivirusStatus: antivirusStatusDictId,
                 antivirusStatusText: antivirusStatusText,
                 noSymantecReason: data.noSymantecReason,
                 remark: data.remarks,
             };
 
-            console.log('发送到后端的权限数据:', permissionData);
+            console.log('バックエンドに送信される権限データ:', permissionData);
 
-            // 编辑模式
+            // 編集モード
             if (!editingPermission) {
-                message.error('编辑权限信息不存在');
+                message.error('編集権限情報が存在しません');
                 return;
             }
 
             const response = await updatePermission(editingPermission.permissionId, permissionData);
-            console.log('更新权限响应:', response);
+            console.log('更新権限レスポンス:', response);
             
             if (response.code === 200) {
-                message.success('权限更新成功');
+                message.success('権限の更新に成功しました');
                 setModalVisible(false);
                 setEditingPermission(null);
-                // 刷新列表数据
+                // リストデータを更新
                 await loadPermissions(pagination.current, pagination.pageSize);
-                console.log('列表数据已刷新');
+                console.log('権限リストが更新されました');
             } else {
-                console.error('更新权限失败:', response);
-                message.error(response.message || '权限更新失败');
+                console.error('権限の更新に失敗しました:', response);
+                message.error(response.message || '権限の更新に失敗しました');
             }
         } catch (error: any) {
-            message.error(error.message || '权限更新失败');
+            message.error(error.message || '権限更新失敗しました');
         }
     };
 
-    // 导出Excel
+    // Excelをエクスポート
     const handleExport = async () => {
         try {
             setLoading(true);
-            // 传递用户信息和字典数据给导出函数
+            // ユーザー情報と辞書データをエクスポート関数に渡す
             await exportPermissionsExcel(userInfo, dictMap);
-            message.success('导出成功，文件已保存到下载文件夹');
+            message.success('エクスポート成功しました');
         } catch (error: any) {
-            message.error(error.message || '导出失败');
+            message.error(error.message || 'エクスポートに失敗しました');
         } finally {
             setLoading(false);
         }
     };
 
-    // 关闭对话框
+    // ダイアログを閉じる
     const handleModalCancel = () => {
         setModalVisible(false);
         setEditingPermission(null);
     };
 
     return (
-        <Layout title="权限管理">
+        <Layout title="権限管理">
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                {/* 权限列表卡片 */}
+                {/* 権限リストカード */}
                 <Card
-                    title="权限列表"
+                    title="権限リスト"
                     extra={
                         <Button icon={<ExportOutlined />} onClick={handleExport} loading={loading}>
-                            导出Excel
+                            Excelにエクスポート
                         </Button>
                     }
                 >
-                    {/* 搜索栏 */}
+                    {/* 検索フォーム */}
                     <PermissionSearchForm onSearch={onSearch} onReset={onResetSearch} isAdmin={isAdmin} />
 
-                    {/* 表格 */}
+                    {/* テーブル */}
                     <div style={{ marginTop: 16 }}>
                         <PermissionTable
                             data={permissions}
@@ -310,7 +304,7 @@ const DevicePermissions: React.FC = () => {
                 </Card>
             </Space>
 
-            {/* 查看详情对话框 */}
+            {/* 詳細情報ダイアログ */}
             <PermissionDetailModal
                 visible={modalVisible}
                 loading={loading}
