@@ -88,7 +88,7 @@ const EditModal: React.FC<EditModalProps> = ({
     >
       {!draft ? null : (
         <div>
-          {/* 基础信息（只读） */}
+          {/* 基礎情報（読み取り専用） */}
           <div style={{ marginBottom: 20 }}>
             <h3 style={{ marginBottom: 16 }}>基础信息</h3>
 
@@ -126,7 +126,7 @@ const EditModal: React.FC<EditModalProps> = ({
             </div>
           </div>
 
-          {/* 检查项目 */}
+          {/* 検査項目 */}
           <div style={{ marginBottom: 20 }}>
             <h3 style={{ marginBottom: 16 }}>检查项目</h3>
 
@@ -183,7 +183,7 @@ const EditModal: React.FC<EditModalProps> = ({
             </div>
           </div>
 
-          {/* 处置措施 */}
+          {/* 処置措置 */}
           <div>
             <h3 style={{ marginBottom: 16 }}>处置措施</h3>
             <TextArea

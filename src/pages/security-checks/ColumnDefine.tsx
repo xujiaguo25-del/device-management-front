@@ -2,13 +2,7 @@ import { Button, Tag } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 import type { SecurityCheck } from '../../types';
 
-/**
- * 创建表格列定义
- * @param currentPage 当前页码
- * @param pageSize 每页条数
- * @param onEdit 编辑回调函数
- * @param isAdmin 是否为管理员
- */
+//表の列の定義
 export const createColumns = (
   currentPage: number,
   pageSize: number,
@@ -159,7 +153,7 @@ export const createColumns = (
   },
 ];
 
-  // 仅管理员显示操作列
+  // 管理者のみがアクション列を表示
   if (isAdmin) {
     baseColumns.push({
       title: '操作',

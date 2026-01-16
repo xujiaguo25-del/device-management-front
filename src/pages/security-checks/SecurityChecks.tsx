@@ -5,15 +5,14 @@ import Layout from '../../components/common/Layout';
 import type { SecurityCheck } from '../../types';
 import EditModal from './EditModal';
 import { createColumns } from './ColumnDefine';
-import { testData } from './TestData';
 import { getSecurityChecks, updateSecurityCheck, exportSecurityChecksExcel } from '../../services/securityCheckService';
 import { useAuthStore } from '../../stores/authStore';
 
 const SecurityChecks: React.FC = () => {
   const { userInfo } = useAuthStore();
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<SecurityCheck[]>(testData);
-  const [total, setTotal] = useState(testData.length);
+  const [data, setData] = useState<SecurityCheck[]>([]);
+  const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [userId, setUserId] = useState('');
@@ -21,15 +20,15 @@ const SecurityChecks: React.FC = () => {
   const [currentRecord, setCurrentRecord] = useState<SecurityCheck | null>(null);
   const [exporting, setExporting] = useState(false);
   
-  // 判断是否为管理员
+  // 管理者かどうかを判断する
   const isAdmin = userInfo?.USER_TYPE_NAME.toUpperCase() === 'ADMIN';
 
-  // 加载数据
+  // データのロード
   const fetchData = async () => {
     try {
       setLoading(true);
       
-      // 如果不是管理员，使用当前用户的 USER_ID
+      // 管理者でない場合は、現在のユーザーのUSER _ IDを使用します
       const searchUserId = isAdmin ? userId : (userInfo?.USER_ID ?? '');
 
       const res = await getSecurityChecks({
@@ -57,22 +56,17 @@ const SecurityChecks: React.FC = () => {
     fetchData();
   }, [currentPage, pageSize, isAdmin]);
 
-  // 处理搜索
+  // 検索の操作
   const handleSearch = () => {
     fetchData();
     setCurrentPage(1);
   };
 
-  // 处理导出
+  // エクスポートの操作
   const handleExport = async () => {
     try {
       setExporting(true);
-      
-      // 如果不是管理员，强制使用当前用户的 USER_ID
-      const exportUserId = isAdmin ? userId : userInfo?.USER_ID || '';
-      
-      await exportSecurityChecksExcel(exportUserId ? { userId: exportUserId } : undefined);
-      
+      await exportSecurityChecksExcel();
       message.success('导出成功');
     } catch (error: any) {
       console.error('导出失败:', error);
@@ -82,13 +76,13 @@ const SecurityChecks: React.FC = () => {
     }
   };
 
-  // 处理编辑
+  // 編集の操作
   const handleEdit = (record: SecurityCheck) => {
     setCurrentRecord(record);
     setEditVisible(true);
   };
 
-  // 处理更新
+  // 更新の処理
   const handleUpdate = async (updated: SecurityCheck) => {
     try {
       const res =  await updateSecurityCheck(updated.samplingId, updated);
@@ -108,13 +102,13 @@ const SecurityChecks: React.FC = () => {
     }
   };
 
-  // 创建表格列（根据权限决定是否显示操作列）
+  // テーブル列の作成（権限に基づいてアクション列を表示するかどうかを決定）
   const columns = createColumns(currentPage, pageSize, handleEdit, isAdmin);
 
   return (
-    <Layout title="安全检查记录">
+    <Layout title="セキュリティチェック">
       <Card>
-        {/* 管理员显示搜索栏 */}
+        {/* 管理者による検索バーの表示 */}
         {isAdmin && (
           <Card size="small" style={{ marginBottom: 16 }}>
             <Row gutter={16}>
@@ -150,7 +144,7 @@ const SecurityChecks: React.FC = () => {
           </Card>
         )}
 
-        {/* 非管理员提示信息 */}
+        {/* 管理者以外のプロンプト情報 */}
         {!isAdmin && (
           <Card size="small" style={{ marginBottom: 16, backgroundColor: '#f0f5ff' }}>
             <div style={{ color: '#1890ff' }}>
@@ -159,7 +153,7 @@ const SecurityChecks: React.FC = () => {
           </Card>
         )}
 
-        {/*表格栏*/}
+        {/*表バー*/}
         <Table
           columns={columns}
           dataSource={data}
@@ -181,7 +175,7 @@ const SecurityChecks: React.FC = () => {
           }}
         />
 
-        {/* 编辑栏 - 仅管理员可用 */}
+        {/* 編集バー-管理者のみ使用可能*/}
         {isAdmin && (
           <EditModal
             visible={editVisible}

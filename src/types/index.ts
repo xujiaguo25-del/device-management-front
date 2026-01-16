@@ -78,30 +78,30 @@ export interface DevicePermission {
   UPDATED_USER: string;
 }
 
-// 安全检查记录（与后端DTO同步）
+// セキュリティチェック記録（バックエンドDTOと同期
 export interface SecurityCheck {
-  samplingId: string;          // 主键
-  reportId: string;            // 报告ID
-  userId: string;              // 用户ID
-  name: string;                // 用户名
-  deviceId: string;            // 设备ID
+  samplingId: string;          
+  reportId: string;            
+  userId: string;             
+  name: string;                
+  deviceId: string;            
 
-  updateDate: string;          // 导出日期（LocalDate → string）
-  updateTime: string;          // 更新时间（LocalDateTime → string）
-  createTime: string;          // 创建时间（LocalDateTime → string）
+  updateDate: string;          
+  updateTime: string;          
+  createTime: string;          
 
-  updater: string;             // 更新人
-  creater: string;             // 创建人
+  updater: string;            
+  creater: string;           
 
-  installedSoftware: boolean;  // 是否安装非法软件
-  disposalMeasures: string;    // 处置措施
-  screenSaverPwd: boolean;     // 屏保密码
-  usbInterface: boolean;       // USB接口
-  securityPatch: boolean;      // 安全补丁
-  antivirusProtection: boolean;// 杀毒软件
-  bootAuthentication: boolean; // 启动认证
+  installedSoftware: boolean;  
+  disposalMeasures: string;    
+  screenSaverPwd: boolean;     
+  usbInterface: boolean;       
+  securityPatch: boolean;     
+  antivirusProtection: boolean;
+  bootAuthentication: boolean; 
 
-  monitorName?: string; //显示器名称
+  monitorName?: string; 
 }
 
 // 認証状態
