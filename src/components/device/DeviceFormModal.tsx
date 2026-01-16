@@ -89,15 +89,6 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         form.resetFields();
         setMonitors([{ monitorName: '', deviceId: '' }]);
         setDeviceIps([{ ipAddress: '', deviceId: '' }]);
-
-        // 设置默认值
-        // form.setFieldsValue({
-        //   selfConfirmId: 0,
-        //   osId: 1,
-        //   memoryId: 16,
-        //   ssdId: 0,
-        //   hddId: 0,
-        // });
       }
     }
   }, [visible, device, form]);
@@ -113,19 +104,6 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         return;
       }
 
-      // // 验证显示器名称
-      // const emptyMonitors = monitors.filter(m => !m.monitorName.trim());
-      // if (emptyMonitors.length > 0) {
-      //   message.error('请填写所有显示器名称');
-      //   return;
-      // }
-
-      // 获取字典显示名称
-      // const osName = dictData.OS_TYPE?.find(item => item.dictId === values.osId)?.dictItemName || '';
-      // const memorySize = dictData.MEMORY_SIZE?.find(item => item.dictId === values.memoryId)?.dictItemName || '';
-      // const ssdSize = values.ssdId ? (dictData.SSD_SIZE?.find(item => item.dictId === values.ssdId)?.dictItemName || '') : '—';
-      // const hddSize = values.hddId ? (dictData.HDD_SIZE?.find(item => item.dictId === values.hddId)?.dictItemName || '') : '—';
-
       // 从字典数据中获取显示名称
       const osName = dictMap.OS_TYPE?.find(item => item.dictId === values.osId)?.dictItemName || '';
       const memorySize = dictMap.MEMORY_SIZE?.find(item => item.dictId === values.memoryId)?.dictItemName || '';
@@ -140,30 +118,12 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       const submitData: DeviceListItem = {
         ...values,
 
-        ///// 修改
-        // monitors: monitors.filter(m => m.monitorName.trim()),
-        // monitors: monitors
-        // .filter(m => m.monitorName.trim())
-        // .map(monitor => ({
-        //   ...monitor,
-        //   // 确保 deviceId 与主表一致
-        //   deviceId: values.deviceId,
-        // })),
          monitors: monitors
         .filter(m => m.monitorName.trim())
         .map(monitor => ({
           monitorName: monitor.monitorName,
           deviceId: values.deviceId,
         })),
-
-
-        // deviceIps: deviceIps.filter(ip => ip.ipAddress.trim()),
-        //  deviceIps: deviceIps
-        // .filter(ip => ip.ipAddress.trim())
-        // .map(ip => ({
-        //   ...ip,
-        //   deviceId: values.deviceId,
-        // })),
 
         // 确保 deviceIps 不包含 ipId
         deviceIps: deviceIps
@@ -172,10 +132,8 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
           ipAddress: ip.ipAddress,
           deviceId: values.deviceId,
         })),
-        ///// 修改
 
         // 设置字典显示值
-        // confirmStatus: values.selfConfirmId === 1 ? '已确认' : '未确认',
         confirmStatus: confirmStatus,
         osName,
         memorySize,
@@ -200,9 +158,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 
   // 处理显示器变更
   const handleMonitorChange = (index: number, field: keyof Monitor, value: any) => {
-    const newMonitors = [...monitors];
-    // newMonitors[index] = { ...newMonitors[index], [field]: value }; // 全展开，再改动，保留monitorId
-    
+    const newMonitors = [...monitors];    
     // 移除 monitorId 的处理，只保留 monitorName
     newMonitors[index] = { monitorName: value };
     setMonitors(newMonitors);
@@ -223,7 +179,6 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   // 处理IP地址变更
   const handleIpChange = (index: number, field: keyof DeviceIp, value: any) => {
     const newIps = [...deviceIps];
-    // newIps[index] = { ...newIps[index], [field]: value };
 
     // 移除 ipId 的处理，只保留 ipAddress
     newIps[index] = { ipAddress: value };
@@ -288,7 +243,6 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="deviceModel"
                 label="设备型号"
-                // rules={[{ required: true, message: '请输入设备型号' }]}
               >
                 <Input placeholder="请输入设备型号" />
               </Form.Item>
@@ -300,7 +254,6 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="computerName"
                 label="电脑名称"
-                // rules={[{ required: true, message: '请输入电脑名称' }]}
               >
                 <Input placeholder="请输入电脑名称" />
               </Form.Item>
@@ -378,16 +331,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="selfConfirmId"
                 label="本人确认"
-                // rules={[{ required: true, message: '请选择确认状态' }]}
-              >
-                {/* <Select placeholder="请选择确认状态">
-                  {dictData.CONFIRM_STATUS?.map(item => (
-                    <Option key={item.dictId} value={item.dictId}>
-                      {item.dictItemName}
-                    </Option>
-                  ))}
-                </Select> */}
-
+              >        
                 <DictSelect
                   typeCode="CONFIRM_STATUS"
                   placeholder="请选择确认状态"
@@ -405,16 +349,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="osId"
                 label="操作系统"
-                // rules={[{ required: true, message: '请选择操作系统' }]}
               >
-                {/* <Select placeholder="请选择操作系统">
-                  {dictData.OS_TYPE?.map(item => (
-                    <Option key={item.dictId} value={item.dictId}>
-                      {item.dictItemName}
-                    </Option>
-                  ))}
-                </Select> */}
-
                 <DictSelect
                   typeCode="OS_TYPE"
                   placeholder="请选择操作系统"
@@ -426,16 +361,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="memoryId"
                 label="内存"
-                // rules={[{ required: true, message: '请选择内存' }]}
-              >
-                {/* <Select placeholder="请选择内存">
-                  {dictData.MEMORY_SIZE?.map(item => (
-                    <Option key={item.dictId} value={item.dictId}>
-                      {item.dictItemName}
-                    </Option>
-                  ))}
-                </Select> */}
-
+              >  
                 <DictSelect
                   typeCode="MEMORY_SIZE"
                   placeholder="请选择内存"
@@ -447,17 +373,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="ssdId"
                 label="固态硬盘"
-                // rules={[{ required: true, message: '请选择固态硬盘' }]}
-              >
-                {/* <Select placeholder="请选择固态硬盘">
-                  <Option value={0}>无</Option>
-                  {dictData.SSD_SIZE?.map(item => (
-                    <Option key={item.dictId} value={item.dictId}>
-                      {item.dictItemName}
-                    </Option>
-                  ))}
-                </Select> */}
-
+              >              
                  <DictSelect
                   typeCode="SSD_SIZE"
                   placeholder="请选择固态硬盘"
@@ -468,18 +384,9 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
             <Col span={6}>
               <Form.Item
                 name="hddId"
-                label="机械硬盘"
-                // rules={[{ required: true, message: '请选择机械硬盘' }]}
+                label="机械硬盘"                
               >
-                {/* <Select placeholder="请选择机械硬盘">
-                  <Option value={0}>无</Option>
-                  {dictData.HDD_SIZE?.map(item => (
-                    <Option key={item.dictId} value={item.dictId}>
-                      {item.dictItemName}
-                    </Option>
-                  ))}
-                </Select> */}
-
+                
                 <DictSelect
                   typeCode="HDD_SIZE"
                   placeholder="请选择机械硬盘"

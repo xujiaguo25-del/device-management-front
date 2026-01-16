@@ -147,23 +147,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
           });
         }
       });
-      
-      // 如果用户太少，添加默认用户
-      // if (users.length < 5) {
-      //   const defaultUsers = [
-      //     { userId: 'JS0010', name: '小娟', deptId: 'IT' },
-      //     { userId: 'JS0011', name: '张三', deptId: '研发部' },
-      //     { userId: 'JS0012', name: '李四', deptId: '测试部' },
-      //   ];
-        
-      //   defaultUsers.forEach(user => {
-      //     if (!userSet.has(user.userId)) {
-      //       userSet.add(user.userId);
-      //       users.push(user);
-      //     }
-      //   });
-      // }
-      
+            
       setUsers(users);
       
       // 恢复原始搜索参数
@@ -171,15 +155,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
       
     } catch (error) {
       console.error('获取用户列表失败:', error);
-      
-      // 返回模拟数据
-      // const defaultUsers = [
-      //   { userId: 'JS0010', name: '小娟', deptId: 'IT' },
-      //   { userId: 'JS0011', name: '张三', deptId: '研发部' },
-      //   { userId: 'JS0012', name: '李四', deptId: '测试部' },
-      // ];
-      
-      // setUsers(defaultUsers);
+
     } finally {
       setUsersLoading(false);
     }
@@ -243,8 +219,6 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   /* 表单提交暂未实现，先空着 */
   // 处理表单提交
   handleFormSubmit: async (values: DeviceListItem) => {
-    // message.info('表单提交功能暂未实现');
-    // set({ formVisible: false, isEditing: false, selectedDevice: null });
 
      try {
       const { isEditing, fetchDevices } = get();
@@ -283,12 +257,6 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
     }
   },
 
-  // initialize: async () => {
-  //   await get().fetchDevices();
-  //   // 下拉、字典、用户接口全部先不调
-  //   // await get().fetchFormData();
-  //   // await get().fetchFilterOptions();
-  // },
   initialize: async () => {
     // 并行获取设备列表和用户列表
     await Promise.all([
