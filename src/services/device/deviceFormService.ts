@@ -4,13 +4,13 @@ import { get, post, put } from '../api';
 import type { ApiResponse } from '../../types/device';
 
 
-// 将前端DeviceListItem转换为后端DeviceFullDTO格式
+// フロントエンドのDeviceListItemをバックエンドのDeviceFullDTO形式に変換
 const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean = false): any => {
-  // 获取当前登录用户（这里需要根据你的认证系统获取）
+  // 現在のログインユーザーを取得（認証システムに基づいて取得する必要があります）
   const currentUser = localStorage.getItem('user_name') || 'system';
 
 
-  // 构建DeviceFullDTO
+  // DeviceFullDTOを構築
   const deviceFullDTO = {
     deviceId: deviceData.deviceId,
     deviceModel: deviceData.deviceModel || null,
@@ -30,7 +30,7 @@ const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean =
     monitors: (deviceData.monitors || []).map(monitor => ({
       monitorName: monitor.monitorName,
       deviceId: deviceData.deviceId,
-      // 如果是编辑模式且monitor有id，则保留id
+      // 編集モードでmonitorにidがある場合はidを保持
       // ...(monitor.monitorId && { monitorId: monitor.monitorId }),
       creater: currentUser,
       updater: currentUser
@@ -38,7 +38,7 @@ const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean =
     deviceIps: (deviceData.deviceIps || []).map(ip => ({
       ipAddress: ip.ipAddress,
       deviceId: deviceData.deviceId,
-      // 如果是编辑模式且ip有id，则保留id
+      // 編集モードでipにidがある場合はidを保持
       // ...(ip.ipId && { ipId: ip.ipId }),
       creater: currentUser,
       updater: currentUser
@@ -50,61 +50,61 @@ const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean =
   return deviceFullDTO;
 };
 
-// 保存设备（新增设备）
+// デバイスを保存（新規デバイス追加）
 export const saveDevice = async (deviceData: DeviceListItem): Promise<boolean> => {
   try {
     const deviceFullDTO = convertToDeviceFullDTO(deviceData, false);
 
-    console.log('发送给后端的数据:', JSON.stringify(deviceFullDTO, null, 2));
+    console.log('バックエンドに送信するデータ:', JSON.stringify(deviceFullDTO, null, 2));
 
-    // 调用后端insertDevice接口
-    // 使用泛型指定返回类型
+    // バックエンドのinsertDeviceインターフェースを呼び出し
+    // ジェネリックを使用して戻り値の型を指定
     const response = await post<ApiResponse>('/devices', deviceFullDTO);
 
     if (response.code === 200) {
-      console.log('设备保存成功:', response.data);
+      console.log('デバイス保存成功:', response.data);
       return true;
     } else {
-      console.error('设备保存失败:', response.message);
-      throw new Error(response.message || '设备保存失败');
+      console.error('デバイス保存失敗:', response.message);
+      throw new Error(response.message || 'デバイス保存に失敗しました');
     }
   } catch (error: any) {
-    console.error('设备保存请求失败:', error);
+    console.error('デバイス保存リクエスト失敗:', error);
 
-    // 提取错误信息
-    const errorMessage = error.message || error.msg || error.toString() || '未知错误';
-    throw new Error(`设备保存失败: ${errorMessage}`);
+    // エラー情報を抽出
+    const errorMessage = error.message || error.msg || error.toString() || '不明なエラー';
+    throw new Error(`デバイス保存失敗: ${errorMessage}`);
   }
 };
 
-// 更新设备（编辑设备）
+// デバイスを更新（デバイス編集）
 export const updateDevice = async (deviceData: DeviceListItem): Promise<boolean> => {
   try {
     const deviceFullDTO = convertToDeviceFullDTO(deviceData, true);
 
-    console.log('发送给后端的数据:', JSON.stringify(deviceFullDTO, null, 2));
+    console.log('バックエンドに送信するデータ:', JSON.stringify(deviceFullDTO, null, 2));
 
-    // 调用后端updateDevice接口 
-    // 使用泛型指定返回类型
+    // バックエンドのupdateDeviceインターフェースを呼び出し
+    // ジェネリックを使用して戻り値の型を指定
     const response = await put<ApiResponse>(`/devices/${deviceData.deviceId}`, deviceFullDTO);
 
     if (response.code === 200) {
-      console.log('设备更新成功:', response.data);
+      console.log('デバイス更新成功:', response.data);
       return true;
     } else {
-      console.error('设备更新失败:', response.message);
-      throw new Error(response.message || '设备更新失败');
+      console.error('デバイス更新失敗:', response.message);
+      throw new Error(response.message || 'デバイス更新に失敗しました');
     }
   } catch (error: any) {
-    console.error('设备更新请求失败:', error);
+    console.error('デバイス更新リクエスト失敗:', error);
 
-    // 提取错误信息
-    const errorMessage = error.message || error.msg || error.toString() || '未知错误';
-    throw new Error(`设备更新失败: ${errorMessage}`);
+    // エラー情報を抽出
+    const errorMessage = error.message || error.msg || error.toString() || '不明なエラー';
+    throw new Error(`デバイス更新失敗: ${errorMessage}`);
   }
 };
 
-// 验证IP地址格式
+// IPアドレス形式を検証
 export const isValidIP = (ip: string): boolean => {
   const ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
   return ipPattern.test(ip);
