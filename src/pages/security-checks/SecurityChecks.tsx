@@ -1,0 +1,251 @@
+import React, { useState, useEffect } from 'react';
+import { Table, Card, Input, Button, Space, message, Row, Col } from 'antd';
+import { SearchOutlined, DownloadOutlined } from '@ant-design/icons';
+import Layout from '../../components/common/Layout';
+import type {SecurityCheck} from '../../types';
+import EditModal from './EditModal';
+import { createColumns } from './ColumnDefine';
+import { testData } from './TestData';
+import { securityCheckApi } from '../../services/api/securityCheckApi';
+
+const SecurityChecks: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [data, setData] = useState<SecurityCheck[]>([]);
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [userId, setUserId] = useState('');
+  const [editVisible, setEditVisible] = useState(false);
+  const [currentRecord, setCurrentRecord] = useState<SecurityCheck | null>(null);
+  const [searchTrigger, setSearchTrigger] = useState(0);
+
+  // 加载数据
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      const params = {
+        page: currentPage,
+        pageSize: pageSize,
+        userId: userId || undefined,
+      };
+      
+      const response = await securityCheckApi.getSecurityChecks(params);
+      
+      if (response && response.success) {
+        setData(response.data.list || response.data);
+        setTotal(response.data.total || response.data.length || 0);
+      } else {
+        throw new Error(response?.message || '获取数据失败');
+      }
+
+    } catch (error: any) {
+      console.error('获取数据失败:', error);
+      message.error(error.message || '获取数据失败，使用测试数据');
+      
+      let filteredData = [...testData];
+      if (userId) {
+        filteredData = filteredData.filter(item => 
+          item.userId.toLowerCase().includes(userId.toLowerCase())
+        );
+      }
+      
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedData = filteredData.slice(startIndex, endIndex);
+      
+      setData(paginatedData);
+      setTotal(filteredData.length);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [currentPage, pageSize, searchTrigger]);
+
+  // 处理搜索
+  const handleSearch = () => {
+    setCurrentPage(1);
+    setSearchTrigger(prev => prev + 1);
+  };
+
+  // 处理导出
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      
+      // 使用和查询相同的参数
+      const exportParams = {
+        page: currentPage,
+        pageSize: pageSize,
+        userId: userId || undefined,
+      };
+      
+      message.info('正在生成导出文件...');
+      
+      // 调用导出API
+      const blob = await securityCheckApi.exportSecurityChecks(exportParams);
+      
+      // 创建下载链接
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      
+      // 设置文件名
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+      const filename = `安全检查记录_${timestamp}.xlsx`;
+      link.download = filename;
+      
+      // 触发下载
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // 释放URL对象
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      message.success('导出成功！');
+      
+    } catch (error: any) {
+      console.error('导出失败:', error);
+      message.error(error.message || '导出失败，请重试');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // 处理编辑
+  const handleEdit = (record: SecurityCheck) => {
+    setCurrentRecord(record);
+    setEditVisible(true);
+  };
+
+  // 处理更新
+  const handleUpdate = async (updated: SecurityCheck) => {
+    try {
+      setLoading(true);
+      
+      const response = await securityCheckApi.updateSecurityCheck(
+        updated.samplingId,
+        {
+          bootAuthentication: updated.bootAuthentication,
+          securityPatch: updated.securityPatch,
+          screenSaverPwd: updated.screenSaverPwd,
+          antivirusProtection: updated.antivirusProtection,
+          installedSoftware: updated.installedSoftware,
+          usbInterface: updated.usbInterface,
+          disposalMeasures: updated.disposalMeasures,
+        }
+      );
+      
+      if (response && response.success) {
+        const updatedData = response.data || updated;
+        setData(prevData => 
+          prevData.map(item => 
+            item.samplingId === updated.samplingId 
+              ? { ...item, ...updatedData }
+              : item
+          )
+        );
+        
+        message.success('更新成功');
+        setEditVisible(false);
+      } else {
+        throw new Error(response?.message || '更新失败');
+      }
+
+    } catch (error: any) {
+      console.error('更新失败:', error);
+      message.error(error.message || '更新失败，请重试');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 创建表格列
+  const columns = createColumns(currentPage, pageSize, handleEdit);
+
+  return (
+    <Layout title="安全检查记录">
+        {/* 搜索栏 */}
+        <Card size="small" style={{ marginBottom: 16 }}>
+          <Row gutter={[16, 16]} align="middle">
+            <Col xs={24} sm={12} md={8} lg={6}>
+              <Input
+                placeholder="请输入用户ID"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                allowClear
+                onPressEnter={handleSearch}
+              />
+            </Col>
+            <Col xs={24} sm={12} md={16} lg={18}>
+              <Space>
+                <Button
+                  type="primary"
+                  icon={<SearchOutlined />}
+                  onClick={handleSearch}
+                  loading={loading}
+                >
+                  查询
+                </Button>
+                <Button
+                  type="default"
+                  icon={<DownloadOutlined />}
+                  onClick={handleExport}
+                  loading={exporting}
+                >
+                  导出
+                </Button>
+              </Space>
+            </Col>
+          </Row>
+        
+
+
+        {/* 表格栏 */}
+        <Table
+          columns={columns}
+          dataSource={data}
+          rowKey="samplingId"
+          loading={loading}
+          scroll={{ x: 1500 }}
+          style={{ marginTop: 16 }} 
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: total,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total) => `共 ${total} 条记录`,
+            pageSizeOptions: ['5', '10', '20', '50', '100'],
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              setPageSize(size);
+            },
+          }}
+        />
+
+        {/* 编辑弹窗 */}
+        {currentRecord && (
+          <EditModal
+            visible={editVisible}
+            title="编辑安全检查记录"
+            record={currentRecord}
+            onCancel={() => {
+              setEditVisible(false);
+              setCurrentRecord(null);
+            }}
+            onOk={handleUpdate}
+          />
+        )}
+      </Card>
+    </Layout>
+  );
+};
+
+export default SecurityChecks;

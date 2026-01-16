@@ -1,0 +1,58 @@
+/* Layout 样式 */
+
+.layout-sider {
+  background: #001529;
+}
+
+.layout-header {
+  background: #fff;
+  padding: 0 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+}
+
+.layout-content {
+  margin: 24px;
+  padding: 24px;
+  background: #fff;
+  border-radius: 4px;
+  min-height: 280px;
+}
+
+.desktop-toggle {
+  font-size: 18px;
+}
+
+.mobile-toggle {
+  display: none;
+  font-size: 18px;
+}
+
+.mobile-menu-drawer {
+  display: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .layout-sider {
+    display: none;
+  }
+
+  .mobile-toggle {
+    display: inline-block;
+  }
+
+  .mobile-menu-drawer {
+    display: block;
+  }
+
+  .layout-header {
+    padding: 0 16px;
+  }
+
+  .layout-content {
+    margin: 12px;
+    padding: 12px;
+  }
+}
