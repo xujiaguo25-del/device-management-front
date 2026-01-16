@@ -53,11 +53,7 @@ const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean =
 // 保存设备（新增设备）
 export const saveDevice = async (deviceData: DeviceListItem): Promise<boolean> => {
   try {
-
-    console.log('!!!!!!!!!!!!!!!!!!!!!' + deviceData );
     const deviceFullDTO = convertToDeviceFullDTO(deviceData, false);
-
-    console.log(deviceFullDTO);
 
     console.log('发送给后端的数据:', JSON.stringify(deviceFullDTO, null, 2));
 
