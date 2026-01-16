@@ -122,9 +122,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   //     setUsersLoading(false);
   //   }
   // },
-  // 在deviceStore.ts中，修改fetchUsers方法：
-
-fetchUsers: async () => {
+  fetchUsers: async () => {
   const { setUsers, setUsersLoading, searchParams, setDevices } = get();
   setUsersLoading(true);
   
