@@ -20,7 +20,7 @@ const DeviceManagement: React.FC = () => {
     userIdSearch, users, handlePageChange, handlePageSizeChange,
     handleEditDevice, handleDeleteDevice, handleAddDevice,
     handleUserIdSearch, handleFormSubmit, initialize,
-    setFormVisible, setIsEditing, setSelectedDevice
+    setFormVisible, setIsEditing, setSelectedDevice, setUserIdSearch
   } = useDeviceStore();
 
   // テーブルコンテナの参照と高さ状態
@@ -193,7 +193,7 @@ const DeviceManagement: React.FC = () => {
                 allowClear
                 enterButton={<SearchOutlined />}
                 onSearch={handleUserIdSearch}
-                onChange={(e) => handleUserIdSearch(e.target.value)}
+                onChange={(e) => setUserIdSearch(e.target.value)}
                 value={userIdSearch}
                 style={{ width: 240, padding: '6px 0' }}
               />
