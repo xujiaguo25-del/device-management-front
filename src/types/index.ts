@@ -123,22 +123,30 @@ export interface ApiResponse<T> {
   size?: number;
 }
 
-// セキュリティチェック記録
+// セキュリティチェック記録（バックエンドDTOと同期
 export interface SecurityCheck {
-  CHECK_ID: number;
-  DEVICE_ID: number;
-  USER_ID: string;
-  BOOT_AUTH: string;
-  PASSWORD_SCREEN: string;
-  INSTALLED_SOFTWARE: string;
-  SECURITY_PATCH: string;
-  VIRUS_PROTECTION: string;
-  USB_PORT: string;
-  HANDLING_MEASURES: string;
-  CREATED_DATE: string;
-  CREATED_USER: string;
-  UPDATED_DATE: string;
-  UPDATED_USER: string;
+  samplingId: string;          
+  reportId: string;            
+  userId: string;             
+  name: string;                
+  deviceId: string;            
+
+  updateDate: string;          
+  updateTime: string;          
+  createTime: string;          
+
+  updater: string;            
+  creater: string;           
+
+  installedSoftware: boolean;  
+  disposalMeasures: string;    
+  screenSaverPwd: boolean;     
+  usbInterface: boolean;       
+  securityPatch: boolean;     
+  antivirusProtection: boolean;
+  bootAuthentication: boolean; 
+
+  monitorName?: string; 
 }
 
 // 認証状態

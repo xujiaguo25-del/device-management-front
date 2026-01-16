@@ -11,7 +11,7 @@ import Login from './pages/Login';
 import PasswordUpdate from './pages/PasswordUpdate';
 import DeviceManagement from './pages/DeviceManagement';
 import DevicePermissions from './pages/DevicePermissions';
-import SecurityChecks from './pages/SecurityChecks';
+import SecurityChecks from './pages/security-checks/SecurityChecks';
 
 // ルート保護コンポーネント
 import ProtectedRoute from './components/ProtectedRoute';
