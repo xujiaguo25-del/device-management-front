@@ -9,8 +9,6 @@ import {
 import Layout from '../components/common/Layout';
 import DeviceFormModal from '../components/device/DeviceFormModal';
 import { useDeviceStore } from '../stores/deviceStore';
-// import { fetchUsers } from '../services/device/deviceFormService'; // 添加这行
-
 import type { DeviceListItem, DeviceIp, Monitor } from '../types/device';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -22,35 +20,28 @@ const DeviceManagement: React.FC = () => {
     userIdSearch, users, fetchDevices, handlePageChange, handlePageSizeChange,
     handleEditDevice, handleDeleteDevice, handleAddDevice,
     handleUserIdSearch, handleFormSubmit, initialize,
-    setFormVisible, setIsEditing, setSelectedDevice // 添加这行
+    setFormVisible, setIsEditing, setSelectedDevice
   } = useDeviceStore();
 
-
+  // コンポーネントマウント時に初期化
   useEffect(() => { initialize(); }, []);
 
-  const cellStyle: React.CSSProperties = {
-    textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap',
-    overflow: 'hidden', textOverflow: 'ellipsis',
-  };
-
-  
-
+  // テーブル列定義
   const columns: ColumnsType<DeviceListItem> = [
     {
-      title: '主机编号',
+      title: 'デバイス番号',
       dataIndex: 'deviceId',
       key: 'deviceId',
       align: 'center',
       width: 180,
-      ellipsis: true,
       render: (t: string) => (
-        <div style={{ textAlign: 'center', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={t}>
-          {t}
+        <div style={{ textAlign: 'center', wordBreak: 'break-word', whiteSpace: 'normal' }} title={t}>
+          {t || '-'}
         </div>
       ),
     },
     {
-      title: '显示器',
+      title: 'モニター',
       dataIndex: 'monitors',
       key: 'monitors',
       align: 'center',
@@ -62,12 +53,22 @@ const DeviceManagement: React.FC = () => {
         </div>
       ),
     },
-    { title: '用户姓名', dataIndex: 'userName', key: 'userName', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
-    { title: '用户工号', dataIndex: 'userId', key: 'userId', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
-    { title: '主机型号', dataIndex: 'deviceModel', key: 'deviceModel', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
-    { title: '电脑名', dataIndex: 'computerName', key: 'computerName', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
+    { 
+      title: 'ユーザー情報', 
+      key: 'userInfo',
+      align: 'center',
+      width: 120,
+      render: (_: any, record: DeviceListItem) => (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '14px', fontWeight: 500 }}>{record.userName || '-'}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>{record.userId || '-'}</div>
+        </div>
+      ),
+    },
+    { title: 'デバイスモデル', dataIndex: 'deviceModel', key: 'deviceModel', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
+    { title: 'コンピュータ名', dataIndex: 'computerName', key: 'computerName', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
     {
-      title: 'IP地址',
+      title: 'IPアドレス',
       dataIndex: 'deviceIps',
       key: 'deviceIps',
       align: 'center',
@@ -79,15 +80,36 @@ const DeviceManagement: React.FC = () => {
         </div>
       ),
     },
-    { title: '操作系统', dataIndex: 'osName', key: 'osName', align: 'center', width: 120, ellipsis: true },
-    { title: '内存(G)', dataIndex: 'memorySize', key: 'memorySize', align: 'center', width: 80, ellipsis: true },
-    { title: 'SSD(G)', dataIndex: 'ssdSize', key: 'ssdSize', align: 'center', width: 80, ellipsis: true },
-    { title: 'HDD(G)', dataIndex: 'hddSize', key: 'hddSize', align: 'center', width: 80, ellipsis: true },
-    { title: '项目', dataIndex: 'project', key: 'project', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
-    { title: '开发室', dataIndex: 'devRoom', key: 'devRoom', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
-    { title: '备注', dataIndex: 'remark', key: 'remark', align: 'center', width: 150, ellipsis: true, render: (t) => t || '-' },
+    { title: 'OS', dataIndex: 'osName', key: 'osName', align: 'center', width: 120, ellipsis: true },
+    { title: 'メモリ(G)', dataIndex: 'memorySize', key: 'memorySize', align: 'center', width: 80, ellipsis: true },
+    { 
+      title: 'ストレージ(G)', 
+      key: 'storage',
+      align: 'center',
+      width: 100,
+      render: (_: any, record: DeviceListItem) => (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '12px' }}>SSD: {record.ssdSize || '-'}</div>
+          <div style={{ fontSize: '12px' }}>HDD: {record.hddSize || '-'}</div>
+        </div>
+      ),
+    },
+    { title: 'プロジェクト', dataIndex: 'project', key: 'project', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
+    { title: '開発室', dataIndex: 'devRoom', key: 'devRoom', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
+    { 
+      title: '備考', 
+      dataIndex: 'remark', 
+      key: 'remark', 
+      align: 'center', 
+      width: 150,
+      render: (t) => (
+        <div style={{ textAlign: 'center', wordBreak: 'break-word', whiteSpace: 'normal' }} title={t}>
+          {t || '-'}
+        </div>
+      ),
+    },
     {
-      title: '确认状态',
+      title: '確認状態',
       dataIndex: 'confirmStatus',
       key: 'confirmStatus',
       align: 'center',
@@ -104,10 +126,10 @@ const DeviceManagement: React.FC = () => {
       render: (_: any, r: DeviceListItem) => (
         <Space size={[4, 0]} wrap={false} style={{ whiteSpace: 'nowrap' }}>
           <Button type="link" icon={<EditOutlined />} size="small" onClick={() => handleEditDevice(r)}>
-            编辑
+            編集
           </Button>
           <Button type="link" danger icon={<DeleteOutlined />} size="small" onClick={() => handleDeleteDevice(r.deviceId)}>
-            删除
+            削除
           </Button>
         </Space>
       ),
@@ -115,14 +137,14 @@ const DeviceManagement: React.FC = () => {
   ];
 
   return (
-    <Layout title="设备管理">
-      <div style={{ height: 'calc(100vh - 150px)', display: 'flex', flexDirection: 'column', background: '#fff', padding: 20, overflow: 'hidden' }}>
-        {/* 顶部搜索区 - 仅保留工号搜索 & 添加按钮 */}
+    <Layout title="デバイス管理">
+      <div style={{ display: 'flex', flexDirection: 'column', background: '#fff', padding: 20, minHeight: 'calc(100vh - 150px)' }}>
+        {/* 上部検索エリア */}
         <div style={{ marginBottom: 20, flexShrink: 0 }}>
           <Row gutter={16} align="middle" justify="space-between">
             <Col>
               <Search
-                placeholder="输入用户工号进行搜索"
+                placeholder="ユーザーIDで検索"
                 allowClear
                 enterButton={<SearchOutlined />}
                 onSearch={handleUserIdSearch}
@@ -132,13 +154,13 @@ const DeviceManagement: React.FC = () => {
               />
             </Col>
             <Col>
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDevice}>添加设备</Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDevice}>デバイスを追加</Button>
             </Col>
           </Row>
         </div>
 
-        {/* 表格 */}
-        <div style={{ flex: '1 1 auto', overflowX: 'auto', overflowY: 'hidden', minWidth: '100%' }}>
+        {/* テーブル */}
+        <div style={{ flex: '1 1 auto', minWidth: '100%' }}>
           <Table<DeviceListItem>
             rowKey="deviceId"
             columns={columns}
@@ -151,7 +173,7 @@ const DeviceManagement: React.FC = () => {
           />
         </div>
 
-        {/* 分页 */}
+        {/* ページネーション */}
         <div style={{ marginTop: 16, flexShrink: 0, textAlign: 'right', paddingRight: 10 }}>
           <Pagination
             current={searchParams.page}
@@ -161,21 +183,19 @@ const DeviceManagement: React.FC = () => {
             onShowSizeChange={handlePageSizeChange}
             showQuickJumper
             showSizeChanger
-            showTotal={(t, r) => `第 ${r[0]}-${r[1]} 条，共 ${t} 条`}
+            showTotal={(t, r) => `${r[0]}-${r[1]} 件目、全 ${t} 件`}
             pageSizeOptions={['10', '15', '20']}
           />
         </div>
 
+        {/* デバイスフォームモーダル */}
         <DeviceFormModal
           visible={formVisible}
           isEditing={isEditing}
           device={selectedDevice}
           dictData={{}}
-          users={users} // 传入用户列表
+          users={users}
           onCancel={() => {
-            // useDeviceStore.getState().setFormVisible(false);
-            // useDeviceStore.getState().setIsEditing(false);
-            // useDeviceStore.getState().setSelectedDevice(null);
             setFormVisible(false);
             setIsEditing(false);
             setSelectedDevice(null);
