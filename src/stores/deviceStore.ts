@@ -149,20 +149,20 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
       });
       
       // 如果用户太少，添加默认用户
-      if (users.length < 5) {
-        const defaultUsers = [
-          { userId: 'JS0010', name: '小娟', deptId: 'IT' },
-          { userId: 'JS0011', name: '张三', deptId: '研发部' },
-          { userId: 'JS0012', name: '李四', deptId: '测试部' },
-        ];
+      // if (users.length < 5) {
+      //   const defaultUsers = [
+      //     { userId: 'JS0010', name: '小娟', deptId: 'IT' },
+      //     { userId: 'JS0011', name: '张三', deptId: '研发部' },
+      //     { userId: 'JS0012', name: '李四', deptId: '测试部' },
+      //   ];
         
-        defaultUsers.forEach(user => {
-          if (!userSet.has(user.userId)) {
-            userSet.add(user.userId);
-            users.push(user);
-          }
-        });
-      }
+      //   defaultUsers.forEach(user => {
+      //     if (!userSet.has(user.userId)) {
+      //       userSet.add(user.userId);
+      //       users.push(user);
+      //     }
+      //   });
+      // }
       
       setUsers(users);
       
@@ -173,13 +173,13 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
       console.error('获取用户列表失败:', error);
       
       // 返回模拟数据
-      const defaultUsers = [
-        { userId: 'JS0010', name: '小娟', deptId: 'IT' },
-        { userId: 'JS0011', name: '张三', deptId: '研发部' },
-        { userId: 'JS0012', name: '李四', deptId: '测试部' },
-      ];
+      // const defaultUsers = [
+      //   { userId: 'JS0010', name: '小娟', deptId: 'IT' },
+      //   { userId: 'JS0011', name: '张三', deptId: '研发部' },
+      //   { userId: 'JS0012', name: '李四', deptId: '测试部' },
+      // ];
       
-      setUsers(defaultUsers);
+      // setUsers(defaultUsers);
     } finally {
       setUsersLoading(false);
     }

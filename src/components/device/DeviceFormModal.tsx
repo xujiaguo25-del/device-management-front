@@ -460,8 +460,6 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                  <DictSelect
                   typeCode="SSD_SIZE"
                   placeholder="请选择固态硬盘"
-                  allowEmpty
-                  emptyLabel="无"
                   style={{ width: '100%' }}
                 />
               </Form.Item>
@@ -483,8 +481,6 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 <DictSelect
                   typeCode="HDD_SIZE"
                   placeholder="请选择机械硬盘"
-                  allowEmpty
-                  emptyLabel="无"
                   style={{ width: '100%' }}
                 />
               </Form.Item>
