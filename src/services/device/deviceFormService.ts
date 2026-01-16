@@ -1,133 +1,8 @@
 // services/device/deviceFormService.ts
 import type { DeviceListItem } from '../../types/device';
 import { get, post, put } from '../api';
-import type { ApiResponse, DictResponseData, DeviceListResponseData } from '../../types/device';
+import type { ApiResponse } from '../../types/device';
 
-
-// 获取字典数据
-// export const fetchDictData = async (): Promise<DictResponseData> => {
-//   try {
-//     // 使用泛型指定返回类型
-//     const response = await get<ApiResponse<DictResponseData>>('/dict/data');
-
-//     if (response.code === 200) {
-//       return response.data;
-//     } else {
-//       throw new Error(response.message || '获取字典数据失败');
-//     }
-//   } catch (error) {
-//     console.error('获取字典数据失败:', error);
-
-//     // 返回模拟数据
-//     return {
-//       CONFIRM_STATUS: [
-//         { dictId: 13, dictItemName: '已确认' },
-//         { dictId: 12, dictItemName: '未确认' }
-//       ],
-//       OS_TYPE: [
-//         { dictId: 1, dictItemName: 'Windows 11' },
-//         { dictId: 2, dictItemName: 'Windows 10' },
-//         { dictId: 3, dictItemName: 'Mac OS' },
-//       ],
-//       MEMORY_SIZE: [
-//         { dictId: 4, dictItemName: '8G' },
-//         { dictId: 5, dictItemName: '16G' },
-//         { dictId: 6, dictItemName: '32G' },
-//       ],
-//       SSD_SIZE: [
-//         { dictId: 7, dictItemName: '256G' },
-//         { dictId: 8, dictItemName: '512G' },
-//         { dictId: 9, dictItemName: '1T' },
-//       ],
-//       HDD_SIZE: [
-//         { dictId: 10, dictItemName: '1T' },
-//         { dictId: 11, dictItemName: '2T' },
-//       ]
-//     };
-//   }
-// };
-
-
-// 获取用户列表
-// export const fetchUsers = async (): Promise<Array<{userId: string, name: string, deptId?: string}>> => {
-//   try {
-//     const queryString = new URLSearchParams({
-//       page: '1',
-//       pageSize: '1000'
-//     }).toString();
-
-//     // 使用泛型指定返回类型
-//     const response = await get<ApiResponse<DeviceListResponseData>>(`/devices/list?${queryString}`);
-
-//     if (response.code === 200) {
-//       // 从设备列表中提取用户
-//       const deviceList = response.data?.list || [];
-
-//       // 创建用户映射
-//       const userMap = new Map<string, {userId: string, name: string, deptId?: string}>();
-
-//       deviceList.forEach((device: DeviceListItem) => {
-//         if (device.userId && device.userName) {
-//           if (!userMap.has(device.userId)) {
-//             userMap.set(device.userId, {
-//               userId: device.userId,
-//               name: device.userName || '',
-//               deptId: device.deptId || ''
-//             });
-//           }
-//         }
-//       });
-
-//       // 将映射转换为数组
-//       const users = Array.from(userMap.values());
-
-//       // 如果用户太少，添加默认用户
-//       if (users.length < 5) {
-//         const defaultUsers = [
-//           { userId: 'JS0010', name: '小娟', deptId: 'IT' },
-//           { userId: 'JS0011', name: '张三', deptId: '研发部' },
-//           { userId: 'JS0012', name: '李四', deptId: '测试部' },
-//           { userId: 'JS0013', name: '王五', deptId: '产品部' },
-//           { userId: 'JS0014', name: '李松', deptId: '研发部' }
-//         ];
-
-//         defaultUsers.forEach(user => {
-//           if (!userMap.has(user.userId)) {
-//             userMap.set(user.userId, user);
-//           }
-//         });
-
-//         return Array.from(userMap.values());
-//       }
-
-//       return users;
-//     } else {
-//       throw new Error(response.message || '获取用户列表失败');
-//     }
-//   } catch (error) {
-//     console.error('获取用户列表失败:', error);
-
-//     // 返回模拟数据
-//     return [
-//       { userId: 'JS0010', name: '小娟', deptId: 'IT' },
-//       { userId: 'JS0011', name: '张三', deptId: '研发部' },
-//       { userId: 'JS0012', name: '李四', deptId: '测试部' },
-//       { userId: 'JS0013', name: '王五', deptId: '产品部' },
-//       { userId: 'JS0014', name: '李松', deptId: '研发部' },
-//       { userId: 'JS0015', name: '李雪', deptId: '测试部' },
-//       { userId: 'JS0016', name: '韩海峰', deptId: '研发部' },
-//       { userId: 'JS0017', name: '小红', deptId: '产品部' },
-//       { userId: 'JS0018', name: '小芳', deptId: 'IT' },
-//       { userId: 'JS0019', name: '小李', deptId: '研发部' },
-//       { userId: 'JS0020', name: '老丁', deptId: '测试部' },
-//       { userId: 'JS0021', name: '老张', deptId: '产品部' },
-//       { userId: 'JS0022', name: '老刘', deptId: '研发部' },
-//       { userId: 'JS0023', name: '新用户1', deptId: 'IT' },
-//       { userId: 'JS0024', name: '新用户2', deptId: '测试部' },
-//       { userId: 'JS0025', name: '新用户3', deptId: '研发部' }
-//     ];
-//   }
-// };
 
 // 将前端DeviceListItem转换为后端DeviceFullDTO格式
 const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean = false): any => {
@@ -178,13 +53,17 @@ const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean =
 // 保存设备（新增设备）
 export const saveDevice = async (deviceData: DeviceListItem): Promise<boolean> => {
   try {
+
+    console.log('!!!!!!!!!!!!!!!!!!!!!' + deviceData );
     const deviceFullDTO = convertToDeviceFullDTO(deviceData, false);
+
+    console.log(deviceFullDTO);
 
     console.log('发送给后端的数据:', JSON.stringify(deviceFullDTO, null, 2));
 
     // 调用后端insertDevice接口
     // 使用泛型指定返回类型
-    const response = await post<ApiResponse>('/devices/insertDevice', deviceFullDTO);
+    const response = await post<ApiResponse>('/devices', deviceFullDTO);
 
     if (response.code === 200) {
       console.log('设备保存成功:', response.data);
@@ -211,7 +90,7 @@ export const updateDevice = async (deviceData: DeviceListItem): Promise<boolean>
 
     // 调用后端updateDevice接口 
     // 使用泛型指定返回类型
-    const response = await put<ApiResponse>(`/devices/updateDevice/${deviceData.deviceId}`, deviceFullDTO);
+    const response = await put<ApiResponse>(`/devices/${deviceData.deviceId}`, deviceFullDTO);
 
     if (response.code === 200) {
       console.log('设备更新成功:', response.data);
