@@ -90,6 +90,7 @@ const DeviceManagement: React.FC = () => {
     },
     { title: 'デバイスモデル', dataIndex: 'deviceModel', key: 'deviceModel', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
     { title: 'コンピュータ名', dataIndex: 'computerName', key: 'computerName', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
+    { title: 'ログインユーザー名', dataIndex: 'loginUsername', key: 'loginUsername', align: 'center', width: 130, ellipsis: true, render: (t) => t || '-' },
     {
       title: 'IPアドレス',
       dataIndex: 'deviceIps',
@@ -195,7 +196,7 @@ const DeviceManagement: React.FC = () => {
                 onSearch={handleUserIdSearch}
                 onChange={(e) => setUserIdSearch(e.target.value)}
                 value={userIdSearch}
-                style={{ width: 240, padding: '6px 0' }}
+                style={{ width: 240, padding: '0 0 6px' }}
               />
             </Col>
             <Col>
@@ -235,7 +236,7 @@ const DeviceManagement: React.FC = () => {
             loading={loading}
             scroll={{ 
               x: 2200,
-              y: tableHeight - 20 // マージンを考慮
+              y: tableHeight-8 // マージンを考慮
             }}
             pagination={false}
             size="middle"
