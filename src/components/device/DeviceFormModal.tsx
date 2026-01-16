@@ -213,6 +213,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       title={isEditing ? '编辑设备' : '新增设备'}
       open={visible}
       width={800}
+      maskClosable={false} // 禁用遮罩层关闭
       onCancel={onCancel}
       footer={[
         <Button key="cancel" onClick={onCancel}>
