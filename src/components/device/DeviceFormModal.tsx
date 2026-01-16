@@ -20,6 +20,8 @@ import {
 } from '@ant-design/icons';
 import type { DeviceListItem, Monitor, DeviceIp } from '../../types/device';
 import { isValidIP } from '../../services/device/deviceFormService';
+import DictSelect from '../DictSelect'; // 添加这行
+import { useDicts } from '../../hooks/useDicts'; // 添加这行
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -48,6 +50,15 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   const [form] = Form.useForm(); // antd库
   const [monitors, setMonitors] = useState<Monitor[]>([]);
   const [deviceIps, setDeviceIps] = useState<DeviceIp[]>([]);
+
+  // 使用 useDicts 获取字典数据
+  const { map: dictMap, loading: dictLoading } = useDicts([
+    'CONFIRM_STATUS',
+    'OS_TYPE',
+    'MEMORY_SIZE',
+    'SSD_SIZE',
+    'HDD_SIZE'
+  ]);
 
   useEffect(() => {
     if (visible) {
@@ -110,10 +121,18 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       // }
 
       // 获取字典显示名称
-      const osName = dictData.OS_TYPE?.find(item => item.dictId === values.osId)?.dictItemName || '';
-      const memorySize = dictData.MEMORY_SIZE?.find(item => item.dictId === values.memoryId)?.dictItemName || '';
-      const ssdSize = values.ssdId ? (dictData.SSD_SIZE?.find(item => item.dictId === values.ssdId)?.dictItemName || '') : '—';
-      const hddSize = values.hddId ? (dictData.HDD_SIZE?.find(item => item.dictId === values.hddId)?.dictItemName || '') : '—';
+      // const osName = dictData.OS_TYPE?.find(item => item.dictId === values.osId)?.dictItemName || '';
+      // const memorySize = dictData.MEMORY_SIZE?.find(item => item.dictId === values.memoryId)?.dictItemName || '';
+      // const ssdSize = values.ssdId ? (dictData.SSD_SIZE?.find(item => item.dictId === values.ssdId)?.dictItemName || '') : '—';
+      // const hddSize = values.hddId ? (dictData.HDD_SIZE?.find(item => item.dictId === values.hddId)?.dictItemName || '') : '—';
+
+      // 从字典数据中获取显示名称
+      const osName = dictMap.OS_TYPE?.find(item => item.dictId === values.osId)?.dictItemName || '';
+      const memorySize = dictMap.MEMORY_SIZE?.find(item => item.dictId === values.memoryId)?.dictItemName || '';
+      const ssdSize = values.ssdId ? (dictMap.SSD_SIZE?.find(item => item.dictId === values.ssdId)?.dictItemName || '') : '—';
+      const hddSize = values.hddId ? (dictMap.HDD_SIZE?.find(item => item.dictId === values.hddId)?.dictItemName || '') : '—';
+      const confirmStatus = dictMap.CONFIRM_STATUS?.find(item => item.dictId === values.selfConfirmId)?.dictItemName || '';
+      
       
       // 获取选中的用户信息
       const selectedUser = users.find(user => user.userId === values.userId);
@@ -156,11 +175,13 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         ///// 修改
 
         // 设置字典显示值
-        confirmStatus: values.selfConfirmId === 1 ? '已确认' : '未确认',
+        // confirmStatus: values.selfConfirmId === 1 ? '已确认' : '未确认',
+        confirmStatus: confirmStatus,
         osName,
         memorySize,
         ssdSize,
         hddSize,
+
         // 设置用户信息
         userName: selectedUser?.name || values.userName,
         // 设置创建/更新时间
@@ -359,13 +380,19 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 label="本人确认"
                 rules={[{ required: true, message: '请选择确认状态' }]}
               >
-                <Select placeholder="请选择确认状态">
+                {/* <Select placeholder="请选择确认状态">
                   {dictData.CONFIRM_STATUS?.map(item => (
                     <Option key={item.dictId} value={item.dictId}>
                       {item.dictItemName}
                     </Option>
                   ))}
-                </Select>
+                </Select> */}
+
+                <DictSelect
+                  typeCode="CONFIRM_STATUS"
+                  placeholder="请选择确认状态"
+                  style={{ width: '100%' }}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -380,13 +407,19 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 label="操作系统"
                 rules={[{ required: true, message: '请选择操作系统' }]}
               >
-                <Select placeholder="请选择操作系统">
+                {/* <Select placeholder="请选择操作系统">
                   {dictData.OS_TYPE?.map(item => (
                     <Option key={item.dictId} value={item.dictId}>
                       {item.dictItemName}
                     </Option>
                   ))}
-                </Select>
+                </Select> */}
+
+                <DictSelect
+                  typeCode="OS_TYPE"
+                  placeholder="请选择操作系统"
+                  style={{ width: '100%' }}
+                />
               </Form.Item>
             </Col>
             <Col span={6}>
@@ -395,13 +428,19 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 label="内存"
                 rules={[{ required: true, message: '请选择内存' }]}
               >
-                <Select placeholder="请选择内存">
+                {/* <Select placeholder="请选择内存">
                   {dictData.MEMORY_SIZE?.map(item => (
                     <Option key={item.dictId} value={item.dictId}>
                       {item.dictItemName}
                     </Option>
                   ))}
-                </Select>
+                </Select> */}
+
+                <DictSelect
+                  typeCode="MEMORY_SIZE"
+                  placeholder="请选择内存"
+                  style={{ width: '100%' }}
+                />
               </Form.Item>
             </Col>
             <Col span={6}>
@@ -409,14 +448,22 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 name="ssdId"
                 label="固态硬盘"
               >
-                <Select placeholder="请选择固态硬盘">
+                {/* <Select placeholder="请选择固态硬盘">
                   <Option value={0}>无</Option>
                   {dictData.SSD_SIZE?.map(item => (
                     <Option key={item.dictId} value={item.dictId}>
                       {item.dictItemName}
                     </Option>
                   ))}
-                </Select>
+                </Select> */}
+
+                 <DictSelect
+                  typeCode="SSD_SIZE"
+                  placeholder="请选择固态硬盘"
+                  allowEmpty
+                  emptyLabel="无"
+                  style={{ width: '100%' }}
+                />
               </Form.Item>
             </Col>
             <Col span={6}>
@@ -424,14 +471,22 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 name="hddId"
                 label="机械硬盘"
               >
-                <Select placeholder="请选择机械硬盘">
+                {/* <Select placeholder="请选择机械硬盘">
                   <Option value={0}>无</Option>
                   {dictData.HDD_SIZE?.map(item => (
                     <Option key={item.dictId} value={item.dictId}>
                       {item.dictItemName}
                     </Option>
                   ))}
-                </Select>
+                </Select> */}
+
+                <DictSelect
+                  typeCode="HDD_SIZE"
+                  placeholder="请选择机械硬盘"
+                  allowEmpty
+                  emptyLabel="无"
+                  style={{ width: '100%' }}
+                />
               </Form.Item>
             </Col>
           </Row>

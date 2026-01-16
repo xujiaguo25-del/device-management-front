@@ -5,47 +5,48 @@ import type { ApiResponse, DictResponseData, DeviceListResponseData } from '../.
 
 
 // 获取字典数据
-export const fetchDictData = async (): Promise<DictResponseData> => {
-  try {
-    // 使用泛型指定返回类型
-    const response = await get<ApiResponse<DictResponseData>>('/dict/data');
+// export const fetchDictData = async (): Promise<DictResponseData> => {
+//   try {
+//     // 使用泛型指定返回类型
+//     const response = await get<ApiResponse<DictResponseData>>('/dict/data');
 
-    if (response.code === 200) {
-      return response.data;
-    } else {
-      throw new Error(response.message || '获取字典数据失败');
-    }
-  } catch (error) {
-    console.error('获取字典数据失败:', error);
+//     if (response.code === 200) {
+//       return response.data;
+//     } else {
+//       throw new Error(response.message || '获取字典数据失败');
+//     }
+//   } catch (error) {
+//     console.error('获取字典数据失败:', error);
 
-    // 返回模拟数据
-    return {
-      CONFIRM_STATUS: [
-        { dictId: 13, dictItemName: '已确认' },
-        { dictId: 12, dictItemName: '未确认' }
-      ],
-      OS_TYPE: [
-        { dictId: 1, dictItemName: 'Windows 11' },
-        { dictId: 2, dictItemName: 'Windows 10' },
-        { dictId: 3, dictItemName: 'Mac OS' },
-      ],
-      MEMORY_SIZE: [
-        { dictId: 4, dictItemName: '8G' },
-        { dictId: 5, dictItemName: '16G' },
-        { dictId: 6, dictItemName: '32G' },
-      ],
-      SSD_SIZE: [
-        { dictId: 7, dictItemName: '256G' },
-        { dictId: 8, dictItemName: '512G' },
-        { dictId: 9, dictItemName: '1T' },
-      ],
-      HDD_SIZE: [
-        { dictId: 10, dictItemName: '1T' },
-        { dictId: 11, dictItemName: '2T' },
-      ]
-    };
-  }
-};
+//     // 返回模拟数据
+//     return {
+//       CONFIRM_STATUS: [
+//         { dictId: 13, dictItemName: '已确认' },
+//         { dictId: 12, dictItemName: '未确认' }
+//       ],
+//       OS_TYPE: [
+//         { dictId: 1, dictItemName: 'Windows 11' },
+//         { dictId: 2, dictItemName: 'Windows 10' },
+//         { dictId: 3, dictItemName: 'Mac OS' },
+//       ],
+//       MEMORY_SIZE: [
+//         { dictId: 4, dictItemName: '8G' },
+//         { dictId: 5, dictItemName: '16G' },
+//         { dictId: 6, dictItemName: '32G' },
+//       ],
+//       SSD_SIZE: [
+//         { dictId: 7, dictItemName: '256G' },
+//         { dictId: 8, dictItemName: '512G' },
+//         { dictId: 9, dictItemName: '1T' },
+//       ],
+//       HDD_SIZE: [
+//         { dictId: 10, dictItemName: '1T' },
+//         { dictId: 11, dictItemName: '2T' },
+//       ]
+//     };
+//   }
+// };
+
 
 // 获取用户列表
 export const fetchUsers = async (): Promise<Array<{userId: string, name: string, deptId?: string}>> => {
