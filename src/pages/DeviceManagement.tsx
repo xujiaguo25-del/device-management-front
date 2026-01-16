@@ -138,7 +138,7 @@ const DeviceManagement: React.FC = () => {
       align: 'center',
       width: 100,
       fixed: 'right',
-      render: (s: string) => <Tag color={s === '已确认' ? 'green' : 'red'}>{s}</Tag>,
+      render: (s: string) => <Tag color={s === '已确认' || s === '確認済み' ? 'green' : 'red'}>{s}</Tag>,
     },
     {
       title: '操作',
