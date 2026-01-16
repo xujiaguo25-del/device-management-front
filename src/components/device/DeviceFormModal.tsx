@@ -87,8 +87,8 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       } else {
         // 新規モード：デフォルト値を設定
         form.resetFields();
-        setMonitors([{ monitorName: '', deviceId: '' }]);
-        setDeviceIps([{ ipAddress: '', deviceId: '' }]);
+        setMonitors([]);
+        setDeviceIps([]);
       }
     }
   }, [visible, device, form]);
