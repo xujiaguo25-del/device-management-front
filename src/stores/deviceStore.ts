@@ -14,7 +14,8 @@ import {
 import {
   saveDevice,
   updateDevice,
-} from '../services/device/deviceFormService'; // 添加导入
+} from '../services/device/deviceFormService';
+import { useAuthStore } from '../stores/authStore'; // ✅ 导入 authStore
 
 interface DeviceStore {
   devices: DeviceListItem[];
@@ -25,8 +26,8 @@ interface DeviceStore {
   isEditing: boolean;
   selectedDevice: DeviceListItem | null;
   userIdSearch: string;
-  users: any[]; // 添加用户列表
-  usersLoading: boolean; // 添加用户加载状态
+  users: any[];
+  usersLoading: boolean;
 
   setDevices: (d: DeviceListItem[]) => void;
   setLoading: (l: boolean) => void;
@@ -36,11 +37,11 @@ interface DeviceStore {
   setIsEditing: (e: boolean) => void;
   setSelectedDevice: (d: DeviceListItem | null) => void;
   setUserIdSearch: (s: string) => void;
-  setUsers: (u: any[]) => void; // 添加
-  setUsersLoading: (l: boolean) => void; // 添加
+  setUsers: (u: any[]) => void;
+  setUsersLoading: (l: boolean) => void;
 
   fetchDevices: () => Promise<void>;
-  fetchUsers: () => Promise<void>; // 添加
+  fetchUsers: () => Promise<void>;
   handlePageChange: (page: number, pageSize?: number) => void;
   handlePageSizeChange: (size: number) => void;
   handleEditDevice: (d: DeviceListItem) => Promise<void>;
@@ -48,7 +49,7 @@ interface DeviceStore {
   handleAddDevice: () => void;
   handleUserIdSearch: (value: string) => void;
   handleFormSubmit: (values: DeviceListItem) => Promise<void>;
-  initialize: () => Promise<void>;
+  initialize: (isAdmin: boolean, currentUserId?: string) => Promise<void>; // ✅ 修改参数
 }
 
 export const useDeviceStore = create<DeviceStore>((set, get) => ({
@@ -61,7 +62,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   isEditing: false,
   selectedDevice: null,
   userIdSearch: '',
-  users: [], // 初始化为空数组
+  users: [],
   usersLoading: false,
 
   /* ---------- setters ---------- */
@@ -80,16 +81,18 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   fetchDevices: async () => {
     const { searchParams, setLoading, setDevices, setTotal } = get();
     setLoading(true);
+    console.log('fetchDevices被调用，参数：', searchParams);
     try {
       const res: DeviceApiResponse<DeviceListItem> = await getDeviceList(searchParams);
+      console.log('fetchDevices返回：', res);
       if (res.code === 200 && res.data) {
-        // ✅ 显式告诉 TS 这是分页结构
         const pageData = res.data as {
           list: DeviceListItem[];
           total: number;
           page: number;
           pageSize: number;
         };
+        console.log('转换后的pageData：', pageData);
         setDevices(pageData.list);
         setTotal(pageData.total);
       } else {
@@ -107,36 +110,26 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   },
 
   fetchUsers: async () => {
-    const { setUsers, setUsersLoading, searchParams, setDevices } = get();
+    const { setUsers, setUsersLoading, searchParams } = get();
     setUsersLoading(true);
-    
+
     try {
-      // 调用fetchDevices获取设备列表
       const { fetchDevices } = get();
-      
-      // 先保存原始搜索参数
       const originalParams = { ...searchParams };
-      
-      // 设置获取用户所需的参数（获取大量数据以便提取用户）
+
       const userSearchParams = {
         page: 1,
         pageSize: 1000,
         ...originalParams
       };
-      
-      // 临时修改搜索参数
+
       set({ searchParams: userSearchParams });
-      
-      // 获取设备列表
       await fetchDevices();
-      
-      // 从当前设备列表中提取用户信息
+
       const deviceList = get().devices;
-      
-      // 使用Set去重
       const userSet = new Set<string>();
       const users: Array<{userId: string, name: string, deptId?: string}> = [];
-      
+
       deviceList.forEach((device) => {
         if (device.userId && device.userName && !userSet.has(device.userId)) {
           userSet.add(device.userId);
@@ -147,15 +140,14 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
           });
         }
       });
-      
-      // 如果用户太少，添加默认用户
+
       if (users.length < 5) {
         const defaultUsers = [
           { userId: 'JS0010', name: '小娟', deptId: 'IT' },
           { userId: 'JS0011', name: '张三', deptId: '研发部' },
           { userId: 'JS0012', name: '李四', deptId: '测试部' },
         ];
-        
+
         defaultUsers.forEach(user => {
           if (!userSet.has(user.userId)) {
             userSet.add(user.userId);
@@ -163,27 +155,22 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
           }
         });
       }
-      
+
       setUsers(users);
-      
-      // 恢复原始搜索参数
       set({ searchParams: originalParams });
-      
+
     } catch (error) {
       console.error('获取用户列表失败:', error);
-      
-      // 返回模拟数据
       const defaultUsers = [
         { userId: 'JS0010', name: '小娟', deptId: 'IT' },
         { userId: 'JS0011', name: '张三', deptId: '研发部' },
         { userId: 'JS0012', name: '李四', deptId: '测试部' },
       ];
-      
       setUsers(defaultUsers);
     } finally {
       setUsersLoading(false);
     }
-},
+  },
 
   handlePageChange: (page, pageSize) => {
     const { setSearchParams, fetchDevices } = get();
@@ -200,6 +187,15 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   },
 
   handleEditDevice: async (device) => {
+    // ✅ 权限检查
+    const { userInfo } = useAuthStore.getState();
+    const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
+
+    if (!isAdmin) {
+      message.error('普通用户无权限编辑设备');
+      return;
+    }
+
     try {
       const detail = await getDeviceDetail(device.deviceId);
       set({ selectedDevice: detail, isEditing: true, formVisible: true });
@@ -208,8 +204,17 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
     }
   },
 
-  handleDeleteDevice: async (deviceId) =>
-    new Promise<void>((resolve) => {
+  handleDeleteDevice: async (deviceId) => {
+    // ✅ 权限检查
+    const { userInfo } = useAuthStore.getState();
+    const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
+
+    if (!isAdmin) {
+      message.error('普通用户无权限删除设备');
+      return Promise.resolve();
+    }
+
+    return new Promise<void>((resolve) => {
       Modal.confirm({
         title: '确认删除',
         content: `确定要删除设备 ${deviceId} 吗？`,
@@ -227,52 +232,82 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
         },
         onCancel: () => resolve(),
       });
-    }),
+    });
+  },
 
-  handleAddDevice: () =>
-    set({ selectedDevice: null, isEditing: false, formVisible: true }),
+  handleAddDevice: () => {
+
+
+    set({
+
+      isEditing: false,
+      formVisible: true
+    });
+  },
 
   handleUserIdSearch: (value) => {
     const { setUserIdSearch, setSearchParams, fetchDevices } = get();
-    setUserIdSearch(value);
-    const p = { ...get().searchParams, userId: value.trim() || undefined, page: 1 };
-    setSearchParams(p);
+    // ✅ 普通用户无法修改搜索条件
+    const { userInfo } = useAuthStore.getState();
+    const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
+
+    if (!isAdmin && userInfo?.USER_ID) {
+      // 普通用户强制使用自己的ID
+      const forcedUserId = userInfo.USER_ID;
+      setUserIdSearch(forcedUserId);
+      const p = { ...get().searchParams, userId: forcedUserId, page: 1 };
+      setSearchParams(p);
+    } else {
+      setUserIdSearch(value);
+
+      // ✅ 管理员搜索逻辑：空字符串或 undefined 时设为 undefined
+      const userIdParam = value.trim() === '' ? undefined : value.trim();
+      const p = { ...get().searchParams, userId: userIdParam, page: 1 };
+      setSearchParams(p);
+    }
+
     fetchDevices();
   },
 
-  /* 表单提交暂未实现，先空着 */
-  // 处理表单提交
   handleFormSubmit: async (values: DeviceListItem) => {
-    // message.info('表单提交功能暂未实现');
-    // set({ formVisible: false, isEditing: false, selectedDevice: null });
-
-     try {
+    try {
       const { isEditing, fetchDevices } = get();
+      const { userInfo } = useAuthStore.getState();
+      const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
+
+      // ✅ 普通用户只能添加/编辑自己的设备
+      if (!isAdmin && values.userId !== userInfo?.USER_ID) {
+        if (isEditing) {
+          message.error('无权编辑其他用户的设备');
+          return;
+        }
+      }
+
+      // ✅ 普通用户添加设备时强制使用自己的ID
+      if (!isAdmin && !isEditing) {
+        values.userId = userInfo?.USER_ID || '';
+      }
+
       let success;
-      
+
       if (isEditing) {
-        // 编辑模式下调用 updateDevice
-        success = await updateDevice(values);  
+        success = await updateDevice(values);
       } else {
-        // 新增模式下调用 saveDevice
         success = await saveDevice(values);
       }
-      
+
       if (success) {
         if (isEditing) {
           message.success(`设备 ${values.deviceId} 编辑成功`);
         } else {
           message.success(`设备 ${values.deviceId} 添加成功`);
         }
-        
-        // 重新加载设备列表
+
         await fetchDevices();
-        
-        // 关闭表单
-        set({ 
-          formVisible: false, 
-          isEditing: false, 
-          selectedDevice: null 
+        set({
+          formVisible: false,
+          isEditing: false,
+          selectedDevice: null
         });
       } else {
         message.error('操作失败');
@@ -283,17 +318,38 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
     }
   },
 
-  // initialize: async () => {
-  //   await get().fetchDevices();
-  //   // 下拉、字典、用户接口全部先不调
-  //   // await get().fetchFormData();
-  //   // await get().fetchFilterOptions();
-  // },
-  initialize: async () => {
-    // 并行获取设备列表和用户列表
-    await Promise.all([
-      get().fetchDevices(),
-      get().fetchUsers()
-    ]);
+  // ✅ 根据用户类型初始化
+  // src/stores/deviceStore.ts
+  initialize: async (isAdmin: boolean, currentUserId?: string) => {
+    const { setSearchParams, setUserIdSearch, fetchDevices, fetchUsers } = get();
+
+    console.log('初始化设备商店:', { isAdmin, currentUserId });
+
+    if (!isAdmin && currentUserId) {
+      // 普通用户：只加载自己的设备，不加载用户列表
+      // 强制设置为自己的ID
+      setUserIdSearch(currentUserId);
+      // ✅ 设置搜索参数时包含 userId
+      setSearchParams({
+        page: 1,
+        pageSize: 10,
+        userId: currentUserId  // 明确设置userId
+      });
+      await fetchDevices();
+    } else {
+      // ✅ 管理员：清除所有搜索条件，加载所有设备和用户列表
+      setUserIdSearch('');  // 清空搜索框
+      // ✅ 明确设置 userId 为 undefined，而不是空字符串
+      setSearchParams({
+        page: 1,
+        pageSize: 10,
+        userId: undefined  // 明确设置为 undefined
+      });
+
+      await Promise.all([
+        fetchDevices(),
+        fetchUsers()
+      ]);
+    }
   },
 }));
