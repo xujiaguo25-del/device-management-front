@@ -110,12 +110,27 @@ const DeviceManagement: React.FC = () => {
       key: 'storage',
       align: 'center',
       width: 100,
-      render: (_: any, record: DeviceListItem) => (
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '12px' }}>SSD: {record.ssdSize || '-'}</div>
-          <div style={{ fontSize: '12px' }}>HDD: {record.hddSize || '-'}</div>
-        </div>
-      ),
+      render: (_: any, record: DeviceListItem) => {
+        const items: string[] = [];
+        if (record.ssdSize && record.ssdSize !== '-') {
+          items.push(`SSD: ${record.ssdSize}`);
+        }
+        if (record.hddSize && record.hddSize !== '-') {
+          items.push(`HDD: ${record.hddSize}`);
+        }
+        
+        if (items.length === 0) {
+          return <div style={{ textAlign: 'center' }}>-</div>;
+        }
+        
+        return (
+          <div style={{ textAlign: 'center' }}>
+            {items.map((item, index) => (
+              <div key={index}>{item}</div>
+            ))}
+          </div>
+        );
+      },
     },
     { title: 'プロジェクト', dataIndex: 'project', key: 'project', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
     { title: '開発室', dataIndex: 'devRoom', key: 'devRoom', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
@@ -165,7 +180,7 @@ const DeviceManagement: React.FC = () => {
         display: 'flex', 
         flexDirection: 'column', 
         background: '#fff', 
-        padding: 20, 
+        padding: 16, 
         height: '100%', 
         overflow: 'hidden' 
       }}>
@@ -180,7 +195,7 @@ const DeviceManagement: React.FC = () => {
                 onSearch={handleUserIdSearch}
                 onChange={(e) => handleUserIdSearch(e.target.value)}
                 value={userIdSearch}
-                style={{ width: 240 }}
+                style={{ width: 240, padding: '6px 0' }}
               />
             </Col>
             <Col>
@@ -202,7 +217,7 @@ const DeviceManagement: React.FC = () => {
           {/* 絶対配置で内部スクロールを実現 */}
           <div style={{
             position: 'absolute',
-            top: 0,
+            top: -12,
             left: 0,
             right: 0,
             bottom: -36,
@@ -239,8 +254,8 @@ const DeviceManagement: React.FC = () => {
         <div style={{ 
           marginTop: 40, 
           flexShrink: 0, 
-          textAlign: 'right', 
-          paddingRight: 10,
+          display: 'flex',
+          justifyContent: 'center',
           transition: 'all 0.3s ease' // ページネーションもトランジション
         }}>
           <Pagination
