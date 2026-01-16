@@ -49,85 +49,85 @@ import type { ApiResponse, DictResponseData, DeviceListResponseData } from '../.
 
 
 // 获取用户列表
-export const fetchUsers = async (): Promise<Array<{userId: string, name: string, deptId?: string}>> => {
-  try {
-    const queryString = new URLSearchParams({
-      page: '1',
-      pageSize: '1000'
-    }).toString();
+// export const fetchUsers = async (): Promise<Array<{userId: string, name: string, deptId?: string}>> => {
+//   try {
+//     const queryString = new URLSearchParams({
+//       page: '1',
+//       pageSize: '1000'
+//     }).toString();
 
-    // 使用泛型指定返回类型
-    const response = await get<ApiResponse<DeviceListResponseData>>(`/devices/list?${queryString}`);
+//     // 使用泛型指定返回类型
+//     const response = await get<ApiResponse<DeviceListResponseData>>(`/devices/list?${queryString}`);
 
-    if (response.code === 200) {
-      // 从设备列表中提取用户
-      const deviceList = response.data?.list || [];
+//     if (response.code === 200) {
+//       // 从设备列表中提取用户
+//       const deviceList = response.data?.list || [];
 
-      // 创建用户映射
-      const userMap = new Map<string, {userId: string, name: string, deptId?: string}>();
+//       // 创建用户映射
+//       const userMap = new Map<string, {userId: string, name: string, deptId?: string}>();
 
-      deviceList.forEach((device: DeviceListItem) => {
-        if (device.userId && device.userName) {
-          if (!userMap.has(device.userId)) {
-            userMap.set(device.userId, {
-              userId: device.userId,
-              name: device.userName || '',
-              deptId: device.deptId || ''
-            });
-          }
-        }
-      });
+//       deviceList.forEach((device: DeviceListItem) => {
+//         if (device.userId && device.userName) {
+//           if (!userMap.has(device.userId)) {
+//             userMap.set(device.userId, {
+//               userId: device.userId,
+//               name: device.userName || '',
+//               deptId: device.deptId || ''
+//             });
+//           }
+//         }
+//       });
 
-      // 将映射转换为数组
-      const users = Array.from(userMap.values());
+//       // 将映射转换为数组
+//       const users = Array.from(userMap.values());
 
-      // 如果用户太少，添加默认用户
-      if (users.length < 5) {
-        const defaultUsers = [
-          { userId: 'JS0010', name: '小娟', deptId: 'IT' },
-          { userId: 'JS0011', name: '张三', deptId: '研发部' },
-          { userId: 'JS0012', name: '李四', deptId: '测试部' },
-          { userId: 'JS0013', name: '王五', deptId: '产品部' },
-          { userId: 'JS0014', name: '李松', deptId: '研发部' }
-        ];
+//       // 如果用户太少，添加默认用户
+//       if (users.length < 5) {
+//         const defaultUsers = [
+//           { userId: 'JS0010', name: '小娟', deptId: 'IT' },
+//           { userId: 'JS0011', name: '张三', deptId: '研发部' },
+//           { userId: 'JS0012', name: '李四', deptId: '测试部' },
+//           { userId: 'JS0013', name: '王五', deptId: '产品部' },
+//           { userId: 'JS0014', name: '李松', deptId: '研发部' }
+//         ];
 
-        defaultUsers.forEach(user => {
-          if (!userMap.has(user.userId)) {
-            userMap.set(user.userId, user);
-          }
-        });
+//         defaultUsers.forEach(user => {
+//           if (!userMap.has(user.userId)) {
+//             userMap.set(user.userId, user);
+//           }
+//         });
 
-        return Array.from(userMap.values());
-      }
+//         return Array.from(userMap.values());
+//       }
 
-      return users;
-    } else {
-      throw new Error(response.message || '获取用户列表失败');
-    }
-  } catch (error) {
-    console.error('获取用户列表失败:', error);
+//       return users;
+//     } else {
+//       throw new Error(response.message || '获取用户列表失败');
+//     }
+//   } catch (error) {
+//     console.error('获取用户列表失败:', error);
 
-    // 返回模拟数据
-    return [
-      { userId: 'JS0010', name: '小娟', deptId: 'IT' },
-      { userId: 'JS0011', name: '张三', deptId: '研发部' },
-      { userId: 'JS0012', name: '李四', deptId: '测试部' },
-      { userId: 'JS0013', name: '王五', deptId: '产品部' },
-      { userId: 'JS0014', name: '李松', deptId: '研发部' },
-      { userId: 'JS0015', name: '李雪', deptId: '测试部' },
-      { userId: 'JS0016', name: '韩海峰', deptId: '研发部' },
-      { userId: 'JS0017', name: '小红', deptId: '产品部' },
-      { userId: 'JS0018', name: '小芳', deptId: 'IT' },
-      { userId: 'JS0019', name: '小李', deptId: '研发部' },
-      { userId: 'JS0020', name: '老丁', deptId: '测试部' },
-      { userId: 'JS0021', name: '老张', deptId: '产品部' },
-      { userId: 'JS0022', name: '老刘', deptId: '研发部' },
-      { userId: 'JS0023', name: '新用户1', deptId: 'IT' },
-      { userId: 'JS0024', name: '新用户2', deptId: '测试部' },
-      { userId: 'JS0025', name: '新用户3', deptId: '研发部' }
-    ];
-  }
-};
+//     // 返回模拟数据
+//     return [
+//       { userId: 'JS0010', name: '小娟', deptId: 'IT' },
+//       { userId: 'JS0011', name: '张三', deptId: '研发部' },
+//       { userId: 'JS0012', name: '李四', deptId: '测试部' },
+//       { userId: 'JS0013', name: '王五', deptId: '产品部' },
+//       { userId: 'JS0014', name: '李松', deptId: '研发部' },
+//       { userId: 'JS0015', name: '李雪', deptId: '测试部' },
+//       { userId: 'JS0016', name: '韩海峰', deptId: '研发部' },
+//       { userId: 'JS0017', name: '小红', deptId: '产品部' },
+//       { userId: 'JS0018', name: '小芳', deptId: 'IT' },
+//       { userId: 'JS0019', name: '小李', deptId: '研发部' },
+//       { userId: 'JS0020', name: '老丁', deptId: '测试部' },
+//       { userId: 'JS0021', name: '老张', deptId: '产品部' },
+//       { userId: 'JS0022', name: '老刘', deptId: '研发部' },
+//       { userId: 'JS0023', name: '新用户1', deptId: 'IT' },
+//       { userId: 'JS0024', name: '新用户2', deptId: '测试部' },
+//       { userId: 'JS0025', name: '新用户3', deptId: '研发部' }
+//     ];
+//   }
+// };
 
 // 将前端DeviceListItem转换为后端DeviceFullDTO格式
 const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean = false): any => {
