@@ -288,7 +288,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="deviceModel"
                 label="设备型号"
-                rules={[{ required: true, message: '请输入设备型号' }]}
+                // rules={[{ required: true, message: '请输入设备型号' }]}
               >
                 <Input placeholder="请输入设备型号" />
               </Form.Item>
@@ -300,7 +300,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="computerName"
                 label="电脑名称"
-                rules={[{ required: true, message: '请输入电脑名称' }]}
+                // rules={[{ required: true, message: '请输入电脑名称' }]}
               >
                 <Input placeholder="请输入电脑名称" />
               </Form.Item>
@@ -378,7 +378,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="selfConfirmId"
                 label="本人确认"
-                rules={[{ required: true, message: '请选择确认状态' }]}
+                // rules={[{ required: true, message: '请选择确认状态' }]}
               >
                 {/* <Select placeholder="请选择确认状态">
                   {dictData.CONFIRM_STATUS?.map(item => (
@@ -405,7 +405,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="osId"
                 label="操作系统"
-                rules={[{ required: true, message: '请选择操作系统' }]}
+                // rules={[{ required: true, message: '请选择操作系统' }]}
               >
                 {/* <Select placeholder="请选择操作系统">
                   {dictData.OS_TYPE?.map(item => (
@@ -426,7 +426,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="memoryId"
                 label="内存"
-                rules={[{ required: true, message: '请选择内存' }]}
+                // rules={[{ required: true, message: '请选择内存' }]}
               >
                 {/* <Select placeholder="请选择内存">
                   {dictData.MEMORY_SIZE?.map(item => (
@@ -447,6 +447,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="ssdId"
                 label="固态硬盘"
+                // rules={[{ required: true, message: '请选择固态硬盘' }]}
               >
                 {/* <Select placeholder="请选择固态硬盘">
                   <Option value={0}>无</Option>
@@ -468,6 +469,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Form.Item
                 name="hddId"
                 label="机械硬盘"
+                // rules={[{ required: true, message: '请选择机械硬盘' }]}
               >
                 {/* <Select placeholder="请选择机械硬盘">
                   <Option value={0}>无</Option>
