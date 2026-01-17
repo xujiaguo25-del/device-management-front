@@ -7,9 +7,8 @@ export const createColumns = (
   currentPage: number,
   pageSize: number,
   onEdit: (record: SecurityCheck) => void,
-  isAdmin: boolean = true
 ): ColumnType<SecurityCheck>[] => {
-  const baseColumns: ColumnType<SecurityCheck>[] = [
+  const columns: ColumnType<SecurityCheck>[] = [
   {
     title: '序号',
     key: 'index',
@@ -29,36 +28,36 @@ export const createColumns = (
     width: 120,
   },
   {
-  title: '设备编号',
-  dataIndex: 'deviceId',
-  key: 'deviceId',
-  width: 180,
-  render: (deviceId: string, record: SecurityCheck) => {
-    const monitors = record.monitorName
-      ? record.monitorName.split(';').map(m => m.trim()).filter(Boolean)
-      : [];
+    title: '设备编号',
+    dataIndex: 'deviceId',
+    key: 'deviceId',
+    width: 180,
+    render: (deviceId: string, record: SecurityCheck) => {
+      const monitors = record.monitorName
+        ? record.monitorName.split(';').map(m => m.trim()).filter(Boolean)
+        : [];
+      return (
+        <div>
+          <div>{deviceId}</div>
 
-    return (
-      <div>
-        <div>{deviceId}</div>
-
-        {monitors.length > 0 && (
-          <div style={{ marginTop: 4 }}>
-            {monitors.map((monitor, index) => (
-              <Tag
-                key={index}
-                color="blue"
-                style={{ marginBottom: 2 }}
-              >
-                {monitor}（显示器）
-              </Tag>
-            ))}
-          </div>
-        )}
-      </div>
-    );
+          {monitors.length > 0 && (
+            <div style={{ marginTop: 4 }}>
+              {monitors.map((monitor, index) => (
+                <Tag
+                  key={index}
+                  color="blue"
+                  style={{ marginBottom: 2 }}
+                >
+                  {monitor}（显示器）
+                </Tag>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }, 
   },
-},
+  
   
   {
     title: '开机认证',
@@ -151,11 +150,7 @@ export const createColumns = (
     width: 200,
     ellipsis: true,
   },
-];
-
-  // 管理者のみがアクション列を表示
-  if (isAdmin) {
-    baseColumns.push({
+  {
       title: '操作',
       key: 'action',
       fixed: 'right',
@@ -168,8 +163,8 @@ export const createColumns = (
           更新
         </Button>
       ),
-    });
-  }
+    }
+];
 
-  return baseColumns;
+  return columns;
 };
