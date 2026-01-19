@@ -177,11 +177,11 @@ const DeviceManagement: React.FC = () => {
       fixed: 'right',
       render: (_: any, r: DeviceListItem) => (
         <Space size={[4, 0]} wrap={false} style={{ whiteSpace: 'nowrap' }}>
-          <Button type="link" icon={<EditOutlined />} size="small" onClick={() => handleEditDevice(r)}>
+          <Button type="link" size="small" onClick={() => handleEditDevice(r)}>
             編集
           </Button>
           {isAdmin && (
-          <Button type="link" danger icon={<DeleteOutlined />} size="small" onClick={() => handleDeleteDevice(r.deviceId)}>
+          <Button type="link" danger size="small" onClick={() => handleDeleteDevice(r.deviceId)}>
             削除
           </Button>
           )}
@@ -208,12 +208,13 @@ const DeviceManagement: React.FC = () => {
               <Search
                 placeholder="ユーザーIDで検索"
                 allowClear
-                enterButton={<SearchOutlined />}
+                enterButton={<div style={{ display: 'flex', alignItems: 'center' }}><SearchOutlined />&nbsp;&nbsp;搜索</div>}
                 onSearch={handleUserIdSearch}
                 onChange={(e) => setUserIdSearch(e.target.value)}
                 value={userIdSearch}
                 style={{ width: 240, padding: '0 0 6px' }}
               />
+
             </Col>
             )}
             {isAdmin && (

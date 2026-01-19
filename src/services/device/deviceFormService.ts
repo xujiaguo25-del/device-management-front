@@ -2,12 +2,13 @@
 import type { DeviceListItem } from '../../types/device';
 import { get, post, put } from '../api';
 import type { ApiResponse } from '../../types/device';
+import { getAuthStore } from '../../stores/authStore';
 
 
 // フロントエンドのDeviceListItemをバックエンドのDeviceFullDTO形式に変換
 const convertToDeviceFullDTO = (deviceData: DeviceListItem, isEditing: boolean = false): any => {
-  // 現在のログインユーザーを取得（認証システムに基づいて取得する必要があります）
-  const currentUser = localStorage.getItem('user_name') || 'system';
+  // 現在のログインユーザーを取得（認証ストアから取得）
+  const currentUser = getAuthStore().userInfo?.NAME || 'system';
 
 
   // DeviceFullDTOを構築
