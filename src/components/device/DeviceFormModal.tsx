@@ -67,10 +67,8 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 
   const userOptions = useMemo(() => {
     if (isAdmin) {
-      // 管理员：显示所有用户
       return users;
     } else {
-      // 普通用户：只显示当前用户自己
       if (currentUserId) {
         return users.filter(user => user.userId === currentUserId);
       }
