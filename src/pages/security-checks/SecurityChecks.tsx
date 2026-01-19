@@ -29,7 +29,7 @@ const SecurityChecks: React.FC = () => {
       <Layout title="セキュリティチェック">
         <Card>
           <div style={{ textAlign: 'center', padding: '50px 0' }}>
-            <h2>当前无查看权限</h2>
+            <h2>現在閲覧権限がありません</h2>
           </div>
         </Card>
       </Layout>
@@ -52,11 +52,11 @@ const SecurityChecks: React.FC = () => {
         setTotal(res.total)
       }
       else{
-        message.error(res.message || "获取失败")
+        message.error(res.message || "取得失敗")
       }
 
     } catch (error: any) {
-      message.error(error.message || '获取数据失败');
+      message.error(error.message || 'データ取得失敗');
     } finally {
       setLoading(false);
     }
@@ -87,11 +87,11 @@ const SecurityChecks: React.FC = () => {
         setCurrentPage(1)
       }
       else{
-        message.error(res.message || "获取失败")
+        message.error(res.message || "取得失敗")
       }
 
     } catch (error: any) {
-      message.error(error.message || '获取数据失败');
+      message.error(error.message || 'データ取得失敗');
     } finally {
       setLoading(false);
     }
@@ -102,10 +102,10 @@ const SecurityChecks: React.FC = () => {
     try {
       setExporting(true);
       await exportSecurityChecksExcel();
-      message.success('导出成功');
+      message.success('エクスポート成功');
     } catch (error: any) {
-      console.error('导出失败:', error);
-      message.error(error.message || '导出失败');
+      console.error('エクスポート失敗:', error);
+      message.error(error.message || 'エクスポート失敗');
     } finally {
       setExporting(false);
     }
@@ -127,12 +127,12 @@ const SecurityChecks: React.FC = () => {
         fetchData();
       }
       else{
-        message.error(res.message || '更新失败')
+        message.error(res.message || '更新失敗')
       }
 
 
     } catch (error: any) {
-      message.error("更新数据失败")
+      message.error("データ更新失敗")
       throw error;
     }
   };
@@ -147,7 +147,7 @@ const SecurityChecks: React.FC = () => {
             <Row gutter={16}>
               <Col xs={24} sm={12} md={8} lg={6}>
                 <Input
-                  placeholder="用户ID"
+                  placeholder="ユーザーID"
                   value={userId || ''}
                   onChange={(e) => setUserId(e.target.value)}
                   allowClear
@@ -163,14 +163,14 @@ const SecurityChecks: React.FC = () => {
                     onClick={handleSearch}
                     loading={loading}
                   >
-                    查询
+                    検索
                   </Button>
                   <Button
                     icon={<DownloadOutlined />}
                     onClick={handleExport}
                     loading={exporting}
                   >
-                    导出Excel
+                    Excelエクスポート
                   </Button>
                 </Space>
               </Col>
@@ -191,7 +191,7 @@ const SecurityChecks: React.FC = () => {
             placement:['bottomCenter'],
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 条记录`,
+            showTotal: (total) => `合計 ${total} 件`,
             pageSizeOptions: ['5', '10', '20', '50', '100'],
             onChange: (page, size) => {
               setCurrentPage(page);
@@ -201,7 +201,7 @@ const SecurityChecks: React.FC = () => {
         />
         <EditModal
             visible={editVisible}
-            title="编辑安全检查"
+            title="セキュリティチェック編集"
             record={currentRecord}
             onCancel={() => setEditVisible(false)}
             onOk={handleUpdate}

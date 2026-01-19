@@ -19,7 +19,7 @@ const fieldBoxStyle: React.CSSProperties = { flex: 1 };
 
 const EditModal: React.FC<EditModalProps> = ({
   visible,
-  title = '编辑安全检查',
+  title = 'セキュリティチェック編集',
   record,
   onCancel,
   onOk,
@@ -33,18 +33,18 @@ const EditModal: React.FC<EditModalProps> = ({
 
   const helpClick = () => {
     Modal.info({
-      title: '检查内容与检查方法',
+      title: 'チェック内容とチェック方法',
       content: (
         <div style={{ lineHeight: 1.9 }}>
-          <div>• 开机认证：检查是否开启本地/域认证（符合公司策略）。</div>
-          <div>• 安全补丁：检查系统补丁是否为最新或在合规周期内。</div>
-          <div>• 密码屏保：检查是否设置屏保并在超时后锁屏。</div>
-          <div>• 病毒防护：检查杀毒/EDR 是否安装且策略生效。</div>
-          <div>• 安装软件：检查是否存在未授权软件。</div>
-          <div>• USB接口：检查 USB 存储是否禁用或受控。</div>
+          <div>• 起動認証：ローカル/ドメイン認証が有効になっているかチェック（会社ポリシーに準拠）。</div>
+          <div>• セキュリティパッチ：システムパッチが最新または適合期間内かチェック。</div>
+          <div>• パスワードスクリーンセーバー：スクリーンセーバーが設定され、タイムアウト後にロックされるかチェック。</div>
+          <div>• ウイルス対策：アンチウイルス/EDRがインストールされ、ポリシーが有効かチェック。</div>
+          <div>• インストールソフトウェア：未承認ソフトウェアが存在するかチェック。</div>
+          <div>• USBインターフェース：USBストレージが無効または制御されているかチェック。</div>
         </div>
       ),
-      okText: '知道了',
+      okText: '了解',
     });
   };
 
@@ -68,7 +68,7 @@ const EditModal: React.FC<EditModalProps> = ({
       title={
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>{title}</span>
-          <Tooltip title="检查内容与检查方法">
+          <Tooltip title="チェック内容とチェック方法">
             <Button type="text" icon={<QuestionCircleOutlined />} onClick={helpClick} />
           </Tooltip>
         </div>
@@ -78,10 +78,10 @@ const EditModal: React.FC<EditModalProps> = ({
       maskClosable={false}
       footer={[
         <Button key="cancel" onClick={onCancel}>
-          取消
+          キャンセル
         </Button>,
         <Button key="ok" type="primary" loading={saving} onClick={handleSave}>
-          确认编辑
+          編集確認
         </Button>,
       ]}
       destroyOnHidden
@@ -90,32 +90,32 @@ const EditModal: React.FC<EditModalProps> = ({
         <div>
           {/* 基礎情報（読み取り専用） */}
           <div style={{ marginBottom: 20 }}>
-            <h3 style={{ marginBottom: 16 }}>基础信息</h3>
+            <h3 style={{ marginBottom: 16 }}>基本情報</h3>
 
             <div style={twoColRowStyle}>
               <div style={fieldBoxStyle}>
-                <div style={labelStyle}>姓名*</div>
+                <div style={labelStyle}>氏名*</div>
                 <Input value={draft.name} disabled />
               </div>
               <div style={fieldBoxStyle}>
-                <div style={labelStyle}>工号*</div>
+                <div style={labelStyle}>社員番号*</div>
                 <Input value={draft.userId} disabled />
               </div>
             </div>
 
             <div style={twoColRowStyle}>
               <div style={fieldBoxStyle}>
-                <div style={labelStyle}>设备ID*</div>
+                <div style={labelStyle}>デバイスID*</div>
                 <Input value={draft.deviceId} disabled />
               </div>
               <div style={fieldBoxStyle}>
-                <div style={labelStyle}>显示器名称*</div>
+                <div style={labelStyle}>モニター名*</div>
                 <TextArea
                   value={
                     draft.monitorName
                       ? draft.monitorName
                           .split(';')
-                          .map(m => `${m.trim()}（显示器）`)
+                          .map(m => `${m.trim()}（モニター）`)
                           .join('\n')
                       : ''
                   }
@@ -128,71 +128,71 @@ const EditModal: React.FC<EditModalProps> = ({
 
           {/* 検査項目 */}
           <div style={{ marginBottom: 20 }}>
-            <h3 style={{ marginBottom: 16 }}>检查项目</h3>
+            <h3 style={{ marginBottom: 16 }}>チェック項目</h3>
 
             <div style={twoColRowStyle}>
               <div style={fieldBoxStyle}>
-                <div style={labelStyle}>开机认证</div>
+                <div style={labelStyle}>起動認証</div>
                 <Switch checked={draft.bootAuthentication} onChange={(v) => setBool('bootAuthentication', v)} />
-                <span style={{ marginLeft: 10 }}>{draft.bootAuthentication ? '合规' : '不合规'}</span>
+                <span style={{ marginLeft: 10 }}>{draft.bootAuthentication ? '適合' : '不適合'}</span>
               </div>
               <div style={fieldBoxStyle}>
-                <div style={labelStyle}>安全补丁</div>
+                <div style={labelStyle}>セキュリティパッチ</div>
                 <Switch checked={draft.securityPatch} onChange={(v) => setBool('securityPatch', v)} />
-                <span style={{ marginLeft: 10 }}>{draft.securityPatch ? '合规' : '不合规'}</span>
+                <span style={{ marginLeft: 10 }}>{draft.securityPatch ? '適合' : '不適合'}</span>
               </div>
             </div>
 
             <div style={twoColRowStyle}>
               <div style={fieldBoxStyle}>
-                <div style={labelStyle}>密码屏保</div>
+                <div style={labelStyle}>パスワードスクリーンセーバー</div>
                 <Switch
                   checked={draft.screenSaverPwd}
                   onChange={(v) => setBool('screenSaverPwd', v)}
                 />
                 <span style={{ marginLeft: 10 }}>
-                  {draft.screenSaverPwd ? '合规' : '不合规'}
+                  {draft.screenSaverPwd ? '適合' : '不適合'}
                 </span>
               </div>
               <div style={fieldBoxStyle}>
-                <div style={labelStyle}>病毒防护</div>
+                <div style={labelStyle}>ウイルス対策</div>
                 <Switch
                   checked={draft.antivirusProtection}
                   onChange={(v) => setBool('antivirusProtection', v)}
                 />
-                <span style={{ marginLeft: 10 }}>{draft.antivirusProtection ? '合规' : '不合规'}</span>
+                <span style={{ marginLeft: 10 }}>{draft.antivirusProtection ? '適合' : '不適合'}</span>
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: 20 }}>
               <div style={fieldBoxStyle}>
-                <div style={labelStyle}>安装软件</div>
+                <div style={labelStyle}>インストールソフトウェア</div>
                 <Switch
                   checked={draft.installedSoftware}
                   onChange={(v) => setBool('installedSoftware', v)}
                 />
                 <span style={{ marginLeft: 10 }}>
-                  {draft.installedSoftware ? '合规' : '不合规'}
+                  {draft.installedSoftware ? '適合' : '不適合'}
                 </span>
               </div>
               <div style={fieldBoxStyle}>
-                <div style={labelStyle}>USB接口</div>
+                <div style={labelStyle}>USBインターフェース</div>
                 <Switch checked={draft.usbInterface} onChange={(v) => setBool('usbInterface', v)} />
-                <span style={{ marginLeft: 10 }}>{draft.usbInterface ? '合规' : '不合规'}</span>
+                <span style={{ marginLeft: 10 }}>{draft.usbInterface ? '適合' : '不適合'}</span>
               </div>
             </div>
           </div>
 
           {/* 処置措置 */}
           <div>
-            <h3 style={{ marginBottom: 16 }}>处置措施</h3>
+            <h3 style={{ marginBottom: 16 }}>対処措置</h3>
             <TextArea
               rows={4}
               value={draft.disposalMeasures || ''}
               onChange={(e) =>
                 setDraft({ ...draft, disposalMeasures: e.target.value })
               }
-              placeholder="选填：填写处置措施或备注"
+              placeholder="任意：対処措置または備考を入力"
               allowClear
             />
           </div>
