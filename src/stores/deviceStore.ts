@@ -48,7 +48,7 @@ interface DeviceStore {
   handleAddDevice: () => void;
   handleUserIdSearch: (value: string) => void;
   handleFormSubmit: (values: DeviceListItem) => Promise<void>;
-  initialize: () => Promise<void>;
+  initialize: (isAdmin: boolean, currentUserId?: string) => Promise<void>; // ✅ 修改参数
 }
 
 export const useDeviceStore = create<DeviceStore>((set, get) => ({
@@ -80,8 +80,10 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   fetchDevices: async () => {
     const { searchParams, setLoading, setDevices, setTotal } = get();
     setLoading(true);
+    console.log('fetchDevices被调用，参数：', searchParams);
     try {
       const res: DeviceApiResponse<DeviceListItem> = await getDeviceList(searchParams);
+      console.log('fetchDevices返回：', res);
       if (res.code === 200 && res.data) {
         // TSに明示的にページネーション構造を伝える
         const pageData = res.data as {
@@ -90,6 +92,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
           page: number;
           pageSize: number;
         };
+        console.log('转换后的pageData：', pageData);
         setDevices(pageData.list);
         setTotal(pageData.total);
       } else {
@@ -107,9 +110,9 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   },
 
   fetchUsers: async () => {
-    const { setUsers, setUsersLoading, searchParams, setDevices } = get();
+    const { setUsers, setUsersLoading, searchParams } = get();
     setUsersLoading(true);
-    
+
     try {
       // fetchDevicesを呼び出してデバイスリストを取得
       const { fetchDevices } = get();
@@ -136,7 +139,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
       // Setを使用して重複を排除
       const userSet = new Set<string>();
       const users: Array<{userId: string, name: string, deptId?: string}> = [];
-      
+
       deviceList.forEach((device) => {
         if (device.userId && device.userName && !userSet.has(device.userId)) {
           userSet.add(device.userId);
@@ -152,14 +155,14 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
       
       // 元の検索パラメータに戻す
       set({ searchParams: originalParams });
-      
+
     } catch (error) {
       console.error('ユーザーリストの取得に失敗しました:', error);
 
     } finally {
       setUsersLoading(false);
     }
-},
+  },
 
   handlePageChange: (page, pageSize) => {
     const { setSearchParams, fetchDevices } = get();
@@ -176,6 +179,15 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   },
 
   handleEditDevice: async (device) => {
+    // ✅ 权限检查
+    const { userInfo } = useAuthStore.getState();
+    const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
+
+    if (!isAdmin) {
+      message.error('普通用户无权限编辑设备');
+      return;
+    }
+
     try {
       const detail = await getDeviceDetail(device.deviceId, true);
       set({ selectedDevice: detail, isEditing: true, formVisible: true });
@@ -184,8 +196,17 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
     }
   },
 
-  handleDeleteDevice: async (deviceId) =>
-    new Promise<void>((resolve) => {
+  handleDeleteDevice: async (deviceId) => {
+    // ✅ 权限检查
+    const { userInfo } = useAuthStore.getState();
+    const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
+
+    if (!isAdmin) {
+      message.error('普通用户无权限删除设备');
+      return Promise.resolve();
+    }
+
+    return new Promise<void>((resolve) => {
       Modal.confirm({
         title: '削除の確認',
         content: `デバイス ${deviceId} を削除してもよろしいですか？`,
@@ -203,16 +224,40 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
         },
         onCancel: () => resolve(),
       });
-    }),
+    });
+  },
 
-  handleAddDevice: () =>
-    set({ selectedDevice: null, isEditing: false, formVisible: true }),
+  handleAddDevice: () => {
+
+
+    set({
+
+      isEditing: false,
+      formVisible: true
+    });
+  },
 
   handleUserIdSearch: (value) => {
     const { setUserIdSearch, setSearchParams, fetchDevices } = get();
-    setUserIdSearch(value);
-    const p = { ...get().searchParams, userId: value.trim() || undefined, page: 1 };
-    setSearchParams(p);
+    // ✅ 普通用户无法修改搜索条件
+    const { userInfo } = useAuthStore.getState();
+    const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
+
+    if (!isAdmin && userInfo?.USER_ID) {
+      // 普通用户强制使用自己的ID
+      const forcedUserId = userInfo.USER_ID;
+      setUserIdSearch(forcedUserId);
+      const p = { ...get().searchParams, userId: forcedUserId, page: 1 };
+      setSearchParams(p);
+    } else {
+      setUserIdSearch(value);
+
+      // ✅ 管理员搜索逻辑：空字符串或 undefined 时设为 undefined
+      const userIdParam = value.trim() === '' ? undefined : value.trim();
+      const p = { ...get().searchParams, userId: userIdParam, page: 1 };
+      setSearchParams(p);
+    }
+
     fetchDevices();
   },
 
@@ -222,8 +267,24 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
 
      try {
       const { isEditing, fetchDevices } = get();
+      const { userInfo } = useAuthStore.getState();
+      const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
+
+      // ✅ 普通用户只能添加/编辑自己的设备
+      if (!isAdmin && values.userId !== userInfo?.USER_ID) {
+        if (isEditing) {
+          message.error('无权编辑其他用户的设备');
+          return;
+        }
+      }
+
+      // ✅ 普通用户添加设备时强制使用自己的ID
+      if (!isAdmin && !isEditing) {
+        values.userId = userInfo?.USER_ID || '';
+      }
+
       let success;
-      
+
       if (isEditing) {
         // 編集モードでは updateDevice を呼び出す
         success = await updateDevice(values);  
@@ -231,7 +292,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
         // 新規追加モードでは saveDevice を呼び出す
         success = await saveDevice(values);
       }
-      
+
       if (success) {
         if (isEditing) {
           message.success(`デバイス ${values.deviceId} の編集に成功しました`);

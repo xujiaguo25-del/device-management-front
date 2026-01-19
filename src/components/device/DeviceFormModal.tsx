@@ -33,6 +33,8 @@ interface DeviceFormModalProps {
   device: DeviceListItem | null;
   dictData: Record<string, any[]>; // Record定義オブジェクト
   users: any[];
+  isAdmin?: boolean; // 添加：是否为管理员
+  currentUserId?: string; // 添加：当前登录用户ID
   onCancel: () => void;
   onSubmit: (values: DeviceListItem) => void;
 }
@@ -59,6 +61,10 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     'SSD_SIZE',
     'HDD_SIZE'
   ]);
+
+  const currentUser = currentUserId
+      ? users.find(u => u.userId === currentUserId)
+      : null;
 
   useEffect(() => {
     if (visible) {
@@ -91,7 +97,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         setDeviceIps([]);
       }
     }
-  }, [visible, device, form]);
+  }, [visible, device, form, isAdmin, currentUser]);
 
   const handleSubmit = async () => {
     try {
@@ -200,6 +206,8 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 
   // ユーザー選択変更を処理
   const handleUserChange = (userId: string) => {
+    if (!isAdmin) return;
+
     const selectedUser = users.find(user => user.userId === userId);
     if (selectedUser) {
       form.setFieldsValue({

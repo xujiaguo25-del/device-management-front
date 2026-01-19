@@ -71,9 +71,9 @@ const DeviceManagement: React.FC = () => {
       width: 180,
       ellipsis: true,
       render: (m: Monitor[] | null) => (
-        <div style={{ whiteSpace: 'pre-line', textAlign: 'center' }}>
-          {m?.map((i) => i.monitorName).filter(Boolean).join('\n') || '-'}
-        </div>
+          <div style={{ whiteSpace: 'pre-line', textAlign: 'center' }}>
+            {m?.map((i) => i.monitorName).filter(Boolean).join('\n') || '-'}
+          </div>
       ),
     },
     { 
@@ -99,9 +99,9 @@ const DeviceManagement: React.FC = () => {
       width: 150,
       ellipsis: true,
       render: (ips: DeviceIp[] | null) => (
-        <div style={{ whiteSpace: 'pre-line', textAlign: 'center' }}>
-          {ips?.map((i) => i.ipAddress).filter(Boolean).join('\n') || '-'}
-        </div>
+          <div style={{ whiteSpace: 'pre-line', textAlign: 'center' }}>
+            {ips?.map((i) => i.ipAddress).filter(Boolean).join('\n') || '-'}
+          </div>
       ),
     },
     { title: 'OS', dataIndex: 'osName', key: 'osName', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },

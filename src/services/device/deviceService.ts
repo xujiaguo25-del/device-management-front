@@ -73,20 +73,36 @@ export const getDeviceList = async (params: DeviceQueryParams): Promise<DeviceAp
   const qs = new URLSearchParams();
   qs.append('page', String(params.page || 1));
   qs.append('size', String(params.pageSize || 10));
-  if (params.userId) qs.append('userId', params.userId);
+
+  // ✅ 更精确地判断 userId 是否应该被添加到查询参数
+  // 只有当 userId 存在且不为空字符串时才添加
+  if (params.userId !== undefined && params.userId !== '' && params.userId !== null) {
+    qs.append('userId', params.userId);
+  }
+
+  // 其他条件参数
   if (params.computerName) qs.append('computerName', params.computerName);
   if (params.project) qs.append('project', params.project);
   if (params.devRoom) qs.append('devRoom', params.devRoom);
-  
+
   const url = `/devices?${qs}`;
-  
+
+  // ✅ 添加调试日志，查看实际发送的请求URL
+  console.log('请求设备列表URL:', url);
+  console.log('请求参数:', {
+    page: params.page || 1,
+    size: params.pageSize || 10,
+    userId: params.userId,
+    hasUserIdParam: params.userId !== undefined && params.userId !== '' && params.userId !== null
+  });
+
   try {
     const response = await get<BackendDeviceListResponse>(url);
-    
+
     if (response.code !== 200) {
       throw new Error(response.message || 'デバイスリストの取得に失敗しました');
     }
-    
+
     return {
       code: response.code,
       message: response.message,
