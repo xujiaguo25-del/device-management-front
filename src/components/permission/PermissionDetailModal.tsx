@@ -471,7 +471,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                         </Col>
                                     )}
 
-                                    {(domainStatusText === '未参加') && (
+                                    {(domainStatusText === '未参加' || domainStatusText === '') && (
                                         <Col span={12}>
                                             <Form.Item
                                                 label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />ドメインに参加しない理由</span>}
@@ -483,7 +483,6 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                     name="noDomainReason"
                                                     control={control}
                                                     rules={{
-                                                        required: '不加域理由を入力してください',
                                                         maxLength: { value: 20, message: '最大20文字' }
                                                     }}
                                                     render={({ field }) => (
