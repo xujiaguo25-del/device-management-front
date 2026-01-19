@@ -74,8 +74,6 @@ export const getDeviceList = async (params: DeviceQueryParams): Promise<DeviceAp
   qs.append('page', String(params.page || 1));
   qs.append('size', String(params.pageSize || 10));
 
-  // ✅ 更精确地判断 userId 是否应该被添加到查询参数
-  // 只有当 userId 存在且不为空字符串时才添加
   if (params.userId !== undefined && params.userId !== '' && params.userId !== null) {
     qs.append('userId', params.userId);
   }
@@ -87,7 +85,6 @@ export const getDeviceList = async (params: DeviceQueryParams): Promise<DeviceAp
 
   const url = `/devices?${qs}`;
 
-  // ✅ 添加调试日志，查看实际发送的请求URL
   console.log('请求设备列表URL:', url);
   console.log('请求参数:', {
     page: params.page || 1,
