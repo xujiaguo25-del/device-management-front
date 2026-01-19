@@ -249,7 +249,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
           キャンセル
         </Button>,
         <Button key="submit" type="primary" onClick={handleSubmit}>
-          送信
+          更新
         </Button>,
       ]}
     >
