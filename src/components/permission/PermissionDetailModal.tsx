@@ -426,7 +426,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                         {...field}
                                                         style={{ width: '100%' }}
                                                         placeholder="ドメイン名を選択してください"
-                                                        size="small"
+                                                        size="middle"
                                                         allowClear
                                                         disabled={!isAdmin}
                                                     >
@@ -462,7 +462,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                             {...field}
                                                             placeholder="Domainグループ名を入力してください"
                                                             allowClear
-                                                            size="small"
+                                                            size="middle"
                                                             disabled={!isAdmin}
                                                         />
                                                     )}
@@ -471,7 +471,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                         </Col>
                                     )}
 
-                                    {(domainStatusText === '未参加' || domainStatusText === 'なし') && (
+                                    {(domainStatusText === '未参加') && (
                                         <Col span={12}>
                                             <Form.Item
                                                 label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />ドメインに参加しない理由</span>}
@@ -494,7 +494,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                             showCount
                                                             maxLength={20}
                                                             disabled={!isAdmin}
-                                                            size="small"
+                                                            size="middle"
                                                         />
                                                     )}
                                                 />
@@ -523,7 +523,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                         {...field}
                                                         style={{ width: '100%' }}
                                                         placeholder="状態を選択してください"
-                                                        size="small"
+                                                        size="middle"
                                                         allowClear
                                                         disabled={!isAdmin}
                                                     >
@@ -538,7 +538,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                         </Form.Item>
                                     </Col>
 
-                                    {(smartitStatusText === '未インストール' || smartitStatusText === '未インストール') && (
+                                    {(smartitStatusText === '未安装') && (
                                         <Col span={12}>
                                             <Form.Item
                                                 label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />インストールしない理由</span>}
@@ -561,7 +561,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                             showCount
                                                             maxLength={20}
                                                             disabled={!isAdmin}
-                                                            size="small"
+                                                            size="middle"
                                                         />
                                                     )}
                                                 />
@@ -592,7 +592,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                 {...field}
                                                 style={{ width: '100%' }}
                                                 placeholder="状態を選択してください"
-                                                size="small"
+                                                size="middle"
                                                 allowClear
                                                 disabled={!isAdmin}
                                             >
@@ -607,7 +607,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                 </Form.Item>
                             </Col>
 
-                            {(usbStatusText === '許可' || usbStatusText === '一時許可' || usbStatusText === 'データ' || usbStatusText === '3Gモデム') && (
+                            {(usbStatusText !== '关闭') && (
                                 <>
                                     <Col span={6}>
                                         <Form.Item
@@ -631,7 +631,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                         showCount
                                                         maxLength={20}
                                                         disabled={!isAdmin}
-                                                        size="small"
+                                                        size="middle"
                                                     />
                                                 )}
                                             />
@@ -658,7 +658,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                         format="YYYY-MM-DD"
                                                         allowClear={false}
                                                         disabled={!isAdmin}
-                                                        size="small"
+                                                        size="middle"
                                                     />
                                                 )}
                                             />
@@ -688,7 +688,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                 {...field}
                                                 style={{ width: '100%' }}
                                                 placeholder="状態を選択してください"
-                                                size="small"
+                                                size="middle"
                                                 allowClear
                                                 disabled={!isAdmin}
                                             >
@@ -703,7 +703,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                 </Form.Item>
                             </Col>
 
-                            {(connectionStatusText === '未インストール' || connectionStatusText === '接続なし') && (
+                            {(connectionStatusText === '未安装') && (
                                 <Col span={6}>
                                     <Form.Item
                                         label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />Symantec未接続の理由</span>}
@@ -726,7 +726,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                     showCount
                                                     maxLength={20}
                                                     disabled={!isAdmin}
-                                                    size="small"
+                                                    size="middle"
                                                 />
                                             )}
                                         />
@@ -757,12 +757,12 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                             <Input.TextArea
                                                 {...field}
                                                 placeholder="備考情報を入力してください"
-                                                rows={1}
+                                                rows={3}
                                                 showCount
                                                 maxLength={200}
                                                 disabled={!isAdmin}
                                                 style={{ resize: 'vertical', width: '100%' }}
-                                                size="small"
+                                                size="middle"
                                             />
                                         )}
                                     />
