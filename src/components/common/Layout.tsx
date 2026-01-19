@@ -36,8 +36,11 @@ const Layout: React.FC<LayoutProps> = ({ children, title = 'デバイス管理�
     [navigate]
   );
 
-  const menuItems = useMemo(
-    () => [
+  // 管理者かどうかを判断する
+  const isAdmin = userInfo?.USER_TYPE_NAME?.toUpperCase() === 'ADMIN';
+
+  const menuItems = useMemo(() => {
+    const baseItems = [
       {
         key: '/devices',
         icon: <DesktopOutlined />,
@@ -50,15 +53,20 @@ const Layout: React.FC<LayoutProps> = ({ children, title = 'デバイス管理�
         label: '権限管理',
         onClick: () => handleMenuClick('/permissions'),
       },
-      {
+    ];
+
+    // 管理者の場合、セキュリティチェック画面を表示します
+    if (isAdmin) {
+      baseItems.push({
         key: '/security-checks',
         icon: <SecurityScanOutlined />,
         label: 'セキュリティチェック',
         onClick: () => handleMenuClick('/security-checks'),
-      },
-    ],
-    [handleMenuClick]
-  );
+      });
+    }
+
+    return baseItems;
+  }, [handleMenuClick, isAdmin]);
 
   const handleLogout = useCallback(async () => {
     try {

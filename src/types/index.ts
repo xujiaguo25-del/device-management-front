@@ -56,44 +56,97 @@ export interface Device {
   UPDATED_USER: string;
 }
 
-// デバイス利用権限
-export interface DevicePermission {
-  ID: number;
-  DEVICE_ID: number;
-  USER_ID: string;
-  SMARTIT_STATUS: string;
-  NO_SMARTIT_REASON: string;
-  USB_STATUS: string;
-  USB_OPEN_REASON: string;
-  USB_OPEN_ENDDATE: string;
-  CONNECTION_STATUS: string;
-  NO_SYMENTEC_REASON: string;
-  DOMAIN_NAME: string;
-  DOMAIN_GROUP: string;
-  NO_DOMAIN_REASON: string;
-  COMMET: string;
-  CREATED_DATE: string;
-  CREATED_USER: string;
-  UPDATED_DATE: string;
-  UPDATED_USER: string;
+// デバイス使用権限リストDTO（バックエンドのPermissionsListDTOに対応）
+export interface DevicePermissionList {
+  permissionId: string;
+  deviceId: string;
+  monitorNames: string[];
+  computerName: string;
+  ipAddress: string[];
+  userId: string;
+  name: string;
+  deptId: string;
+  loginUsername: string;
+  domainStatus: number;
+  domainName?: string;
+  domainGroup: string;
+  noDomainReason: string;
+  smartitStatus: number;
+  smartitStatusText?: string; // テキスト値の保存：ローカル、リモート、未インストール
+  noSmartitReason: string;
+  usbStatus: number;
+  usbStatusText?: string; // テキスト値の保存：閉じる、データ、3Gモデム
+  usbReason: string;
+  usbExpireDate: string | null;
+  antivirusStatus: number;
+  antivirusStatusText?: string; // テキスト値の保存：自動、手動
+  noSymantecReason: string;
+  remark: string;
+  createTime: string;
+  creater: string;
+  updateTime: string;
+  updater: string;
 }
 
-// セキュリティチェック記録
+// デバイス使用権限挿入DTO（バックエンドのPermissionInsertDTOに対応）
+export interface DevicePermissionInsert {
+  permissionId?: string;
+  deviceId: string;
+  domainStatus?: number | null;
+  domainName?: string;
+  domainGroup?: string;
+  noDomainReason?: string;
+  smartitStatus?: number | null;
+  smartitStatusText?: string; // テキスト値の保存：ローカル、リモート、未インストール
+  noSmartitReason?: string;
+  usbStatus?: number | null;
+  usbStatusText?: string; // テキスト値の保存：閉じる、データ、3Gモデム
+  usbReason?: string;
+  usbExpireDate?: string | null;
+  antivirusStatus?: number | null;
+  antivirusStatusText?: string; // テキスト値の保存：自動、手動
+  noSymantecReason?: string;
+  remark?: string;
+  createTime?: string;
+  creater?: string;
+  updateTime?: string;
+  updater?: string;
+}
+
+// APIレスポンス構造（バックエンドの ApiResponse に対応）
+export interface ApiResponse<T> {
+  code: number;
+  message: string;
+  data?: T;
+  total?: number;
+  page?: number;
+  size?: number;
+}
+
+// セキュリティチェック記録（バックエンドDTOと同期
 export interface SecurityCheck {
-  CHECK_ID: number;
-  DEVICE_ID: number;
-  USER_ID: string;
-  BOOT_AUTH: string;
-  PASSWORD_SCREEN: string;
-  INSTALLED_SOFTWARE: string;
-  SECURITY_PATCH: string;
-  VIRUS_PROTECTION: string;
-  USB_PORT: string;
-  HANDLING_MEASURES: string;
-  CREATED_DATE: string;
-  CREATED_USER: string;
-  UPDATED_DATE: string;
-  UPDATED_USER: string;
+  samplingId: string;          
+  reportId: string;            
+  userId: string;             
+  name: string;                
+  deviceId: string;            
+
+  updateDate: string;          
+  updateTime: string;          
+  createTime: string;          
+
+  updater: string;            
+  creater: string;           
+
+  installedSoftware: boolean;  
+  disposalMeasures: string;    
+  screenSaverPwd: boolean;     
+  usbInterface: boolean;       
+  securityPatch: boolean;     
+  antivirusProtection: boolean;
+  bootAuthentication: boolean; 
+
+  monitorName?: string; 
 }
 
 // 認証状態
