@@ -1,6 +1,6 @@
 // services/device/deviceService.ts
 import type { DeviceListItem, DeviceQueryParams, DeviceApiResponse } from '../../types/index';
-import { get, del } from '../api/index';
+import { get, del, post } from '../api/index';
 
 /**
  * 値をフォーマットします
@@ -149,4 +149,37 @@ export const deleteDevice = async (deviceId: string): Promise<boolean> => {
   const response = await del(url) as { code: number; message: string; data: any };
   
   return response.code === 200;
+};
+
+/**
+ * Excelファイルからデバイスデータをインポートします
+ */
+export const importDevicesFromExcel = async (file: File): Promise<{ success: boolean; message: string; data?: any }> => {
+  if (!file) throw new Error('ファイルを選択してください');
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const url = '/devices/import';
+  
+  try {
+    const response = await post<{ code: number; message: string; data: any }>(
+      url,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    
+    return {
+      success: response.code === 200,
+      message: response.message || 'インポートが成功しました',
+      data: response.data,
+    };
+  } catch (error) {
+    console.error('Excelインポートに失敗しました:', error);
+    throw error;
+  }
 };
