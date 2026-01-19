@@ -15,6 +15,7 @@ import {
   saveDevice,
   updateDevice,
 } from '../services/device/deviceFormService'; // インポートを追加
+import { useAuthStore } from '../stores/authStore';
 
 interface DeviceStore {
   devices: DeviceListItem[];
@@ -48,7 +49,7 @@ interface DeviceStore {
   handleAddDevice: () => void;
   handleUserIdSearch: (value: string) => void;
   handleFormSubmit: (values: DeviceListItem) => Promise<void>;
-  initialize: (isAdmin: boolean, currentUserId?: string) => Promise<void>; // ✅ 修改参数
+  initialize: (isAdmin: boolean, currentUserId?: string) => Promise<void>;
 }
 
 export const useDeviceStore = create<DeviceStore>((set, get) => ({
@@ -179,14 +180,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   },
 
   handleEditDevice: async (device) => {
-    // ✅ 权限检查
-    const { userInfo } = useAuthStore.getState();
-    const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
 
-    if (!isAdmin) {
-      message.error('普通用户无权限编辑设备');
-      return;
-    }
 
     try {
       const detail = await getDeviceDetail(device.deviceId, true);
@@ -197,7 +191,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   },
 
   handleDeleteDevice: async (deviceId) => {
-    // ✅ 权限检查
+
     const { userInfo } = useAuthStore.getState();
     const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
 
@@ -239,7 +233,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
 
   handleUserIdSearch: (value) => {
     const { setUserIdSearch, setSearchParams, fetchDevices } = get();
-    // ✅ 普通用户无法修改搜索条件
+
     const { userInfo } = useAuthStore.getState();
     const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
 
@@ -252,7 +246,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
     } else {
       setUserIdSearch(value);
 
-      // ✅ 管理员搜索逻辑：空字符串或 undefined 时设为 undefined
+
       const userIdParam = value.trim() === '' ? undefined : value.trim();
       const p = { ...get().searchParams, userId: userIdParam, page: 1 };
       setSearchParams(p);
@@ -270,7 +264,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
       const { userInfo } = useAuthStore.getState();
       const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
 
-      // ✅ 普通用户只能添加/编辑自己的设备
+
       if (!isAdmin && values.userId !== userInfo?.USER_ID) {
         if (isEditing) {
           message.error('无权编辑其他用户的设备');
@@ -278,7 +272,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
         }
       }
 
-      // ✅ 普通用户添加设备时强制使用自己的ID
+
       if (!isAdmin && !isEditing) {
         values.userId = userInfo?.USER_ID || '';
       }
@@ -318,11 +312,35 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
     }
   },
 
-  initialize: async () => {
-    // デバイスリストとユーザーリストを並行して取得
-    await Promise.all([
-      get().fetchDevices(),
-      get().fetchUsers()
-    ]);
+  initialize: async (isAdmin: boolean, currentUserId?: string) => {
+    const { setSearchParams, setUserIdSearch, fetchDevices, fetchUsers } = get();
+
+    console.log('初始化设备商店:', { isAdmin, currentUserId });
+
+    if (!isAdmin && currentUserId) {
+
+      setUserIdSearch(currentUserId);
+
+      setSearchParams({
+        page: 1,
+        pageSize: 10,
+        userId: currentUserId  // 明确设置userId
+      });
+      await fetchDevices();
+    } else {
+
+      setUserIdSearch('');  // 清空搜索框
+
+      setSearchParams({
+        page: 1,
+        pageSize: 10,
+        userId: undefined  // 明确设置为 undefined
+      });
+
+      await Promise.all([
+        fetchDevices(),
+        fetchUsers()
+      ]);
+    }
   },
 }));

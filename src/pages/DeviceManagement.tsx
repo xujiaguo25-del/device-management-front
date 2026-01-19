@@ -1,7 +1,7 @@
 // pages/DeviceManagement.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Table, Button, Space, Tag, Input, Row, Col, Pagination
+  Table, Button, Space, Tag, Input, Row, Col, Pagination, Spin
 } from 'antd';
 import {
   SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined
@@ -11,43 +11,56 @@ import DeviceFormModal from '../components/device/DeviceFormModal';
 import { useDeviceStore } from '../stores/deviceStore';
 import type { DeviceListItem, DeviceIp, Monitor } from '../types/device';
 import type { ColumnsType } from 'antd/es/table';
+import { useAuthStore } from '../stores/authStore';
 
 const { Search } = Input;
 
 const DeviceManagement: React.FC = () => {
   const {
     devices, loading, searchParams, total, formVisible, isEditing, selectedDevice,
-    userIdSearch, users, handlePageChange, handlePageSizeChange,
+    userIdSearch, users,fetchDevices, handlePageChange, handlePageSizeChange,
     handleEditDevice, handleDeleteDevice, handleAddDevice,
     handleUserIdSearch, handleFormSubmit, initialize,
     setFormVisible, setIsEditing, setSelectedDevice, setUserIdSearch
   } = useDeviceStore();
 
+
+  const { userInfo, isLoading: authLoading } = useAuthStore();
+  const [initialized, setInitialized] = useState(false);
+
+
+  const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
+
   // テーブルコンテナの参照と高さ状態
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [tableHeight, setTableHeight] = useState<number>(600);
 
-  // コンポーネントマウント時に初期化
-  useEffect(() => { initialize(); }, []);
-
   // リサイズオブザーバーでテーブルコンテナの高さを監視
   useEffect(() => {
-    if (!tableContainerRef.current) return;
+    console.log('userInfo 变化:', userInfo);
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        // スムーズなトランジションのためにrequestAnimationFrameを使用
-        requestAnimationFrame(() => {
-          setTableHeight(entry.contentRect.height);
-        });
-      }
-    });
+    if (userInfo) {
+      console.log('调用 initialize，参数:', {
+        isAdmin,
+        userId: userInfo.USER_ID
+      });
 
-    resizeObserver.observe(tableContainerRef.current);
-    
-    // クリーンアップ関数
-    return () => resizeObserver.disconnect();
-  }, [searchParams.pageSize]);
+      initialize(isAdmin, userInfo.USER_ID);
+    } else {
+      console.log('userInfo 为空，等待加载...');
+    }
+  }, [userInfo]);
+
+
+  if (authLoading) {
+    return (
+        <Layout title="设备管理">
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+            <Spin size="large" tip="加载用户信息..." />
+          </div>
+        </Layout>
+    );
+  }
 
   // テーブル列定義
   const columns: ColumnsType<DeviceListItem> = [
@@ -167,9 +180,11 @@ const DeviceManagement: React.FC = () => {
           <Button type="link" icon={<EditOutlined />} size="small" onClick={() => handleEditDevice(r)}>
             編集
           </Button>
+          {isAdmin && (
           <Button type="link" danger icon={<DeleteOutlined />} size="small" onClick={() => handleDeleteDevice(r.deviceId)}>
             削除
           </Button>
+          )}
         </Space>
       ),
     },
@@ -188,6 +203,7 @@ const DeviceManagement: React.FC = () => {
         {/* 上部検索エリア */}
         <div style={{ marginBottom: 20, flexShrink: 0 }}>
           <Row gutter={16} align="middle" justify="space-between">
+            {isAdmin && (
             <Col>
               <Search
                 placeholder="ユーザーIDで検索"
@@ -199,9 +215,12 @@ const DeviceManagement: React.FC = () => {
                 style={{ width: 240, padding: '0 0 6px' }}
               />
             </Col>
+            )}
+            {isAdmin && (
             <Col>
               <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDevice}>デバイスを追加</Button>
             </Col>
+            )}
           </Row>
         </div>
 
@@ -279,6 +298,8 @@ const DeviceManagement: React.FC = () => {
           device={selectedDevice}
           dictData={{}}
           users={users}
+          isAdmin={isAdmin}
+          currentUserId={userInfo?.USER_ID}
           onCancel={() => {
             setFormVisible(false);
             setIsEditing(false);

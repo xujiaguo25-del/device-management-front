@@ -1,5 +1,5 @@
 // components/DeviceFormModal.tsx
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   Modal,
   Form,
@@ -23,6 +23,7 @@ import { isValidIP } from '../../services/device/deviceFormService';
 import DictSelect from '../DictSelect'; // この行を追加
 import { useDicts } from '../../hooks/useDicts'; // この行を追加
 
+
 const { Option } = Select;
 const { TextArea } = Input;
 const { Title, Text } = Typography;
@@ -33,8 +34,8 @@ interface DeviceFormModalProps {
   device: DeviceListItem | null;
   dictData: Record<string, any[]>; // Record定義オブジェクト
   users: any[];
-  isAdmin?: boolean; // 添加：是否为管理员
-  currentUserId?: string; // 添加：当前登录用户ID
+  isAdmin?: boolean;
+  currentUserId?: string;
   onCancel: () => void;
   onSubmit: (values: DeviceListItem) => void;
 }
@@ -46,8 +47,10 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   device,
   dictData,                 // パラメータを分解
   users,
+  isAdmin = false,
   onCancel,
   onSubmit,
+  currentUserId,
 }) => {
   const [form] = Form.useForm(); // antdライブラリ
   const [monitors, setMonitors] = useState<Monitor[]>([]);
@@ -62,9 +65,18 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     'HDD_SIZE'
   ]);
 
-  const currentUser = currentUserId
-      ? users.find(u => u.userId === currentUserId)
-      : null;
+  const userOptions = useMemo(() => {
+    if (isAdmin) {
+      // 管理员：显示所有用户
+      return users;
+    } else {
+      // 普通用户：只显示当前用户自己
+      if (currentUserId) {
+        return users.filter(user => user.userId === currentUserId);
+      }
+      return [];
+    }
+  }, [users, isAdmin, currentUserId]);
 
   useEffect(() => {
     if (visible) {
@@ -95,9 +107,19 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         form.resetFields();
         setMonitors([]);
         setDeviceIps([]);
+        if (!isAdmin && currentUserId && userOptions.length > 0) {
+          const currentUser = userOptions[0];
+          if (currentUser) {
+            form.setFieldsValue({
+              userId: currentUser.userId,
+              userName: currentUser.name,
+              deptId: currentUser.deptId || '',
+            });
+          }
+        }
       }
     }
-  }, [visible, device, form, isAdmin, currentUser]);
+  }, [visible, device, form, isAdmin]);
 
   const handleSubmit = async () => {
     try {
@@ -279,6 +301,7 @@ const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                   showSearch
                   optionFilterProp="children" // 入力内容をOption（children）で検索マッチング
                   onChange={handleUserChange}
+                  disabled={!isAdmin}
                 >
                   {users.map(user => (
                     <Option key={user.userId} value={user.userId}>
