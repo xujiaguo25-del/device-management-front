@@ -31,7 +31,7 @@ export const createColumns = (
     title: 'デバイス番号',
     dataIndex: 'deviceId',
     key: 'deviceId',
-    width: 180,
+    width: 260,
     render: (deviceId: string, record: SecurityCheck) => {
       const monitors = record.monitorName
         ? record.monitorName.split(';').map(m => m.trim()).filter(Boolean)
@@ -74,10 +74,10 @@ export const createColumns = (
     },
   },
   {
-    title: 'スクリーンセーバーパスワード',
+    title: 'パスワード画面保護',
     dataIndex: 'screenSaverPwd',
     key: 'screenSaverPwd',
-    width: 100,
+    width: 180,
     render: (value: boolean) => {
       if (value === null) return '-';
       return (
@@ -91,7 +91,7 @@ export const createColumns = (
     title: 'インストールソフトウェア',
     dataIndex: 'installedSoftware',
     key: 'installedSoftware',
-    width: 100,
+    width: 220,
     render: (value: boolean) => {
       if (value === null) return '-';
       return (
@@ -105,7 +105,7 @@ export const createColumns = (
     title: 'セキュリティパッチ',
     dataIndex: 'securityPatch',
     key: 'securityPatch',
-    width: 100,
+    width: 220,
     render: (value: boolean) => {
       if (value === null) return '-';
       return (
@@ -119,7 +119,7 @@ export const createColumns = (
     title: 'アンチウイルスソフトウェア',
     dataIndex: 'antivirusProtection',
     key: 'antivirusProtection',
-    width: 100,
+    width: 220,
     render: (value: boolean) => {
       if (value === null) return '-';
       return (
@@ -133,7 +133,7 @@ export const createColumns = (
     title: 'USBインターフェース',
     dataIndex: 'usbInterface',
     key: 'usbInterface',
-    width: 100,
+    width: 220,
     render: (value: boolean) => {
       if (value === null) return '-';
       return (
