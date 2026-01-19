@@ -287,7 +287,7 @@ const DeviceManagement: React.FC = () => {
             onShowSizeChange={handlePageSizeChange}
             showQuickJumper
             showSizeChanger
-            
+            showTotal={(t, r) => `全 ${t} 件`}
             pageSizeOptions={['10', '15', '20']}
           />
         </div>
