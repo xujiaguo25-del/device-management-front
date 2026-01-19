@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Button, Tag } from 'antd';
+import { Table, Button, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import type { DevicePermissionList, DictItem } from '../../types';
@@ -62,7 +62,21 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             title: 'デバイスID',
             dataIndex: 'deviceId',
             key: 'deviceId',
-            width: 120,
+            width: 220,
+            fixed: 'left',
+            render: (text: string) => (
+                <Tooltip title={text} placement="topLeft" >
+                    <span style={{
+                        display: 'inline-block',
+                        width: '100%',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                    }}>
+                        {text}
+                    </span>
+                </Tooltip>
+            ),
         },
         {
             title: 'コンピュータ名',
@@ -74,8 +88,55 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             title: 'IPアドレス',
             dataIndex: 'ipAddress',
             key: 'ipAddress',
-            width: 150,
-            render: (ips: string[]) => (ips && ips.length > 0 ? ips.join(', ') : '-'),
+            width: 140,
+            render: (ips: string[]) => (
+                ips && ips.length > 0
+                    ? <Tooltip
+                        placement="right"
+                        color="#fff"
+                        title={
+                            <div style={{ background: '#fff', color: '#000' }}>
+                                {ips.map((ip, idx) => (
+                                    <div key={`${ip}-${idx}`} style={{ marginBottom: 6 }}>
+                                        <Tag color="blue">{ip}</Tag>
+                                    </div>
+                                ))}
+                            </div>
+                        }
+                        overlayStyle={{ color: '#000' }}
+                    >
+                        <Tag color="blue">
+                            {ips[0]}{ips.length > 1 ? <span style={{ fontSize: '0.8em' }}> (+{ips.length - 1})</span> : ''}
+                        </Tag>
+                    </Tooltip>
+                    : '-'
+            ),
+        },
+        {
+            title: 'モニター名',
+            dataIndex: 'monitorNames',
+            key: 'monitorNames',
+            width: 200,
+            render: (names: string[]) => (
+                names && names.length > 0
+                    ? <Tooltip
+                        placement="right"
+                        color="#fff"
+                        title={
+                            <div style={{ background: '#fff', color: '#000' }}>
+                                {names.map((n, idx) => (
+                                    <div key={`${n}-${idx}`} style={{ marginBottom: 6 }}>
+                                        <Tag color="blue">{n}</Tag>
+                                    </div>
+                                ))}
+                            </div>
+                        }
+                        overlayStyle={{ color: '#000' }}
+                    >
+                        <Tag color="blue">{names[0]}{names.length > 1 ? <span style={{ fontSize: '0.8em' }}> (+{names.length - 1})</span> : ''}</Tag>
+                    </Tooltip>
+                    : '-'
+            ),
         },
         {
             title: 'ユーザーID',
@@ -110,9 +171,9 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
                 if (record.domainStatus != null) {
                     const label = getLabel(domainStatusOptions, record.domainStatus);
                     if (label !== '-') {
-                        const color = 
+                        const color =
                             label === '参加済み' ? 'green' :
-                            label === '未参加' ? 'red' : 'blue';
+                                label === '未参加' ? 'red' : 'blue';
                         return <Tag color={color}>{label}</Tag>;
                     }
                 }
@@ -126,6 +187,13 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             width: 160,
             render: (text: string) => text || '-',
         },
+        // {
+        //     title:'ドメインに参加しない理由',
+        //     dataIndex: 'noDomainReason',
+        //     key: 'noDomainReason',
+        //     width: 160,
+        //     render: (text: string) => text || '-',
+        // },
         {
             title: 'SmartIT状態',
             dataIndex: 'smartitStatus',
@@ -135,9 +203,9 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
                 if (record.smartitStatus != null) {
                     const label = getLabel(smartitStatusOptions, record.smartitStatus);
                     if (label !== '-') {
-                        const color = 
+                        const color =
                             label === 'インストール済み' || label === 'ローカル' || label === 'リモート' ? 'green' :
-                            label === '未インストール' || label === '未インストール' ? 'red' : 'orange';
+                                label === '未インストール' || label === '未インストール' ? 'red' : 'orange';
                         return <Tag color={color}>{label}</Tag>;
                     }
                 }
@@ -153,9 +221,9 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
                 if (record.usbStatus != null) {
                     const label = getLabel(usbStatusOptions, record.usbStatus);
                     if (label !== '-') {
-                        const color = 
+                        const color =
                             label === '一時許可' || label === '許可' || label === 'データ' || label === '3Gモデム' ? 'green' :
-                            label === '禁止' || label === '閉じる' ? 'red' : 'orange';
+                                label === '禁止' || label === '閉じる' ? 'red' : 'orange';
                         return <Tag color={color}>{label}</Tag>;
                     }
                 }
@@ -187,10 +255,10 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
                 if (record.antivirusStatus != null) {
                     const label = getLabel(antivirusStatusOptions, record.antivirusStatus);
                     if (label !== '-') {
-                        const color = 
+                        const color =
                             label === '有効期限切れ' || label === 'インストール済み' || label === '自動' ? 'green' :
-                            label === '未インストール' || label === '無接続' ? 'red' :
-                            label === '手動' ? 'orange' : 'default';
+                                label === '未インストール' || label === '無接続' ? 'red' :
+                                    label === '手動' ? 'orange' : 'default';
                         return <Tag color={color}>{label}</Tag>;
                     }
                 }
@@ -235,7 +303,7 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
                 dataSource={data}
                 rowKey="permissionId"
                 loading={loading}
-                scroll={{ x: 2000 }}
+                scroll={{ x: 2000, y: 520 }}
                 pagination={{
                     current: pagination.current,
                     pageSize: pagination.pageSize,
