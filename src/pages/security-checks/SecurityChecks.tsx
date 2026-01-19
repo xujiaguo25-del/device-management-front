@@ -21,20 +21,30 @@ const SecurityChecks: React.FC = () => {
   const [exporting, setExporting] = useState(false);
   
   // 管理者かどうかを判断する
-  const isAdmin = userInfo?.USER_TYPE_NAME.toUpperCase() === 'ADMIN';
+  const isAdmin = userInfo?.USER_TYPE_NAME?.toUpperCase() === 'ADMIN';
+
+  // 非管理者の場合は権限不足ページを表示
+  if (!isAdmin) {
+    return (
+      <Layout title="セキュリティチェック">
+        <Card>
+          <div style={{ textAlign: 'center', padding: '50px 0' }}>
+            <h2>当前无查看权限</h2>
+          </div>
+        </Card>
+      </Layout>
+    );
+  }
 
   // データのロード
   const fetchData = async () => {
     try {
       setLoading(true);
-      
-      // 管理者でない場合は、現在のユーザーのUSER _ IDを使用します
-      const searchUserId = isAdmin ? userId : (userInfo?.USER_ID ?? '');
-
+    
       const res = await getSecurityChecks({
           page: currentPage,
           size: pageSize,
-          userId: searchUserId,
+          userId: userId,
       });
 
       if(res.code == 200){
@@ -54,12 +64,37 @@ const SecurityChecks: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, pageSize, isAdmin]);
+  }, [currentPage, pageSize]);
 
   // 検索の操作
   const handleSearch = () => {
     fetchData();
     setCurrentPage(1);
+  };
+
+  const handleClear = async () => {
+    try {
+      setLoading(true);
+    
+      const res = await getSecurityChecks({
+          page: 1,
+          size: pageSize
+      });
+
+      if(res.code == 200){
+        setData(res.data)
+        setTotal(res.total)
+        setCurrentPage(1)
+      }
+      else{
+        message.error(res.message || "获取失败")
+      }
+
+    } catch (error: any) {
+      message.error(error.message || '获取数据失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // エクスポートの操作
@@ -103,14 +138,12 @@ const SecurityChecks: React.FC = () => {
   };
 
   // テーブル列の作成（権限に基づいてアクション列を表示するかどうかを決定）
-  const columns = createColumns(currentPage, pageSize, handleEdit, isAdmin);
+  const columns = createColumns(currentPage, pageSize, handleEdit);
 
   return (
     <Layout title="セキュリティチェック">
       <Card>
-        {/* 管理者による検索バーの表示 */}
-        {isAdmin && (
-          <Card size="small" style={{ marginBottom: 16 }}>
+        <Card size="small" style={{ marginBottom: 16 }}>
             <Row gutter={16}>
               <Col xs={24} sm={12} md={8} lg={6}>
                 <Input
@@ -118,6 +151,7 @@ const SecurityChecks: React.FC = () => {
                   value={userId || ''}
                   onChange={(e) => setUserId(e.target.value)}
                   allowClear
+                  onClear={handleClear} 
                   onPressEnter={handleSearch}
                 />
               </Col>
@@ -142,16 +176,6 @@ const SecurityChecks: React.FC = () => {
               </Col>
             </Row>
           </Card>
-        )}
-
-        {/* 管理者以外のプロンプト情報 */}
-        {!isAdmin && (
-          <Card size="small" style={{ marginBottom: 16, backgroundColor: '#f0f5ff' }}>
-            <div style={{ color: '#1890ff' }}>
-              当前仅可显示您的安全检查记录（用户ID: {userInfo?.USER_ID}）
-            </div>
-          </Card>
-        )}
 
         {/*表バー*/}
         <Table
@@ -164,6 +188,7 @@ const SecurityChecks: React.FC = () => {
             current: currentPage,
             pageSize: pageSize,
             total: total,
+            placement:['bottomCenter'],
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条记录`,
@@ -174,17 +199,13 @@ const SecurityChecks: React.FC = () => {
             },
           }}
         />
-
-        {/* 編集バー-管理者のみ使用可能*/}
-        {isAdmin && (
-          <EditModal
+        <EditModal
             visible={editVisible}
             title="编辑安全检查"
             record={currentRecord}
             onCancel={() => setEditVisible(false)}
             onOk={handleUpdate}
-          />
-        )}
+        />
       </Card>
     </Layout>
   );

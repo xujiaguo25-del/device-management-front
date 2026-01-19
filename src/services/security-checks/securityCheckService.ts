@@ -32,9 +32,11 @@ export const getSecurityChecks = (params: GetSecurityChecksParams): Promise<Secu
   query.append('page', params.page.toString());
   query.append('size', (params.size ?? 10).toString());
 
-  if (params.userId) {
-    query.append('userId', params.userId);
+  const userId = params.userId ? params.userId.trim(): "";
+  if (userId !== ''){
+    query.append('userId', userId);
   }
+  
 
   return get<SecurityCheckResponse>(`/security-checks?${query.toString()}`);
 };
