@@ -208,7 +208,7 @@ const DeviceManagement: React.FC = () => {
               <Search
                 placeholder="ユーザーIDで検索"
                 allowClear
-                enterButton={<div style={{ display: 'flex', alignItems: 'center' }}><SearchOutlined />&nbsp;&nbsp;搜索</div>}
+                enterButton={<div style={{ display: 'flex', alignItems: 'center' }}><SearchOutlined />&nbsp;&nbsp;検索</div>}
                 onSearch={handleUserIdSearch}
                 onChange={(e) => setUserIdSearch(e.target.value)}
                 value={userIdSearch}
