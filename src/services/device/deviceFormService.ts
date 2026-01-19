@@ -1,7 +1,7 @@
 // services/device/deviceFormService.ts
-import type { DeviceListItem } from '../../types/device';
+import type { DeviceListItem } from '../../types/index';
 import { get, post, put } from '../api';
-import type { ApiResponse } from '../../types/device';
+import type { ApiResponse } from '../../types/index';
 import { getAuthStore } from '../../stores/authStore';
 
 

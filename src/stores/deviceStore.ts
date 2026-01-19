@@ -5,7 +5,7 @@ import type {
   DeviceListItem,
   DeviceQueryParams,
   DeviceApiResponse,
-} from '../types/device';
+} from '../types/index';
 import {
   getDeviceList,
   deleteDevice,

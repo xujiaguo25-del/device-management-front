@@ -9,7 +9,7 @@ import {
 import Layout from '../components/common/Layout';
 import DeviceFormModal from '../components/device/DeviceFormModal';
 import { useDeviceStore } from '../stores/deviceStore';
-import type { DeviceListItem, DeviceIp, Monitor } from '../types/device';
+import type { DeviceListItem, DeviceIp, Monitor } from '../types/index';
 import type { ColumnsType } from 'antd/es/table';
 import { useAuthStore } from '../stores/authStore';
 

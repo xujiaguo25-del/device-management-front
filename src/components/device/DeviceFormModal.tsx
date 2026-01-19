@@ -18,7 +18,7 @@ import {
   PlusOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
-import type { DeviceListItem, Monitor, DeviceIp } from '../../types/device';
+import type { DeviceListItem, Monitor, DeviceIp } from '../../types/index';
 import { isValidIP } from '../../services/device/deviceFormService';
 import DictSelect from '../DictSelect'; // この行を追加
 import { useDicts } from '../../hooks/useDicts'; // この行を追加
