@@ -77,11 +77,11 @@ export const exportSecurityChecksExcel = async (params?: ExportSecurityChecksPar
     });
     
     if (!response.ok) {
-      throw new Error(`导出失败: ${response.status}`);
+      throw new Error(`エクスポート失敗: ${response.status}`);
     }
     
     const contentDisposition = response.headers.get('Content-Disposition');
-    let filename = '月度检查表.xlsx'; 
+    let filename = '月次チェック表.xlsx'; 
     
     if (contentDisposition) {
       const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
@@ -106,7 +106,7 @@ export const exportSecurityChecksExcel = async (params?: ExportSecurityChecksPar
     document.body.removeChild(link);
     window.URL.revokeObjectURL(downloadUrl);
   } catch (error) {
-    console.error('导出失败:', error);
+    console.error('エクスポート失敗:', error);
     throw error;
   }
 };

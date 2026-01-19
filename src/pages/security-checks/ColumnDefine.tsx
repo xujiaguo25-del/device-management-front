@@ -10,25 +10,25 @@ export const createColumns = (
 ): ColumnType<SecurityCheck>[] => {
   const columns: ColumnType<SecurityCheck>[] = [
   {
-    title: '序号',
+    title: '番号',
     key: 'index',
     width: 80,
     render: (_text, _record, index) => (currentPage - 1) * pageSize + index + 1,
   },
   {
-    title: '用户ID',
+    title: 'ユーザーID',
     dataIndex: 'userId',
     key: 'userId',
     width: 120,
   },
   {
-    title: '用户名',
+    title: 'ユーザー名',
     dataIndex: 'name',
     key: 'name',
     width: 120,
   },
   {
-    title: '设备编号',
+    title: 'デバイス番号',
     dataIndex: 'deviceId',
     key: 'deviceId',
     width: 180,
@@ -48,7 +48,7 @@ export const createColumns = (
                   color="blue"
                   style={{ marginBottom: 2 }}
                 >
-                  {monitor}（显示器）
+                  {monitor}（モニター）
                 </Tag>
               ))}
             </div>
@@ -60,7 +60,7 @@ export const createColumns = (
   
   
   {
-    title: '开机认证',
+    title: '起動認証',
     dataIndex: 'bootAuthentication',
     key: 'bootAuthentication',
     width: 100,
@@ -68,13 +68,13 @@ export const createColumns = (
       if (value === null) return '-';
       return (
         <Tag color={value ? 'success' : 'error'}>
-          {value ? '正常' : '异常'}
+          {value ? '正常' : '異常'}
         </Tag>
       );
     },
   },
   {
-    title: '屏保密码',
+    title: 'スクリーンセーバーパスワード',
     dataIndex: 'screenSaverPwd',
     key: 'screenSaverPwd',
     width: 100,
@@ -82,13 +82,13 @@ export const createColumns = (
       if (value === null) return '-';
       return (
         <Tag color={value ? 'success' : 'error'}>
-          {value ? '正常' : '异常'}
+          {value ? '正常' : '異常'}
         </Tag>
       );
     },
   },
   {
-    title: '安装软件',
+    title: 'インストールソフトウェア',
     dataIndex: 'installedSoftware',
     key: 'installedSoftware',
     width: 100,
@@ -96,13 +96,13 @@ export const createColumns = (
       if (value === null) return '-';
       return (
         <Tag color={value ? 'success' : 'error'}>
-          {value ? '正常' : '异常'}
+          {value ? '正常' : '異常'}
         </Tag>
       );
     },
   },
   {
-    title: '安全补丁',
+    title: 'セキュリティパッチ',
     dataIndex: 'securityPatch',
     key: 'securityPatch',
     width: 100,
@@ -110,13 +110,13 @@ export const createColumns = (
       if (value === null) return '-';
       return (
         <Tag color={value ? 'success' : 'error'}>
-          {value ? '正常' : '异常'}
+          {value ? '正常' : '異常'}
         </Tag>
       );
     },
   },
   {
-    title: '杀毒软件',
+    title: 'アンチウイルスソフトウェア',
     dataIndex: 'antivirusProtection',
     key: 'antivirusProtection',
     width: 100,
@@ -124,13 +124,13 @@ export const createColumns = (
       if (value === null) return '-';
       return (
         <Tag color={value ? 'success' : 'error'}>
-          {value ? '正常' : '异常'}
+          {value ? '正常' : '異常'}
         </Tag>
       );
     },
   },
   {
-    title: 'USB接口',
+    title: 'USBインターフェース',
     dataIndex: 'usbInterface',
     key: 'usbInterface',
     width: 100,
@@ -138,13 +138,13 @@ export const createColumns = (
       if (value === null) return '-';
       return (
         <Tag color={value ? 'success' : 'error'}>
-          {value ? '正常' : '异常'}
+          {value ? '正常' : '異常'}
         </Tag>
       );
     },
   },
   {
-    title: '处置措施',
+    title: '対処措置',
     dataIndex: 'disposalMeasures',
     key: 'disposalMeasures',
     width: 200,
