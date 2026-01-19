@@ -1,5 +1,5 @@
 // pages/DeviceManagement.tsx
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Table, Button, Space, Tag, Input, Row, Col, Pagination
 } from 'antd';
@@ -9,8 +9,6 @@ import {
 import Layout from '../components/common/Layout';
 import DeviceFormModal from '../components/device/DeviceFormModal';
 import { useDeviceStore } from '../stores/deviceStore';
-import { useAuthStore } from '../stores/authStore'; // ✅ 添加 authStore 导入
-
 import type { DeviceListItem, DeviceIp, Monitor } from '../types/device';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -19,76 +17,54 @@ const { Search } = Input;
 const DeviceManagement: React.FC = () => {
   const {
     devices, loading, searchParams, total, formVisible, isEditing, selectedDevice,
-    userIdSearch, users, fetchDevices, handlePageChange, handlePageSizeChange,
+    userIdSearch, users, handlePageChange, handlePageSizeChange,
     handleEditDevice, handleDeleteDevice, handleAddDevice,
     handleUserIdSearch, handleFormSubmit, initialize,
-    setFormVisible, setIsEditing, setSelectedDevice
+    setFormVisible, setIsEditing, setSelectedDevice, setUserIdSearch
   } = useDeviceStore();
 
-  // ✅ 获取当前登录用户信息
-  const { userInfo, isLoading: authLoading } = useAuthStore();
-  const [initialized, setInitialized] = useState(false);
+  // テーブルコンテナの参照と高さ状態
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [tableHeight, setTableHeight] = useState<number>(600);
 
-  // ✅ 判断是否为管理员（基于 DictEnum.java 的值）
-  const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
+  // コンポーネントマウント時に初期化
+  useEffect(() => { initialize(); }, []);
 
-  // 在组件开始时添加
-  console.log('DeviceManagement 渲染，当前状态:', {
-    hasUserInfo: !!userInfo,
-    userInfo,
-    authLoading,
-    isAdmin,
-    devicesCount: devices.length,
-    searchParams
-  });
-
+  // リサイズオブザーバーでテーブルコンテナの高さを監視
   useEffect(() => {
-    console.log('userInfo 变化:', userInfo);
+    if (!tableContainerRef.current) return;
 
-    if (userInfo) {
-      console.log('调用 initialize，参数:', {
-        isAdmin,
-        userId: userInfo.USER_ID
-      });
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        // スムーズなトランジションのためにrequestAnimationFrameを使用
+        requestAnimationFrame(() => {
+          setTableHeight(entry.contentRect.height);
+        });
+      }
+    });
 
-      initialize(isAdmin, userInfo.USER_ID);
-    } else {
-      console.log('userInfo 为空，等待加载...');
-    }
-  }, [userInfo]);
+    resizeObserver.observe(tableContainerRef.current);
+    
+    // クリーンアップ関数
+    return () => resizeObserver.disconnect();
+  }, [searchParams.pageSize]);
 
-  // ✅ 如果认证还在加载，显示加载状态
-  if (authLoading) {
-    return (
-        <Layout title="设备管理">
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-            <Spin size="large" tip="加载用户信息..." />
-          </div>
-        </Layout>
-    );
-  }
-
-  const cellStyle: React.CSSProperties = {
-    textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap',
-    overflow: 'hidden', textOverflow: 'ellipsis',
-  };
-
+  // テーブル列定義
   const columns: ColumnsType<DeviceListItem> = [
     {
-      title: '主机编号',
+      title: 'デバイス番号',
       dataIndex: 'deviceId',
       key: 'deviceId',
       align: 'center',
       width: 180,
-      ellipsis: true,
       render: (t: string) => (
-          <div style={{ textAlign: 'center', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={t}>
-            {t}
-          </div>
+        <div style={{ textAlign: 'center', wordBreak: 'break-word', whiteSpace: 'normal' }} title={t}>
+          {t || '-'}
+        </div>
       ),
     },
     {
-      title: '显示器',
+      title: 'モニター',
       dataIndex: 'monitors',
       key: 'monitors',
       align: 'center',
@@ -100,12 +76,23 @@ const DeviceManagement: React.FC = () => {
           </div>
       ),
     },
-    { title: '用户姓名', dataIndex: 'userName', key: 'userName', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
-    { title: '用户工号', dataIndex: 'userId', key: 'userId', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
-    { title: '主机型号', dataIndex: 'deviceModel', key: 'deviceModel', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
-    { title: '电脑名', dataIndex: 'computerName', key: 'computerName', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
+    { 
+      title: 'ユーザー情報', 
+      key: 'userInfo',
+      align: 'center',
+      width: 120,
+      render: (_: any, record: DeviceListItem) => (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '14px', fontWeight: 500 }}>{record.userName || '-'}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>{record.userId || '-'}</div>
+        </div>
+      ),
+    },
+    { title: 'デバイスモデル', dataIndex: 'deviceModel', key: 'deviceModel', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
+    { title: 'コンピュータ名', dataIndex: 'computerName', key: 'computerName', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
+    { title: 'ログインユーザー名', dataIndex: 'loginUsername', key: 'loginUsername', align: 'center', width: 130, ellipsis: true, render: (t) => t || '-' },
     {
-      title: 'IP地址',
+      title: 'IPアドレス',
       dataIndex: 'deviceIps',
       key: 'deviceIps',
       align: 'center',
@@ -117,21 +104,57 @@ const DeviceManagement: React.FC = () => {
           </div>
       ),
     },
-    { title: '操作系统', dataIndex: 'osName', key: 'osName', align: 'center', width: 120, ellipsis: true },
-    { title: '内存(G)', dataIndex: 'memorySize', key: 'memorySize', align: 'center', width: 80, ellipsis: true },
-    { title: 'SSD(G)', dataIndex: 'ssdSize', key: 'ssdSize', align: 'center', width: 80, ellipsis: true },
-    { title: 'HDD(G)', dataIndex: 'hddSize', key: 'hddSize', align: 'center', width: 80, ellipsis: true },
-    { title: '项目', dataIndex: 'project', key: 'project', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
-    { title: '开发室', dataIndex: 'devRoom', key: 'devRoom', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
-    { title: '备注', dataIndex: 'remark', key: 'remark', align: 'center', width: 150, ellipsis: true, render: (t) => t || '-' },
+    { title: 'OS', dataIndex: 'osName', key: 'osName', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
+    { title: 'メモリ(G)', dataIndex: 'memorySize', key: 'memorySize', align: 'center', width: 80, ellipsis: true, render: (t) => t || '-' },
+    { 
+      title: 'ストレージ(G)', 
+      key: 'storage',
+      align: 'center',
+      width: 100,
+      render: (_: any, record: DeviceListItem) => {
+        const items: string[] = [];
+        if (record.ssdSize && record.ssdSize !== '-') {
+          items.push(`SSD: ${record.ssdSize}`);
+        }
+        if (record.hddSize && record.hddSize !== '-') {
+          items.push(`HDD: ${record.hddSize}`);
+        }
+        
+        if (items.length === 0) {
+          return <div style={{ textAlign: 'center' }}>-</div>;
+        }
+        
+        return (
+          <div style={{ textAlign: 'center' }}>
+            {items.map((item, index) => (
+              <div key={index}>{item}</div>
+            ))}
+          </div>
+        );
+      },
+    },
+    { title: 'プロジェクト', dataIndex: 'project', key: 'project', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
+    { title: '開発室', dataIndex: 'devRoom', key: 'devRoom', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
+    { 
+      title: '備考', 
+      dataIndex: 'remark', 
+      key: 'remark', 
+      align: 'center', 
+      width: 150,
+      render: (t) => (
+        <div style={{ textAlign: 'center', wordBreak: 'break-word', whiteSpace: 'normal' }} title={t}>
+          {t || '-'}
+        </div>
+      ),
+    },
     {
-      title: '确认状态',
+      title: '確認状態',
       dataIndex: 'confirmStatus',
       key: 'confirmStatus',
       align: 'center',
       width: 100,
       fixed: 'right',
-      render: (s: string) => <Tag color={s === '已确认' ? 'green' : 'red'}>{s}</Tag>,
+      render: (s: string) => <Tag color={s === '已确认' || s === '確認済み' ? 'green' : 'red'}>{s}</Tag>,
     },
     {
       title: '操作',
@@ -140,106 +163,131 @@ const DeviceManagement: React.FC = () => {
       width: 150,
       fixed: 'right',
       render: (_: any, r: DeviceListItem) => (
-          <Space size={[4, 0]} wrap={false} style={{ whiteSpace: 'nowrap' }}>
-            {/* ✅ 只有管理员可以编辑/删除 */}
-            {isAdmin && (
-                <>
-                  <Button type="link" icon={<EditOutlined />} size="small" onClick={() => handleEditDevice(r)}>
-                    编辑
-                  </Button>
-                  <Button type="link" danger icon={<DeleteOutlined />} size="small" onClick={() => handleDeleteDevice(r.deviceId)}>
-                    删除
-                  </Button>
-                </>
-            )}
-            {/* ✅ 普通用户无操作权限时显示提示 */}
-            {!isAdmin && (
-                <span style={{ color: '#999', fontSize: '12px' }}>无权限</span>
-            )}
-          </Space>
+        <Space size={[4, 0]} wrap={false} style={{ whiteSpace: 'nowrap' }}>
+          <Button type="link" icon={<EditOutlined />} size="small" onClick={() => handleEditDevice(r)}>
+            編集
+          </Button>
+          <Button type="link" danger icon={<DeleteOutlined />} size="small" onClick={() => handleDeleteDevice(r.deviceId)}>
+            削除
+          </Button>
+        </Space>
       ),
     },
   ];
 
   return (
-      <Layout title="设备管理">
-        <div style={{ height: 'calc(100vh - 150px)', display: 'flex', flexDirection: 'column', background: '#fff', padding: 20, overflow: 'hidden' }}>
-          {/* 顶部搜索区 - 仅管理员可见 */}
-          <div style={{ marginBottom: 20, flexShrink: 0 }}>
-            <Row gutter={16} align="middle" justify="space-between">
-              {isAdmin && (
-                  <Col>
-                    <Search
-                        placeholder="输入用户工号进行搜索"
-                        allowClear
-                        enterButton={<SearchOutlined />}
-                        onSearch={handleUserIdSearch}
-                        onChange={(e) => handleUserIdSearch(e.target.value)}
-                        value={userIdSearch}
-                        style={{ width: 240 }}
-                    />
-                  </Col>
-              )}
-              {isAdmin && (
-                  <Col>
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleAddDevice}
-                    >
-                      添加设备
-                    </Button>
-                  </Col>
-              )}
-            </Row>
-          </div>
+    <Layout title="デバイス管理">
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        background: '#fff', 
+        padding: 16, 
+        height: '100%', 
+        overflow: 'hidden' 
+      }}>
+        {/* 上部検索エリア */}
+        <div style={{ marginBottom: 20, flexShrink: 0 }}>
+          <Row gutter={16} align="middle" justify="space-between">
+            <Col>
+              <Search
+                placeholder="ユーザーIDで検索"
+                allowClear
+                enterButton={<SearchOutlined />}
+                onSearch={handleUserIdSearch}
+                onChange={(e) => setUserIdSearch(e.target.value)}
+                value={userIdSearch}
+                style={{ width: 240, padding: '0 0 6px' }}
+              />
+            </Col>
+            <Col>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDevice}>デバイスを追加</Button>
+            </Col>
+          </Row>
+        </div>
 
-          {/* 表格 */}
-          <div style={{ flex: '1 1 auto', overflowX: 'auto', overflowY: 'hidden', minWidth: '100%' }}>
-            <Table<DeviceListItem>
-                rowKey="deviceId"
-                columns={columns}
-                dataSource={devices}
-                loading={loading}
-                scroll={{ x: 2200 }}
-                pagination={false}
-                size="middle"
-                bordered={false}
-            />
+        {/* テーブルコンテナ - リサイズ監視用 */}
+        <div 
+          ref={tableContainerRef}
+          style={{ 
+            flex: 1,
+            minHeight: 0, // flexコンテナで必要
+            position: 'relative',
+            transition: 'all 0.3s ease' // スムーズなトランジション
+          }}
+        >
+          {/* 絶対配置で内部スクロールを実現 */}
+          <div style={{
+            position: 'absolute',
+            top: -12,
+            left: 0,
+            right: 0,
+            bottom: -36,
+            overflow: 'hidden'
+          }}>
+            <style>{`
+              ::-webkit-scrollbar {
+                display: none; /* Chrome, Safari and Opera */
+              }
+            `}</style>
+          <Table<DeviceListItem>
+            rowKey="deviceId"
+            columns={columns}
+            dataSource={devices}
+            loading={loading}
+            scroll={{ 
+              x: 2200,
+              y: tableHeight-8 // マージンを考慮
+            }}
+            pagination={false}
+            size="middle"
+            bordered={false}
+            style={{
+              transition: 'all 0.3s ease',
+              // スクロールバーを自動的に非表示にする
+              scrollbarWidth: 'none',  /* Firefox */
+              msOverflowStyle: 'none', /* IE and Edge */
+            }}
+          />
           </div>
+        </div>
 
-          {/* 分页 */}
-          <div style={{ marginTop: 16, flexShrink: 0, textAlign: 'right', paddingRight: 10 }}>
-            <Pagination
-                current={searchParams.page}
-                pageSize={searchParams.pageSize}
-                total={total}
-                onChange={handlePageChange}
-                onShowSizeChange={handlePageSizeChange}
-                showQuickJumper
-                showSizeChanger
-                showTotal={(t, r) => `第 ${r[0]}-${r[1]} 条，共 ${t} 条`}
-                pageSizeOptions={['10', '15', '20']}
-            />
-          </div>
-
-          <DeviceFormModal
-              visible={formVisible}
-              isEditing={isEditing}
-              device={selectedDevice}
-              dictData={{}}
-              users={users}
-              isAdmin={isAdmin}              // ✅ 传递权限状态
-              currentUserId={userInfo?.USER_ID} // ✅ 传递当前用户ID
-              onCancel={() => {
-                setFormVisible(false);
-                setIsEditing(false);
-                setSelectedDevice(null);
-              }}
-              onSubmit={handleFormSubmit}
+        {/* ページネーション */}
+        <div style={{ 
+          marginTop: 40, 
+          flexShrink: 0, 
+          display: 'flex',
+          justifyContent: 'center',
+          transition: 'all 0.3s ease' // ページネーションもトランジション
+        }}>
+          <Pagination
+            current={searchParams.page}
+            pageSize={searchParams.pageSize}
+            total={total}
+            onChange={handlePageChange}
+            onShowSizeChange={handlePageSizeChange}
+            showQuickJumper
+            showSizeChanger
+            showTotal={(t, r) => `${r[0]}-${r[1]} 件目、全 ${t} 件`}
+            pageSizeOptions={['10', '15', '20']}
           />
         </div>
-      </Layout>
+
+        {/* デバイスフォームモーダル */}
+        <DeviceFormModal
+          visible={formVisible}
+          isEditing={isEditing}
+          device={selectedDevice}
+          dictData={{}}
+          users={users}
+          onCancel={() => {
+            setFormVisible(false);
+            setIsEditing(false);
+            setSelectedDevice(null);
+          }}
+          onSubmit={handleFormSubmit}
+        />
+      </div>
+    </Layout>
   );
 };
 

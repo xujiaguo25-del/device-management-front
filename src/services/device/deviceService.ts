@@ -1,9 +1,16 @@
 // services/device/deviceService.ts
 import type { DeviceListItem, DeviceQueryParams, DeviceApiResponse } from '../../types/device';
-import { get, del } from '../api/index'; // 导入统一的请求方法
+import { get, del } from '../api/index';
 
+/**
+ * 値をフォーマットします
+ * null/undefined/空文字の場合は'-'を返します
+ */
 const formatValue = (v: any) => (v === null || v === undefined || v === '' ? '-' : String(v));
 
+/**
+ * バックエンドから受け取ったデバイスデータをフロントエンド用に変換します
+ */
 const transformDeviceData = (d: any): DeviceListItem => ({
   deviceId: d.deviceId || '',
   deviceModel: formatValue(d.deviceModel),
@@ -49,15 +56,19 @@ const transformDeviceData = (d: any): DeviceListItem => ({
   })),
 });
 
-// 更新后的后端数据结构
+// バックエンドのデバイスリストレスポンス構造
 interface BackendDeviceListResponse {
   code: number;
   message: string;
-  data: any[]; // 直接返回设备数组
-  total?: number; // 总记录数
-  page?: number;  // 当前页码
-  size?: number;  // 每页大小
+  data: any[];
+  total?: number;
+  page?: number;
+  size?: number;
 }
+
+/**
+ * デバイスリストを取得します
+ */
 export const getDeviceList = async (params: DeviceQueryParams): Promise<DeviceApiResponse<DeviceListItem>> => {
   const qs = new URLSearchParams();
   qs.append('page', String(params.page || 1));
@@ -89,7 +100,7 @@ export const getDeviceList = async (params: DeviceQueryParams): Promise<DeviceAp
     const response = await get<BackendDeviceListResponse>(url);
 
     if (response.code !== 200) {
-      throw new Error(response.message || '获取设备列表失败');
+      throw new Error(response.message || 'デバイスリストの取得に失敗しました');
     }
 
     return {
@@ -103,34 +114,42 @@ export const getDeviceList = async (params: DeviceQueryParams): Promise<DeviceAp
       },
     };
   } catch (error) {
-    console.error('获取设备列表失败:', error);
+    console.error('デバイスリストの取得に失敗しました:', error);
     throw error;
   }
 };
-export const getDeviceDetail = async (deviceId: string): Promise<DeviceListItem | null> => {
-  if (!deviceId?.trim()) throw new Error('设备ID不能为空');
+
+/**
+ * デバイスの詳細情報を取得します
+ */
+export const getDeviceDetail = async (deviceId: string, forEditing: boolean = false): Promise<DeviceListItem | null> => {
+  if (!deviceId?.trim()) throw new Error('デバイスIDを入力してください');
   
   const url = `/devices/${encodeURIComponent(deviceId.trim())}`;
   
-  // 使用统一的 get 方法
   const response = await get<{ code: number; message: string; data: any }>(url);
   
-  // 检查业务状态码
   if (response.code !== 200) {
-    throw new Error(response.message || '未知错误');
+    throw new Error(response.message || '不明なエラーが発生しました');
+  }
+  
+  if (forEditing) {
+    // 編集モードではフォーマットせずに生データを返します
+    return response.data as DeviceListItem;
   }
   
   return transformDeviceData(response.data);
 };
 
+/**
+ * デバイスを削除します
+ */
 export const deleteDevice = async (deviceId: string): Promise<boolean> => {
-  if (!deviceId?.trim()) throw new Error('设备ID不能为空');
+  if (!deviceId?.trim()) throw new Error('デバイスIDを入力してください');
   
   const url = `/devices/${encodeURIComponent(deviceId.trim())}`;
   
-  // 使用统一的 del 方法，不传递类型参数
   const response = await del(url) as { code: number; message: string; data: any };
   
-  // 直接返回业务状态码是否成功
   return response.code === 200;
 };

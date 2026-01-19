@@ -88,18 +88,3 @@ export interface ApiResponse<T = any> {
   message?: string;
   data: T;
 }
-
-export interface DictResponseData {
-  [key: string]: Array<{
-    dictId: number;
-    dictItemName: string;
-    [key: string]: any;
-  }>;
-}
-
-export interface DeviceListResponseData {
-  list: DeviceListItem[];
-  total?: number;
-  page?: number;
-  pageSize?: number;
-}

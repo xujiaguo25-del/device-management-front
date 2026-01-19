@@ -14,8 +14,7 @@ import {
 import {
   saveDevice,
   updateDevice,
-} from '../services/device/deviceFormService';
-import { useAuthStore } from '../stores/authStore'; // ✅ 导入 authStore
+} from '../services/device/deviceFormService'; // インポートを追加
 
 interface DeviceStore {
   devices: DeviceListItem[];
@@ -26,8 +25,8 @@ interface DeviceStore {
   isEditing: boolean;
   selectedDevice: DeviceListItem | null;
   userIdSearch: string;
-  users: any[];
-  usersLoading: boolean;
+  users: any[]; // ユーザーリストを追加
+  usersLoading: boolean; // ユーザー読み込み状態を追加
 
   setDevices: (d: DeviceListItem[]) => void;
   setLoading: (l: boolean) => void;
@@ -37,11 +36,11 @@ interface DeviceStore {
   setIsEditing: (e: boolean) => void;
   setSelectedDevice: (d: DeviceListItem | null) => void;
   setUserIdSearch: (s: string) => void;
-  setUsers: (u: any[]) => void;
-  setUsersLoading: (l: boolean) => void;
+  setUsers: (u: any[]) => void; // 追加
+  setUsersLoading: (l: boolean) => void; // 追加
 
   fetchDevices: () => Promise<void>;
-  fetchUsers: () => Promise<void>;
+  fetchUsers: () => Promise<void>; // 追加
   handlePageChange: (page: number, pageSize?: number) => void;
   handlePageSizeChange: (size: number) => void;
   handleEditDevice: (d: DeviceListItem) => Promise<void>;
@@ -53,7 +52,7 @@ interface DeviceStore {
 }
 
 export const useDeviceStore = create<DeviceStore>((set, get) => ({
-  /* ---------- 初始状态 ---------- */
+  /* ---------- 初期状態 ---------- */
   devices: [],
   loading: false,
   searchParams: { page: 1, pageSize: 10 },
@@ -62,10 +61,10 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   isEditing: false,
   selectedDevice: null,
   userIdSearch: '',
-  users: [],
+  users: [], // 空の配列で初期化
   usersLoading: false,
 
-  /* ---------- setters ---------- */
+  /* ---------- セッター ---------- */
   setDevices: (d) => set({ devices: d }),
   setLoading: (l) => set({ loading: l }),
   setSearchParams: (p) => set({ searchParams: p }),
@@ -77,7 +76,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   setUsers: (u) => set({ users: u }),
   setUsersLoading: (l) => set({ usersLoading: l }),
 
-  /* ---------- 业务方法 ---------- */
+  /* ---------- ビジネスメソッド ---------- */
   fetchDevices: async () => {
     const { searchParams, setLoading, setDevices, setTotal } = get();
     setLoading(true);
@@ -86,6 +85,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
       const res: DeviceApiResponse<DeviceListItem> = await getDeviceList(searchParams);
       console.log('fetchDevices返回：', res);
       if (res.code === 200 && res.data) {
+        // TSに明示的にページネーション構造を伝える
         const pageData = res.data as {
           list: DeviceListItem[];
           total: number;
@@ -96,13 +96,13 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
         setDevices(pageData.list);
         setTotal(pageData.total);
       } else {
-        message.error(`获取设备列表失败: ${res.message}`);
+        message.error(`デバイスリストの取得に失敗しました: ${res.message}`);
         setDevices([]); setTotal(0);
       }
     } catch (e: any) {
-      const errorMessage = e.message || '获取设备列表失败';
-      message.error(`获取设备列表失败: ${errorMessage}`);
-      console.error('获取设备列表失败详情:', e);
+      const errorMessage = e.message || 'デバイスリストの取得に失敗しました';
+      message.error(`デバイスリストの取得に失敗しました: ${errorMessage}`);
+      console.error('デバイスリスト取得失敗の詳細:', e);
       setDevices([]); setTotal(0);
     } finally {
       setLoading(false);
@@ -114,19 +114,29 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
     setUsersLoading(true);
 
     try {
+      // fetchDevicesを呼び出してデバイスリストを取得
       const { fetchDevices } = get();
+      
+      // 元の検索パラメータを保存
       const originalParams = { ...searchParams };
-
+      
+      // ユーザー取得に必要なパラメータを設定（ユーザー抽出のため大量データを取得）
       const userSearchParams = {
         page: 1,
         pageSize: 1000,
         ...originalParams
       };
-
+      
+      // 一時的に検索パラメータを変更
       set({ searchParams: userSearchParams });
+      
+      // デバイスリストを取得
       await fetchDevices();
-
+      
+      // 現在のデバイスリストからユーザー情報を抽出
       const deviceList = get().devices;
+      
+      // Setを使用して重複を排除
       const userSet = new Set<string>();
       const users: Array<{userId: string, name: string, deptId?: string}> = [];
 
@@ -140,33 +150,15 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
           });
         }
       });
-
-      if (users.length < 5) {
-        const defaultUsers = [
-          { userId: 'JS0010', name: '小娟', deptId: 'IT' },
-          { userId: 'JS0011', name: '张三', deptId: '研发部' },
-          { userId: 'JS0012', name: '李四', deptId: '测试部' },
-        ];
-
-        defaultUsers.forEach(user => {
-          if (!userSet.has(user.userId)) {
-            userSet.add(user.userId);
-            users.push(user);
-          }
-        });
-      }
-
+            
       setUsers(users);
+      
+      // 元の検索パラメータに戻す
       set({ searchParams: originalParams });
 
     } catch (error) {
-      console.error('获取用户列表失败:', error);
-      const defaultUsers = [
-        { userId: 'JS0010', name: '小娟', deptId: 'IT' },
-        { userId: 'JS0011', name: '张三', deptId: '研发部' },
-        { userId: 'JS0012', name: '李四', deptId: '测试部' },
-      ];
-      setUsers(defaultUsers);
+      console.error('ユーザーリストの取得に失敗しました:', error);
+
     } finally {
       setUsersLoading(false);
     }
@@ -197,10 +189,10 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
     }
 
     try {
-      const detail = await getDeviceDetail(device.deviceId);
+      const detail = await getDeviceDetail(device.deviceId, true);
       set({ selectedDevice: detail, isEditing: true, formVisible: true });
     } catch {
-      message.error('获取设备信息失败');
+      message.error('デバイス情報の取得に失敗しました');
     }
   },
 
@@ -216,17 +208,17 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
 
     return new Promise<void>((resolve) => {
       Modal.confirm({
-        title: '确认删除',
-        content: `确定要删除设备 ${deviceId} 吗？`,
-        okText: '确认',
-        cancelText: '取消',
+        title: '削除の確認',
+        content: `デバイス ${deviceId} を削除してもよろしいですか？`,
+        okText: '確認',
+        cancelText: 'キャンセル',
         onOk: async () => {
           try {
             await deleteDevice(deviceId);
             await get().fetchDevices();
-            message.success(`设备 ${deviceId} 删除成功`);
+            message.success(`デバイス ${deviceId} の削除に成功しました`);
           } catch {
-            message.error('删除设备失败');
+            message.error('デバイスの削除に失敗しました');
           }
           resolve();
         },
@@ -269,8 +261,11 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
     fetchDevices();
   },
 
+  /* フォーム送信はまだ実装されていません。一旦空にしておきます */
+  // フォーム送信を処理
   handleFormSubmit: async (values: DeviceListItem) => {
-    try {
+
+     try {
       const { isEditing, fetchDevices } = get();
       const { userInfo } = useAuthStore.getState();
       const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
@@ -291,65 +286,43 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
       let success;
 
       if (isEditing) {
-        success = await updateDevice(values);
+        // 編集モードでは updateDevice を呼び出す
+        success = await updateDevice(values);  
       } else {
+        // 新規追加モードでは saveDevice を呼び出す
         success = await saveDevice(values);
       }
 
       if (success) {
         if (isEditing) {
-          message.success(`设备 ${values.deviceId} 编辑成功`);
+          message.success(`デバイス ${values.deviceId} の編集に成功しました`);
         } else {
-          message.success(`设备 ${values.deviceId} 添加成功`);
+          message.success(`デバイス ${values.deviceId} の追加に成功しました`);
         }
-
+        
+        // デバイスリストを再読み込み
         await fetchDevices();
-        set({
-          formVisible: false,
-          isEditing: false,
-          selectedDevice: null
+        
+        // フォームを閉じる
+        set({ 
+          formVisible: false, 
+          isEditing: false, 
+          selectedDevice: null 
         });
       } else {
-        message.error('操作失败');
+        message.error('操作に失敗しました');
       }
     } catch (error: any) {
-      message.error(`操作失败: ${error.message || '未知错误'}`);
-      console.error('操作失败:', error);
+      message.error(`操作に失敗しました: ${error.message || '不明なエラー'}`);
+      console.error('操作に失敗しました:', error);
     }
   },
 
-  // ✅ 根据用户类型初始化
-  // src/stores/deviceStore.ts
-  initialize: async (isAdmin: boolean, currentUserId?: string) => {
-    const { setSearchParams, setUserIdSearch, fetchDevices, fetchUsers } = get();
-
-    console.log('初始化设备商店:', { isAdmin, currentUserId });
-
-    if (!isAdmin && currentUserId) {
-      // 普通用户：只加载自己的设备，不加载用户列表
-      // 强制设置为自己的ID
-      setUserIdSearch(currentUserId);
-      // ✅ 设置搜索参数时包含 userId
-      setSearchParams({
-        page: 1,
-        pageSize: 10,
-        userId: currentUserId  // 明确设置userId
-      });
-      await fetchDevices();
-    } else {
-      // ✅ 管理员：清除所有搜索条件，加载所有设备和用户列表
-      setUserIdSearch('');  // 清空搜索框
-      // ✅ 明确设置 userId 为 undefined，而不是空字符串
-      setSearchParams({
-        page: 1,
-        pageSize: 10,
-        userId: undefined  // 明确设置为 undefined
-      });
-
-      await Promise.all([
-        fetchDevices(),
-        fetchUsers()
-      ]);
-    }
+  initialize: async () => {
+    // デバイスリストとユーザーリストを並行して取得
+    await Promise.all([
+      get().fetchDevices(),
+      get().fetchUsers()
+    ]);
   },
 }));
