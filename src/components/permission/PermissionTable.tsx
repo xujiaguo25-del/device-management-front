@@ -1,6 +1,5 @@
 import React from 'react';
 import { Table, Button, Tag } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import type { DevicePermissionList, DictItem } from '../../types';
@@ -50,11 +49,15 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
 
     const columns: ColumnsType<DevicePermissionList> = [
         {
-            title: '権限ID',
-            dataIndex: 'permissionId',
-            key: 'permissionId',
-            width: 120,
+            title: '番号',
+            key: 'index',
+            width: 80,
             fixed: 'left',
+            render: (_: any, __: DevicePermissionList, index: number) => {
+                // 计算序号：(当前页 - 1) * 每页数量 + 索引 + 1
+                const serialNumber = (pagination.current - 1) * pagination.pageSize + index + 1;
+                return serialNumber;
+            },
         },
         {
             title: 'デバイスID',
@@ -97,7 +100,7 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             title: 'ログインユーザー名',
             dataIndex: 'loginUsername',
             key: 'loginUsername',
-            width: 120,
+            width: 160,
         },
         {
             title: 'Domain状態',
@@ -121,7 +124,7 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             title: 'Domainグループ',
             dataIndex: 'domainGroup',
             key: 'domainGroup',
-            width: 120,
+            width: 160,
             render: (text: string) => text || '-',
         },
         {
@@ -164,7 +167,7 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             title: 'USBの有効期限',
             dataIndex: 'usbExpireDate',
             key: 'usbExpireDate',
-            width: 120,
+            width: 150,
             render: (date: string | null) => {
                 if (date) {
                     try {
@@ -180,7 +183,7 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             title: 'アンチウイルス状態',
             dataIndex: 'antivirusStatus',
             key: 'antivirusStatus',
-            width: 120,
+            width: 160,
             render: (_: number, record: DevicePermissionList) => {
                 if (record.antivirusStatus != null) {
                     const label = getLabel(antivirusStatusOptions, record.antivirusStatus);
@@ -211,7 +214,6 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             render: (_, record) => (
                 <Button
                     type="link"
-                    icon={<EyeOutlined />}
                     size="small"
                     onClick={() => onEdit(record.permissionId)}
                 >
@@ -240,6 +242,7 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
                     pageSize: pagination.pageSize,
                     total: pagination.total,
                     showSizeChanger: true,
+                    showQuickJumper: true,
                     showTotal: (total) => `全${total}件`,
                     onChange: onPageChange,
                     onShowSizeChange: (_current, size) => {

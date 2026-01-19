@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Card, Space, message } from 'antd';
-import { ExportOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import Layout from '../components/common/Layout';
 import PermissionSearchForm from '../components/permission/PermissionSearchForm';
@@ -279,14 +278,15 @@ const DevicePermissions: React.FC = () => {
                 {/* 権限リストカード */}
                 <Card
                     title="権限リスト"
-                    extra={
-                        <Button icon={<ExportOutlined />} onClick={handleExport} loading={loading}>
-                            Excelにエクスポート
-                        </Button>
-                    }
                 >
                     {/* 検索フォーム */}
-                    <PermissionSearchForm onSearch={onSearch} onReset={onResetSearch} isAdmin={isAdmin} />
+                    <PermissionSearchForm 
+                        onSearch={onSearch} 
+                        onReset={onResetSearch} 
+                        onExport={handleExport}
+                        loading={loading}
+                        isAdmin={isAdmin} 
+                    />
 
                     {/* テーブル */}
                     <div style={{ marginTop: 16 }}>
