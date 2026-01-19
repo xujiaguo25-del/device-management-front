@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Input, Button, Space, message, Row, Col } from 'antd';
-import { SearchOutlined, DownloadOutlined } from '@ant-design/icons';
+import { SearchOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
 import Layout from '../../components/common/Layout';
 import type { SecurityCheck } from '../../types';
 import EditModal from './EditModal';
 import { createColumns } from './ColumnDefine';
-import { getSecurityChecks, updateSecurityCheck, exportSecurityChecksExcel } from '../../services//security-checks/securityCheckService';
+import { getSecurityChecks, updateSecurityCheck, exportSecurityChecksExcel, init } from '../../services//security-checks/securityCheckService';
 import { useAuthStore } from '../../stores/authStore';
 
 const SecurityChecks: React.FC = () => {
@@ -19,6 +19,7 @@ const SecurityChecks: React.FC = () => {
   const [editVisible, setEditVisible] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<SecurityCheck | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [initializing, setInitializing] = useState(false);
   
   // 管理者かどうかを判断する
   const isAdmin = userInfo?.USER_TYPE_NAME?.toUpperCase() === 'ADMIN';
@@ -26,7 +27,7 @@ const SecurityChecks: React.FC = () => {
   // 非管理者の場合は権限不足ページを表示
   if (!isAdmin) {
     return (
-      <Layout title="セキュリティチェック">
+      <Layout title="安全点検">
         <Card>
           <div style={{ textAlign: 'center', padding: '50px 0' }}>
             <h2>現在閲覧権限がありません</h2>
@@ -111,6 +112,29 @@ const SecurityChecks: React.FC = () => {
     }
   };
 
+  // 初期化の操作
+  const handleInit = async () => {
+    try {
+      setInitializing(true);
+      setLoading(true);
+      const res = await init();
+      if (res.code === 200) {
+
+        message.success('初期化成功');
+        fetchData();
+
+      } else {
+        message.error(res.message || '初期化失敗');
+      }
+    } catch (error: any) {
+      console.error('初期化失敗:', error);
+      message.error(error.message || '初期化失敗');
+    } finally {
+      setInitializing(false);
+      setLoading(false);
+    }
+  };
+
   // 編集の操作
   const handleEdit = (record: SecurityCheck) => {
     setCurrentRecord(record);
@@ -141,7 +165,7 @@ const SecurityChecks: React.FC = () => {
   const columns = createColumns(currentPage, pageSize, handleEdit);
 
   return (
-    <Layout title="セキュリティチェック">
+    <Layout title="安全点検">
       <Card>
         <Card size="small" style={{ marginBottom: 16 }}>
             <Row gutter={16}>
@@ -171,6 +195,14 @@ const SecurityChecks: React.FC = () => {
                     loading={exporting}
                   >
                     Excelエクスポート
+                  </Button>
+                  <Button
+                    icon={<ReloadOutlined />}
+                    onClick={handleInit}
+                    loading={initializing}
+                    type="default"
+                  >
+                    初期化
                   </Button>
                 </Space>
               </Col>
