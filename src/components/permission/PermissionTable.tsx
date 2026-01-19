@@ -54,7 +54,6 @@ const PermissionTable: React.FC<PermissionTableProps> = ({
             width: 80,
             fixed: 'left',
             render: (_: any, __: DevicePermissionList, index: number) => {
-                // 计算序号：(当前页 - 1) * 每页数量 + 索引 + 1
                 const serialNumber = (pagination.current - 1) * pagination.pageSize + index + 1;
                 return serialNumber;
             },
