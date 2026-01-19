@@ -115,33 +115,60 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
     setUsersLoading(true);
 
     try {
-      // fetchDevicesを呼び出してデバイスリストを取得
-      const { fetchDevices } = get();
-      
       // 元の検索パラメータを保存
       const originalParams = { ...searchParams };
       
-      // ユーザー取得に必要なパラメータを設定（ユーザー抽出のため大量データを取得）
-      const userSearchParams = {
-        page: 1,
-        pageSize: 1000,
-        ...originalParams
-      };
+      const allDevices: DeviceListItem[] = [];
+      let currentPage = 1;
+      const maxPages = 10; // 最大10ページ（1000件）まで取得
       
-      // 一時的に検索パラメータを変更
-      set({ searchParams: userSearchParams });
-      
-      // デバイスリストを取得
-      await fetchDevices();
-      
-      // 現在のデバイスリストからユーザー情報を抽出
-      const deviceList = get().devices;
+      // ページネーションでデータを取得（最大10ページ）
+      while (currentPage <= maxPages) {
+        try {
+          const pageSearchParams = {
+            ...originalParams,
+            page: currentPage,
+            pageSize: 100,  // バックエンドAPIの制限: 1から100まで
+            userId: originalParams.userId // userIdパラメータを保持
+          };
+          
+          // 直接getDeviceListを呼び出してデバイスリストを取得
+          const res = await getDeviceList(pageSearchParams);
+          
+          if (res.code === 200 && res.data) {
+            const pageData = res.data as {
+              list: DeviceListItem[];
+              total: number;
+              page: number;
+              pageSize: number;
+            };
+            
+            console.log(`ページ ${currentPage} のデータ取得成功:`, pageData.list.length, '件');
+            
+            // データを追加
+            allDevices.push(...pageData.list);
+            
+            // 最後のページまたはデータがなくなったら終了
+            if (pageData.list.length < 100 || allDevices.length >= 1000) {
+              break;
+            }
+            
+            currentPage++;
+          } else {
+            console.error(`ページ ${currentPage} のデータ取得に失敗:`, res.message);
+            break;
+          }
+        } catch (pageError) {
+          console.error(`ページ ${currentPage} のデータ取得中にエラー:`, pageError);
+          break;
+        }
+      }
       
       // Setを使用して重複を排除
       const userSet = new Set<string>();
       const users: Array<{userId: string, name: string, deptId?: string}> = [];
 
-      deviceList.forEach((device) => {
+      allDevices.forEach((device) => {
         if (device.userId && device.userName && !userSet.has(device.userId)) {
           userSet.add(device.userId);
           users.push({
@@ -153,7 +180,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
       });
             
       setUsers(users);
-      
+
       // 元の検索パラメータに戻す
       set({ searchParams: originalParams });
 
