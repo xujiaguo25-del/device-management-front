@@ -60,10 +60,35 @@ export const updatePermission = async (
     return put<ApiResponse<any>>(`/permissions/${permissionId}`, permissionData);
 };
 
+import {getAuthStore} from '../../stores/authStore'
+/**
+ * 権限リストをExcelにエクスポート
+ * @param userInfo ユーザー情報、権限管理に使用
+ * @param dictMap 辞書データマッピング、状態テキストの変換に使用
+ */
 export const exportPermissionsExcel = async (
     userInfo?: UserInfo | null,
     dictMap?: Record<string, DictItem[]>
 ): Promise<void> => {
+    try {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+        const token = getAuthStore().token;
+        const response = await fetch(`${API_BASE_URL}/permissions/export`, {
+            method: 'GET',
+            headers: {
+                'Authorization': token ? `Bearer ${token}` : '',
+            },
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const fileName = `権限リスト_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`;
+            saveAs(blob, fileName);
+            return;
+        }
+    } catch (error) {
+        console.warn('バックエンドのエクスポートAPIは使用できません。フロントエンドで生成してください:', error);
+    }
     // 権限データを取得
     try {
         // 管理者かどうかで userId パラメータを切り替え

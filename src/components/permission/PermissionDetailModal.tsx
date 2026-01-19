@@ -342,13 +342,13 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
             title={
                 <div className="modal-title">
                     <FileTextOutlined className="icon-blue" />
-                    <span>{`デバイス権限の詳細 - ${editingPermission?.permissionId || ''}`}</span>
+                    <span>{`デバイス権限の詳細 `}</span>
                 </div>
             }
             open={visible}
             onCancel={handleCancel}
             footer={null}
-            width={725}
+            width={950}
             confirmLoading={loading}
             style={{ top: 20 }}
             bodyStyle={{ padding: '12px 16px', maxHeight: '80vh', overflowY: 'auto' }}

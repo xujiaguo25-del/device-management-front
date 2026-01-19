@@ -1,6 +1,6 @@
 import React from 'react';
 import { Form, Input, Button, Space } from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, ExportOutlined } from '@ant-design/icons';
 import { Controller, useForm } from 'react-hook-form';
 
 interface SearchFormData {
@@ -11,10 +11,12 @@ interface SearchFormData {
 interface PermissionSearchFormProps {
     onSearch: (data: SearchFormData) => void;
     onReset: () => void;
+    onExport?: () => void;
+    loading?: boolean;
     isAdmin?: boolean;
 }
 
-const PermissionSearchForm: React.FC<PermissionSearchFormProps> = ({ onSearch, onReset, isAdmin = true }) => {
+const PermissionSearchForm: React.FC<PermissionSearchFormProps> = ({ onSearch, onReset, onExport, loading = false, isAdmin = true }) => {
     const { control, handleSubmit, reset } = useForm<SearchFormData>();
 
     const handleSearchSubmit = handleSubmit((data) => {
@@ -34,15 +36,15 @@ const PermissionSearchForm: React.FC<PermissionSearchFormProps> = ({ onSearch, o
                         <Controller
                             name="userId"
                             control={control}
-                            render={({ field }) => <Input {...field} placeholder="ユーザーIDを入力してください" style={{ width: 150 }} />}
+                            render={({ field }) => <Input {...field} placeholder="ユーザーIDを入力してください" style={{ width: 150 }} allowClear />}
                         />
                     </Form.Item>
                 )}
-                <Form.Item label="设备デバイスID" style={{ marginBottom: 0 }}>
+                <Form.Item label="デバイスID" style={{ marginBottom: 0 }}>
                     <Controller
                         name="deviceId"
                         control={control}
-                        render={({ field }) => <Input {...field} placeholder="設備IDを入力してください" style={{ width: 150 }} />}
+                        render={({ field }) => <Input {...field} placeholder="デバイスIDを入力してください" style={{ width: 150 }} allowClear />}
                     />
                 </Form.Item>
                 <Form.Item style={{ marginBottom: 0 }}>
@@ -57,6 +59,15 @@ const PermissionSearchForm: React.FC<PermissionSearchFormProps> = ({ onSearch, o
                         <Button onClick={handleReset} icon={<ReloadOutlined />}>
                             リセット
                         </Button>
+                        {isAdmin && onExport && (
+                            <Button 
+                                icon={<ExportOutlined />} 
+                                onClick={onExport} 
+                                loading={loading}
+                            >
+                                Excelにエクスポート
+                            </Button>
+                        )}
                     </Space>
                 </Form.Item>
             </Space>
