@@ -81,10 +81,10 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   fetchDevices: async () => {
     const { searchParams, setLoading, setDevices, setTotal } = get();
     setLoading(true);
-    console.log('fetchDevices被调用，参数：', searchParams);
+    console.log('fetchDevicesが呼び出されました。パラメータ:', searchParams);
     try {
       const res: DeviceApiResponse<DeviceListItem> = await getDeviceList(searchParams);
-      console.log('fetchDevices返回：', res);
+      console.log('fetchDevicesの返り値:', res);
       if (res.code === 200 && res.data) {
         // TSに明示的にページネーション構造を伝える
         const pageData = res.data as {
@@ -93,7 +93,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
           page: number;
           pageSize: number;
         };
-        console.log('转换后的pageData：', pageData);
+        console.log('変換後のpageData:', pageData);
         setDevices(pageData.list);
         setTotal(pageData.total);
       } else {
@@ -196,7 +196,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
     const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
 
     if (!isAdmin) {
-      message.error('普通用户无权限删除设备');
+      message.error('一般ユーザーはデバイスを削除する権限がありません');
       return Promise.resolve();
     }
 
@@ -238,7 +238,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
     const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
 
     if (!isAdmin && userInfo?.USER_ID) {
-      // 普通用户强制使用自己的ID
+
       const forcedUserId = userInfo.USER_ID;
       setUserIdSearch(forcedUserId);
       const p = { ...get().searchParams, userId: forcedUserId, page: 1 };
@@ -267,7 +267,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
 
       if (!isAdmin && values.userId !== userInfo?.USER_ID) {
         if (isEditing) {
-          message.error('无权编辑其他用户的设备');
+          message.error('他のユーザーのデバイスを編集する権限がありません');
           return;
         }
       }
@@ -315,7 +315,7 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
   initialize: async (isAdmin: boolean, currentUserId?: string) => {
     const { setSearchParams, setUserIdSearch, fetchDevices, fetchUsers } = get();
 
-    console.log('初始化设备商店:', { isAdmin, currentUserId });
+    console.log('デバイスストアを初期化しています:', { isAdmin, currentUserId });
 
     if (!isAdmin && currentUserId) {
 
@@ -324,17 +324,17 @@ export const useDeviceStore = create<DeviceStore>((set, get) => ({
       setSearchParams({
         page: 1,
         pageSize: 10,
-        userId: currentUserId  // 明确设置userId
+        userId: currentUserId  
       });
       await fetchDevices();
     } else {
 
-      setUserIdSearch('');  // 清空搜索框
+      setUserIdSearch('');  
 
       setSearchParams({
         page: 1,
         pageSize: 10,
-        userId: undefined  // 明确设置为 undefined
+        userId: undefined  
       });
 
       await Promise.all([
