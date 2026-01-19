@@ -1,5 +1,5 @@
 // services/device/deviceService.ts
-import type { DeviceListItem, DeviceQueryParams, DeviceApiResponse } from '../../types/device';
+import type { DeviceListItem, DeviceQueryParams, DeviceApiResponse } from '../../types/index';
 import { get, del } from '../api/index';
 
 /**
