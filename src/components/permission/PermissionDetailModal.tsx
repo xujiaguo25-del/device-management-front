@@ -170,7 +170,8 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
         
         if (domainStatusText === '未参加' || domainStatusText === 'なし') {
             setValue('domainGroup', '');
-        } else if (domainStatusValue && domainStatusText !== '未参加' && domainStatusText !== 'なし') {
+        } 
+        else if (domainStatusValue && domainStatusText !== '未参加' && domainStatusText !== 'なし') {
             setValue('noDomainReason', '');
         }
     }, [domainStatusValue, domainStatusText, setValue]);
@@ -452,10 +453,11 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                                     name="domainGroup"
                                                     control={control}
                                                     rules={{
-                                                        required: 'Domainグループ名を入力してください',
-                                                        maxLength: { value: 50, message: '最大50文字' }
+                                                        //required: 'Domainグループ名を入力してください',
+                                                        maxLength: { value: 50, message: '最大50文字' },
                                                     }}
                                                     render={({ field }) => (
+                                                        
                                                         <Input
                                                             {...field}
                                                             placeholder="Domainグループ名を入力してください"
@@ -577,7 +579,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                             <span>USB配置</span>
                         </div>
                         <Row gutter={8} align="middle">
-                            <Col span={8}>
+                            <Col span={6}>
                                 <Form.Item
                                     label={<span className="form-label"><UsbOutlined />USB状態</span>}
                                     style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -607,7 +609,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
 
                             {(usbStatusText === '許可' || usbStatusText === '一時許可' || usbStatusText === 'データ' || usbStatusText === '3Gモデム') && (
                                 <>
-                                    <Col span={8}>
+                                    <Col span={6}>
                                         <Form.Item
                                             label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />開通理由</span>}
                                             validateStatus={errors.usbReason ? 'error' : undefined}
@@ -635,7 +637,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                                             />
                                         </Form.Item>
                                     </Col>
-                                    <Col span={8}>
+                                    <Col span={6}>
                                         <Form.Item
                                             label={<span className="form-label"><CalendarOutlined />使用期限</span>}
                                             validateStatus={errors.useEndDate ? 'error' : undefined}
@@ -673,7 +675,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                             <span>ウイルス対策の配置</span>
                         </div>
                         <Row gutter={8} align="middle">
-                            <Col span={8}>
+                            <Col span={6}>
                                 <Form.Item
                                     label={<span className="form-label"><SafetyOutlined />接続状態</span>}
                                     style={{ ...COMPACT_FORM_ITEM_STYLE, marginBottom: 2 }}
@@ -702,7 +704,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                             </Col>
 
                             {(connectionStatusText === '未インストール' || connectionStatusText === '接続なし') && (
-                                <Col span={8}>
+                                <Col span={6}>
                                     <Form.Item
                                         label={<span className="form-label"><ExclamationCircleOutlined className="icon-orange" />Symantec未接続の理由</span>}
                                         validateStatus={errors.noSymantecReason ? 'error' : undefined}
@@ -737,7 +739,7 @@ const PermissionDetailModal: React.FC<PermissionDetailModalProps> = ({
                     {/* 備考情報 */}
                     <div className="section-block">
                         <div className="section-title">
-                            <ExclamationCircleOutlined className="icon-orange" />
+                            {/*<ExclamationCircleOutlined className="icon-orange" />*/}
                             <span>備考</span>
                         </div>
                         <Row gutter={8}>
