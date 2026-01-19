@@ -192,3 +192,98 @@ export interface DictSuccessResponse {
   page: number | null;
   size: number | null;
 }
+
+////////////デバイス///////////////
+
+// デバイス検索パラメータインターフェース
+export interface DeviceQueryParams {
+  page?: number; // 現在のページ番号
+  pageSize?: number; // ページサイズ
+  deviceId?: string; // デバイスID
+  computerName?: string; // コンピューター名
+  loginUsername?: string; // ログインユーザー名
+  userId?: string; // ユーザーID
+  project?: string; // プロジェクト
+  devRoom?: string; // 開発室
+  confirmStatus?: string; // ステータス
+  createTimeStart?: string; // 作成開始時間
+  createTimeEnd?: string; // 作成終了時間
+}
+
+// デバイス応答インターフェース
+export interface DeviceApiResponse<T> {
+  code: number; // 応答コード
+  message: string; // 応答メッセージ
+  // 汎用戻り値：dataはオブジェクト（単一）またはページングオブジェクト/リスト
+  data: T | {
+    list: T[];
+    total?: number | null;
+    page?: number | null;
+    pageSize?: number | null;
+  } | null;
+  total?: number | null;
+  page?: number | null;
+  size?: number | null;
+}
+
+// バックエンドから返されるすべてのパラメータを保持
+export interface DeviceListItem {
+  userName?: string | null; // ユーザー名
+  deptId?: string | null;
+  deviceId: string; // デバイスID
+  deviceModel?: string | null;  // デバイスモデル
+  computerName?: string | null; // コンピューター名
+  loginUsername?: string | null;// ログインユーザー名
+  project?: string | null;// プロジェクト
+  devRoom?: string | null;// 開発室
+  userId?: string | null;// ユーザーID
+  remark?: string | null; // 備考
+  selfConfirmId?: number | null;
+  osId?: number | null;
+  memoryId?: number | null;
+  ssdId?: number | null;
+  hddId?: number | null;
+  createTime?: string | null;
+  creater?: string | null;
+  updateTime?: string | null;
+  updater?: string | null;
+  monitors?: Monitor[] | null;
+  deviceIps?: DeviceIp[] | null;
+  // 辞書値
+  confirmStatus: string; // 本人確認状態
+  osName: string; // オペレーティングシステム
+  memorySize: string; // メモリサイズ
+  ssdSize: string; // SSDサイズ
+  hddSize: string; // HDDサイズ
+}
+
+// デバイス IP エンティティ
+export interface DeviceIp {
+  // ipId?: number;
+  ipAddress: string;
+  deviceId?: string;
+  createTime?: string | null;
+  creater?: string | null;
+  updateTime?: string | null;
+  updater?: string | null;
+}
+
+// モニターエンティティ
+export interface Monitor {
+  // monitorId?: number;
+  monitorName: string;
+  deviceId?: string;
+  createTime?: string | null;
+  creater?: string | null;
+  updateTime?: string | null;
+  updater?: string | null;
+}
+
+// API応答タイプを定義
+export interface ApiResponse<T = any> {
+  code: number;
+  message?: string;
+  data: T;
+}
+
+////////////デバイス///////////////

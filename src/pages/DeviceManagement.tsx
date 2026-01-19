@@ -1,177 +1,314 @@
-import React, { useState } from 'react';
-import { Table, Form, Input, Button, Space, Popconfirm, Card, message } from 'antd';
+// pages/DeviceManagement.tsx
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Table, Button, Space, Tag, Input, Row, Col, Pagination, Spin
+} from 'antd';
+import {
+  SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined
+} from '@ant-design/icons';
 import Layout from '../components/common/Layout';
-import type { DictItem } from '../types';
-import { useDicts } from '../hooks/useDicts';
-import DictSelect from '../components/DictSelect';
+import DeviceFormModal from '../components/device/DeviceFormModal';
+import { useDeviceStore } from '../stores/deviceStore';
+import type { DeviceListItem, DeviceIp, Monitor } from '../types/index';
+import type { ColumnsType } from 'antd/es/table';
+import { useAuthStore } from '../stores/authStore';
 
-// デバイス行の型定義
-// DictSelectで使用するフィールドはnumber | null型とする
-
-type DeviceRow = {
-  key: string;
-  name: string;
-  os?: number | null;   // OSタイプ (DictSelect使用)
-  domainStatus?: number | null;  // ドメインステータス (DictSelect使用)
-  usb?: number | null;  // USBステータス (DictSelect使用)
-};
+const { Search } = Input;
 
 const DeviceManagement: React.FC = () => {
-  // 辞書データを一括取得（重複リクエストを避けるため）
-  const { map: dictMap } = useDicts(['OS_TYPE', 'DOMAIN_STATUS', 'USB_STATUS']);
+  const {
+    devices, loading, searchParams, total, formVisible, isEditing, selectedDevice,
+    userIdSearch, users,fetchDevices, handlePageChange, handlePageSizeChange,
+    handleEditDevice, handleDeleteDevice, handleAddDevice,
+    handleUserIdSearch, handleFormSubmit, initialize,
+    setFormVisible, setIsEditing, setSelectedDevice, setUserIdSearch
+  } = useDeviceStore();
 
-  // 各フィールド用の辞書オプションを抽出
-  const osOptions = (dictMap['OS_TYPE'] || []) as DictItem[];
-  const domainOptions = (dictMap['DOMAIN_STATUS'] || []) as DictItem[];
-  const usbOptions = (dictMap['USB_STATUS'] || []) as DictItem[];
 
-  // 状態管理
-  const [form] = Form.useForm();
-  const [data, setData] = useState<DeviceRow[]>([
-    { key: '1', name: 'Device A', os: null, domainStatus: null, usb: null },
-    { key: '2', name: 'Device B', os: null, domainStatus: null, usb: null },
-  ]);
-  const [editingKey, setEditingKey] = useState<string>('');
+  const { userInfo, isLoading: authLoading } = useAuthStore();
+  const [initialized, setInitialized] = useState(false);
 
-  // 編集中判定
-  const isEditing = (record: DeviceRow) => record.key === editingKey;
 
-  // DictSelectの選択値から表示ラベルを取得
-  const getLabel = (options: DictItem[], id?: number | null) => {
-    const it = options.find(o => o.dictId === id);
-    return it ? it.dictItemName : '-';
-  };
+  const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
 
-  // 編集操作関数
-  const edit = (record: Partial<DeviceRow> & { key: string }) => {
-    form.setFieldsValue({ name: '', os: undefined, domainStatus: undefined, usb: undefined, ...record });
-    setEditingKey(record.key);
-  };
+  // テーブルコンテナの参照と高さ状態
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [tableHeight, setTableHeight] = useState<number>(600);
 
-  const cancel = () => setEditingKey('');
+  // リサイズオブザーバーでテーブルコンテナの高さを監視
+  useEffect(() => {
+    console.log('userInfo 变化:', userInfo);
 
-  const save = async (key: string) => {
-    try {
-      const row = (await form.validateFields()) as DeviceRow;
-      setData(prev => prev.map(item => (item.key === key ? { ...item, ...row } : item)));
-      setEditingKey('');
-      message.success('保存しました');
-    } catch (err) {}
-  };
+    if (userInfo) {
+      console.log('调用 initialize，参数:', {
+        isAdmin,
+        userId: userInfo.USER_ID
+      });
 
-  const addRow = () => {
-    const newKey = `${Date.now()}`;
-    setData(prev => [...prev, { key: newKey, name: '', os: null, domainStatus: null, usb: null }]);
-    setTimeout(() => edit({ key: newKey }));
-  };
+      initialize(isAdmin, userInfo.USER_ID);
+    } else {
+      console.log('userInfo 为空，等待加载...');
+    }
+  }, [userInfo]);
 
-  const deleteRow = (key: string) => {
-    setData(prev => prev.filter(r => r.key !== key));
-  };
 
-  // テーブルカラム定義
-  const columns = [
+  if (authLoading) {
+    return (
+        <Layout title="设备管理">
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+            <Spin size="large" tip="加载用户信息..." />
+          </div>
+        </Layout>
+    );
+  }
+
+  // テーブル列定義
+  const columns: ColumnsType<DeviceListItem> = [
     {
-      title: '名称',
-      dataIndex: 'name',
-      width: '25%',
-      render: (_: any, record: DeviceRow) => {
-        const editing = isEditing(record);
-        return editing ? (
-          <Form.Item name="name" rules={[{ required: true, message: '名称は必須項目です' }]} style={{ margin: 0 }}>
-              <Input placeholder="名称を入力してください" />
-          </Form.Item>
-        ) : (record.name || '-');
-      },
+      title: 'デバイス番号',
+      dataIndex: 'deviceId',
+      key: 'deviceId',
+      align: 'center',
+      width: 180,
+      render: (t: string) => (
+        <div style={{ textAlign: 'center', wordBreak: 'break-word', whiteSpace: 'normal' }} title={t}>
+          {t || '-'}
+        </div>
+      ),
     },
     {
-      title: 'OS',
-      dataIndex: 'os',
-      width: '22%',
-      render: (_: any, record: DeviceRow) => {
-        const editing = isEditing(record);
-        if (editing) {
-          // DictSelect使用例：itemsプロパティで直接データを提供
-          return (
-            <Form.Item name="os" style={{ margin: 0 }}>
-              <DictSelect items={osOptions} placeholder="OSを選択" />
-            </Form.Item>
-          );
+      title: 'モニター',
+      dataIndex: 'monitors',
+      key: 'monitors',
+      align: 'center',
+      width: 180,
+      ellipsis: true,
+      render: (m: Monitor[] | null) => (
+          <div style={{ whiteSpace: 'pre-line', textAlign: 'center' }}>
+            {m?.map((i) => i.monitorName).filter(Boolean).join('\n') || '-'}
+          </div>
+      ),
+    },
+    { 
+      title: 'ユーザー情報', 
+      key: 'userInfo',
+      align: 'center',
+      width: 120,
+      render: (_: any, record: DeviceListItem) => (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '14px', fontWeight: 500 }}>{record.userName || '-'}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>{record.userId || '-'}</div>
+        </div>
+      ),
+    },
+    { title: 'デバイスモデル', dataIndex: 'deviceModel', key: 'deviceModel', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
+    { title: 'コンピュータ名', dataIndex: 'computerName', key: 'computerName', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
+    { title: 'ログインユーザー名', dataIndex: 'loginUsername', key: 'loginUsername', align: 'center', width: 130, ellipsis: true, render: (t) => t || '-' },
+    {
+      title: 'IPアドレス',
+      dataIndex: 'deviceIps',
+      key: 'deviceIps',
+      align: 'center',
+      width: 150,
+      ellipsis: true,
+      render: (ips: DeviceIp[] | null) => (
+          <div style={{ whiteSpace: 'pre-line', textAlign: 'center' }}>
+            {ips?.map((i) => i.ipAddress).filter(Boolean).join('\n') || '-'}
+          </div>
+      ),
+    },
+    { title: 'OS', dataIndex: 'osName', key: 'osName', align: 'center', width: 120, ellipsis: true, render: (t) => t || '-' },
+    { title: 'メモリ(G)', dataIndex: 'memorySize', key: 'memorySize', align: 'center', width: 80, ellipsis: true, render: (t) => t || '-' },
+    { 
+      title: 'ストレージ(G)', 
+      key: 'storage',
+      align: 'center',
+      width: 100,
+      render: (_: any, record: DeviceListItem) => {
+        const items: string[] = [];
+        if (record.ssdSize && record.ssdSize !== '-') {
+          items.push(`SSD: ${record.ssdSize}`);
         }
-        return getLabel(osOptions, record.os);
+        if (record.hddSize && record.hddSize !== '-') {
+          items.push(`HDD: ${record.hddSize}`);
+        }
+        
+        if (items.length === 0) {
+          return <div style={{ textAlign: 'center' }}>-</div>;
+        }
+        
+        return (
+          <div style={{ textAlign: 'center' }}>
+            {items.map((item, index) => (
+              <div key={index}>{item}</div>
+            ))}
+          </div>
+        );
       },
     },
-    {
-      title: 'ドメインステータス',
-      dataIndex: 'domainStatus',
-      width: '22%',
-      render: (_: any, record: DeviceRow) => {
-        const editing = isEditing(record);
-        if (editing) {
-          return (
-            <Form.Item name="domainStatus" style={{ margin: 0 }}>
-              <DictSelect items={domainOptions} placeholder="ドメインステータスを選択" />
-            </Form.Item>
-          );
-        }
-        return getLabel(domainOptions, record.domainStatus);
-      },
+    { title: 'プロジェクト', dataIndex: 'project', key: 'project', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
+    { title: '開発室', dataIndex: 'devRoom', key: 'devRoom', align: 'center', width: 100, ellipsis: true, render: (t) => t || '-' },
+    { 
+      title: '備考', 
+      dataIndex: 'remark', 
+      key: 'remark', 
+      align: 'center', 
+      width: 150,
+      render: (t) => (
+        <div style={{ textAlign: 'center', wordBreak: 'break-word', whiteSpace: 'normal' }} title={t}>
+          {t || '-'}
+        </div>
+      ),
     },
     {
-      title: 'USB',
-      dataIndex: 'usb',
-      width: '16%',
-      render: (_: any, record: DeviceRow) => {
-        const editing = isEditing(record);
-        if (editing) {
-          return (
-            <Form.Item name="usb" style={{ margin: 0 }}>
-              <DictSelect items={usbOptions} placeholder="USBを選択" />
-            </Form.Item>
-          );
-        }
-        return getLabel(usbOptions, record.usb);
-      },
+      title: '確認状態',
+      dataIndex: 'confirmStatus',
+      key: 'confirmStatus',
+      align: 'center',
+      width: 100,
+      fixed: 'right',
+      render: (s: string) => <Tag color={s === '已确认' || s === '確認済み' ? 'green' : 'red'}>{s}</Tag>,
     },
     {
       title: '操作',
-      dataIndex: 'action',
-      render: (_: any, record: DeviceRow) => {
-        const editing = isEditing(record);
-        return editing ? (
-          <Space>
-            <Button type="link" onClick={() => save(record.key)}>保存</Button>
-            <Button type="link" onClick={cancel}>キャンセル</Button>
-          </Space>
-        ) : (
-          <Space>
-            <Button type="link" onClick={() => edit(record)}>編集</Button>
-            <Popconfirm title="削除してもよろしいですか？" onConfirm={() => deleteRow(record.key)}>
-              <Button type="link" danger>削除</Button>
-            </Popconfirm>
-          </Space>
-        );
-      },
+      key: 'action',
+      align: 'center',
+      width: 150,
+      fixed: 'right',
+      render: (_: any, r: DeviceListItem) => (
+        <Space size={[4, 0]} wrap={false} style={{ whiteSpace: 'nowrap' }}>
+          <Button type="link" size="small" onClick={() => handleEditDevice(r)}>
+            編集
+          </Button>
+          {isAdmin && (
+          <Button type="link" danger size="small" onClick={() => handleDeleteDevice(r.deviceId)}>
+            削除
+          </Button>
+          )}
+        </Space>
+      ),
     },
   ];
 
   return (
     <Layout title="デバイス管理">
-      <Card style={{ marginTop: 12 }}>
-        <Space style={{ marginBottom: 12 }}>
-          <Button type="primary" onClick={addRow}>新規行追加</Button>
-        </Space>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        background: '#fff', 
+        padding: 16, 
+        height: '100%', 
+        overflow: 'hidden' 
+      }}>
+        {/* 上部検索エリア */}
+        <div style={{ marginBottom: 20, flexShrink: 0 }}>
+          <Row gutter={16} align="middle" justify="space-between">
+            {isAdmin && (
+            <Col>
+              <Search
+                placeholder="ユーザーIDで検索"
+                allowClear
+                enterButton={<div style={{ display: 'flex', alignItems: 'center' }}><SearchOutlined />&nbsp;&nbsp;検索</div>}
+                onSearch={handleUserIdSearch}
+                onChange={(e) => setUserIdSearch(e.target.value)}
+                value={userIdSearch}
+                style={{ width: 240, padding: '0 0 6px' }}
+              />
 
-        <Form form={form} component={false}>
-          <Table
-            bordered
-            dataSource={data}
+            </Col>
+            )}
+            {isAdmin && (
+            <Col>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDevice}>デバイスを追加</Button>
+            </Col>
+            )}
+          </Row>
+        </div>
+
+        {/* テーブルコンテナ - リサイズ監視用 */}
+        <div 
+          ref={tableContainerRef}
+          style={{ 
+            flex: 1,
+            minHeight: 0, // flexコンテナで必要
+            position: 'relative',
+            transition: 'all 0.3s ease' // スムーズなトランジション
+          }}
+        >
+          {/* 絶対配置で内部スクロールを実現 */}
+          <div style={{
+            position: 'absolute',
+            top: -12,
+            left: 0,
+            right: 0,
+            bottom: -36,
+            overflow: 'hidden'
+          }}>
+            <style>{`
+              ::-webkit-scrollbar {
+                display: none; /* Chrome, Safari and Opera */
+              }
+            `}</style>
+          <Table<DeviceListItem>
+            rowKey="deviceId"
             columns={columns}
-            rowKey="key"
-            pagination={{ pageSize: 8 }}
+            dataSource={devices}
+            loading={loading}
+            scroll={{ 
+              x: 2200,
+              y: tableHeight-8 // マージンを考慮
+            }}
+            pagination={false}
+            size="middle"
+            bordered={false}
+            style={{
+              transition: 'all 0.3s ease',
+              // スクロールバーを自動的に非表示にする
+              scrollbarWidth: 'none',  /* Firefox */
+              msOverflowStyle: 'none', /* IE and Edge */
+            }}
           />
-        </Form>
-      </Card>
+          </div>
+        </div>
+
+        {/* ページネーション */}
+        <div style={{ 
+          marginTop: 40, 
+          flexShrink: 0, 
+          display: 'flex',
+          justifyContent: 'center',
+          transition: 'all 0.3s ease' // ページネーションもトランジション
+        }}>
+          <Pagination
+            current={searchParams.page}
+            pageSize={searchParams.pageSize}
+            total={total}
+            onChange={handlePageChange}
+            onShowSizeChange={handlePageSizeChange}
+            showQuickJumper
+            showSizeChanger
+            showTotal={(t, r) => `${r[0]}-${r[1]} 件目、全 ${t} 件`}
+            pageSizeOptions={['10', '15', '20']}
+          />
+        </div>
+
+        {/* デバイスフォームモーダル */}
+        <DeviceFormModal
+          visible={formVisible}
+          isEditing={isEditing}
+          device={selectedDevice}
+          dictData={{}}
+          users={users}
+          isAdmin={isAdmin}
+          currentUserId={userInfo?.USER_ID}
+          onCancel={() => {
+            setFormVisible(false);
+            setIsEditing(false);
+            setSelectedDevice(null);
+          }}
+          onSubmit={handleFormSubmit}
+        />
+      </div>
     </Layout>
   );
 };
