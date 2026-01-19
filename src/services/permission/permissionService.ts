@@ -57,8 +57,6 @@ export const updatePermission = async (
     permissionId: string,
     permissionData: DevicePermissionInsert
 ): Promise<ApiResponse<any>> => {
-
-    console.log('//////////////////////Updating permission:', permissionId, permissionData);
     return put<ApiResponse<any>>(`/permissions/${permissionId}`, permissionData);
 };
 
