@@ -165,12 +165,7 @@ export const importDevicesFromExcel = async (file: File): Promise<{ success: boo
   try {
     const response = await post<{ code: number; message: string; data: any }>(
       url,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+      formData
     );
     
     return {
