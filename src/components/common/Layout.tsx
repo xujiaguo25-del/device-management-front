@@ -60,7 +60,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title = 'デバイス管理�
       baseItems.push({
         key: '/security-checks',
         icon: <SecurityScanOutlined />,
-        label: 'セキュリティチェック',
+        label: '安全点検',
         onClick: () => handleMenuClick('/security-checks'),
       });
     }

@@ -17,6 +17,10 @@ export interface UpdateSecurityCheckResponse {
   message: string;
   data?: SecurityCheck;
 }
+export interface InitResponse{
+  code: number;
+  message: string;
+}
 
 //パラメータの検索
 export interface GetSecurityChecksParams {
@@ -49,6 +53,12 @@ export const updateSecurityCheck = (
 ): Promise<UpdateSecurityCheckResponse> => {
   return put<UpdateSecurityCheckResponse>(`/security-checks/${samplingId}`, data);
 };
+
+//初期化メソッド
+export const init = (): Promise<InitResponse> => {
+  return get<InitResponse>(`/security-checks/init`);
+};
+
 
 
 //パラメータのエクスポート
