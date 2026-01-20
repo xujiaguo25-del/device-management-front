@@ -1,17 +1,17 @@
 // pages/DeviceManagement.tsx
 import React, { useEffect, useRef, useState } from 'react';
+import { Table, Button, Space, Tag, Input, Row, Col, Pagination, Spin, Upload, message } from 'antd';
 import {
-  Table, Button, Space, Tag, Input, Row, Col, Pagination, Spin
-} from 'antd';
-import {
-  SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined
+  SearchOutlined, PlusOutlined, UploadOutlined
 } from '@ant-design/icons';
+import type { UploadProps } from 'antd/es/upload/interface';
 import Layout from '../components/common/Layout';
 import DeviceFormModal from '../components/device/DeviceFormModal';
 import { useDeviceStore } from '../stores/deviceStore';
 import type { DeviceListItem, DeviceIp, Monitor } from '../types/index';
 import type { ColumnsType } from 'antd/es/table';
 import { useAuthStore } from '../stores/authStore';
+import { importDevicesFromExcel } from '../services/device/deviceService';
 
 const { Search } = Input;
 
@@ -26,14 +26,36 @@ const DeviceManagement: React.FC = () => {
 
 
   const { userInfo, isLoading: authLoading } = useAuthStore();
-  const [initialized, setInitialized] = useState(false);
 
 
   const isAdmin = userInfo?.USER_TYPE_NAME === 'admin';
 
   // テーブルコンテナの参照と高さ状態
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const [tableHeight, setTableHeight] = useState<number>(600);
+  const [tableHeight] = useState<number>(600);
+
+  // Excelアップロードハンドラー
+  const handleUpload: UploadProps['beforeUpload'] = async (file) => {
+    try {
+      message.loading('インポート中...', 0);
+      const result = await importDevicesFromExcel(file);
+      message.destroy();
+      
+      if (result.success) {
+        message.success(result.message || 'インポートが成功しました');
+        // インポート成功後、デバイスリストを更新します
+        fetchDevices();
+      } else {
+        message.error(result.message || 'インポートに失敗しました');
+      }
+    } catch (error: any) {
+      message.destroy();
+      message.error(error.message || 'インポート中にエラーが発生しました');
+    }
+    
+    // falseを返して、自動アップロードを防止します
+    return false;
+  };
 
   // リサイズオブザーバーでテーブルコンテナの高さを監視
   useEffect(() => {
@@ -219,7 +241,17 @@ const DeviceManagement: React.FC = () => {
             )}
             {isAdmin && (
             <Col>
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDevice}>デバイスを追加</Button>
+              <Space>
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDevice}>デバイスを追加</Button>
+                <Upload
+                  name="file"
+                  beforeUpload={handleUpload}
+                  showUploadList={false}
+                  accept=".xlsx,.xls"
+                >
+                  <Button icon={<UploadOutlined />}>Excelをインポート</Button>
+                </Upload>
+              </Space>
             </Col>
             )}
           </Row>

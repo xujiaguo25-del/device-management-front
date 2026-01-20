@@ -23,9 +23,11 @@ export const request = async <T = unknown>(
   const token = getToken();
   const skipAuthRedirect = Boolean((options as RequestOptions).skipAuthRedirect);
   
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const headers: Record<string, string> = {};
+
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
   
   // options の headers を追加
   if (options.headers) {
@@ -122,10 +124,12 @@ export const post = <T = unknown>(
   body?: unknown,
   options?: RequestOptions
 ): Promise<T> => {
+  const isFormData = body instanceof FormData;
+
   return request<T>(endpoint, {
     ...options,
     method: 'POST',
-    body: body ? JSON.stringify(body) : undefined,
+    body: isFormData ? (body as FormData) : body ? JSON.stringify(body) : undefined,
   });
 };
 
