@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Input, Button, Space, message, Row, Col } from 'antd';
-import { SearchOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Table, Card, Input, Button, Space, message, Row, Col, Modal } from 'antd';
+import { SearchOutlined, DownloadOutlined, ReloadOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import Layout from '../../components/common/Layout';
 import type { SecurityCheck } from '../../types';
 import EditModal from './EditModal';
@@ -114,25 +114,32 @@ const SecurityChecks: React.FC = () => {
 
   // 初期化の操作
   const handleInit = async () => {
-    try {
-      setInitializing(true);
-      setLoading(true);
-      const res = await init();
-      if (res.code === 200) {
-
-        message.success('初期化成功');
-        fetchData();
-
-      } else {
-        message.error(res.message || '初期化失敗');
+    Modal.confirm({
+      title: '初期化確認',
+      icon: <ExclamationCircleOutlined />,
+      content: '初期化を実行すると、現在のデータが上書きされます。この操作は元に戻すことができません。続行しますか？',
+      okText: '確認',
+      cancelText: 'キャンセル',
+      onOk: async () => {
+        try {
+          setInitializing(true);
+          setLoading(true);
+          const res = await init();
+          if (res.code === 200) {
+            message.success('初期化成功');
+            fetchData();
+          } else {
+            message.error(res.message || '初期化失敗');
+          }
+        } catch (error: any) {
+          console.error('初期化失敗:', error);
+          message.error(error.message || '初期化失敗');
+        } finally {
+          setInitializing(false);
+          setLoading(false);
+        }
       }
-    } catch (error: any) {
-      console.error('初期化失敗:', error);
-      message.error(error.message || '初期化失敗');
-    } finally {
-      setInitializing(false);
-      setLoading(false);
-    }
+    });
   };
 
   // 編集の操作
